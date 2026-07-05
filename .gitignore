@@ -1,0 +1,17 @@
+*.apk
+*.apks
+*.aab
+.local/
+reference/
+references/
+apktool-out/
+jadx-out/
+decompiled/
+*.keystore
+*.jks
+signing.properties
+local.properties
+.gradle/
+build/
+.idea/
+.DS_Store
