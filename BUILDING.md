@@ -12,13 +12,13 @@ The default Gradle build imports a Launcher3-derived standalone configuration.
 Build the universal debug APK with:
 
 ```sh
-./gradlew assembleDebug
+./gradlew assembleLawnWithQuickstepGithubDebug
 ```
 
 Expected debug artifact location:
 
 ```text
-build/outputs/apk/**/debug/*.apk
+build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk
 ```
 
 The universal target uses application ID `com.elyra.launcher` and app label
@@ -29,8 +29,8 @@ The universal target uses application ID `com.elyra.launcher` and app label
 Run available debug unit tests and lint with:
 
 ```sh
-./gradlew testDebugUnitTest
-./gradlew lintDebug
+./gradlew testLawnWithQuickstepGithubDebugUnitTest
+./gradlew lintLawnWithQuickstepGithubDebug
 ```
 
 Instrumentation and emulator checks require `adb` and an Android emulator or

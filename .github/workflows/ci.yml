@@ -3,9 +3,11 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  build:
+  universal-debug:
+    name: Universal debug APK
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,35 +22,36 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses >/dev/null
+
       - name: Install Android SDK components
-        run: |
-          sdkmanager --install "platforms;android-36" "build-tools;36.1.0"
-          sdkmanager --licenses >/dev/null
+        run: sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
 
       - name: Build universal debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleLawnWithQuickstepGithubDebug --stacktrace
 
       - name: Run debug unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew testLawnWithQuickstepGithubDebugUnitTest --stacktrace
 
       - name: Run debug lint
-        run: ./gradlew lintDebug --stacktrace
+        run: ./gradlew lintLawnWithQuickstepGithubDebug --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: elyra-launcher-debug-apk
-          path: build/outputs/apk/**/*.apk
+          name: elyra-launcher-lawn-with-quickstep-github-debug-apk
+          path: build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk
           if-no-files-found: error
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: elyra-launcher-reports
+          name: elyra-launcher-lawn-with-quickstep-github-debug-reports
           path: |
             build/reports/**
             **/build/reports/**

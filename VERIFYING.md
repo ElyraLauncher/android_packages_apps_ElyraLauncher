@@ -9,7 +9,7 @@ Verification results must use the following meanings:
 
 ## Required Gates
 
-- Universal APK builds from source with `./gradlew assembleDebug`.
+- Universal APK builds from source with `./gradlew assembleLawnWithQuickstepGithubDebug`.
 - APK installs on a normal Android system.
 - Launcher can be selected as the default Home app.
 - Home press opens ElyraLauncher.
@@ -24,9 +24,9 @@ Verification results must use the following meanings:
 
 ```sh
 ./gradlew --version
-./gradlew assembleDebug
-./gradlew testDebugUnitTest
-./gradlew lintDebug
+./gradlew assembleLawnWithQuickstepGithubDebug
+./gradlew testLawnWithQuickstepGithubDebugUnitTest
+./gradlew lintLawnWithQuickstepGithubDebug
 ```
 
 Emulator checks should install the APK, set or open the launcher as Home, press
