@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <!-- Template only. Grant privileged permissions in a ROM tree after review. -->
+    <privapp-permissions package="com.elyra.launcher">
+    </privapp-permissions>
+</permissions>

@@ -2,13 +2,13 @@
 
 ## Stage 0: Repository Foundation
 
-Create public project documentation, license files, ignore rules, and verification
-language.
+Complete. Public project documentation, license files, ignore rules, and
+verification language are in place.
 
 ## Stage 1: Launcher3 Base
 
-Import a real Launcher3/Quickstep source base, preserve core architecture, and
-compile a universal Home-capable APK.
+Complete when the imported Launcher3-derived Gradle source builds a universal
+Home-capable APK and the Stage 1 commit is clean.
 
 ## Stage 2: Feature Matrix
 
@@ -33,11 +33,10 @@ history, motion, blur, glow, widgets, hidden apps, backup, and settings polish.
 
 ## Stage 14: ROM Quickstep Path
 
-Add platform integration files and validate Quickstep only inside a real ROM
-tree.
+Validate platform integration files and run a real ROM build when a ROM tree is
+available.
 
 ## Stage 15: Release Quality
 
 Clean lint and resources, confirm artifacts, verify contamination checks, and
 prepare the first universal preview release.
-

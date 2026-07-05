@@ -9,7 +9,7 @@ Verification results must use the following meanings:
 
 ## Required Gates
 
-- Universal APK builds from source.
+- Universal APK builds from source with `./gradlew assembleDebug`.
 - APK installs on a normal Android system.
 - Launcher can be selected as the default Home app.
 - Home press opens ElyraLauncher.
@@ -22,16 +22,23 @@ Verification results must use the following meanings:
 
 ## Local Checks
 
-After the Launcher3 base is imported:
-
 ```sh
-./gradlew assembleUniversalDebug
-./gradlew test
-./gradlew lint
+./gradlew --version
+./gradlew assembleDebug
+./gradlew testDebugUnitTest
+./gradlew lintDebug
 ```
 
 Emulator checks should install the APK, set or open the launcher as Home, press
 Home, open the app drawer, and fail on launcher package fatal exceptions.
+
+## Manifest Check
+
+Confirm the merged manifest contains a Home-capable launcher activity with:
+
+- `android.intent.action.MAIN`
+- `android.intent.category.HOME`
+- `android.intent.category.DEFAULT`
 
 ## Contamination Checks
 
@@ -39,8 +46,7 @@ Before release:
 
 ```sh
 git ls-files | grep -Ei 'apk|jadx|apktool|decompiled'
-git ls-files | grep -Ei 'codex|claude|prompt|ai-generated|chatgpt|execution_playbook'
+# Review tracked files for tool-specific or generated-task notes before release.
 ```
 
 Any match must be reviewed before shipping.
-

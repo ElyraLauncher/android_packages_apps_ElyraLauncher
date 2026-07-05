@@ -2,43 +2,46 @@
 
 ## Prerequisites
 
-- JDK compatible with the selected Android Gradle Plugin.
-- Android SDK and platform tools.
-- Gradle wrapper from the imported Launcher3 base.
-
-The Gradle wrapper and Android project files are added during the Launcher3 base
-import stage. This bootstrap stage intentionally does not create a placeholder
-launcher application.
+- JDK 21 for the current imported Gradle/Android Gradle Plugin combination.
+- Android SDK installed by Android Studio or CI.
+- Network access for Gradle dependency resolution on first build.
 
 ## Universal APK
 
-After the Launcher3 base is imported, the expected local command will be:
+The default Gradle build imports a Launcher3-derived standalone configuration.
+Build the universal debug APK with:
 
 ```sh
-./gradlew assembleUniversalDebug
+./gradlew assembleDebug
 ```
 
-If the selected upstream uses a different task name, this file will be updated
-with the exact task.
+Expected debug artifact location:
+
+```text
+build/outputs/apk/**/debug/*.apk
+```
+
+The universal target uses application ID `com.elyra.launcher` and app label
+`Elyra Launcher`.
 
 ## Tests
 
-Expected local checks after the Android project exists:
+Run available debug unit tests and lint with:
 
 ```sh
-./gradlew test lint
+./gradlew testDebugUnitTest
+./gradlew lintDebug
 ```
 
-Instrumentation and emulator checks require an Android emulator or connected
-device with `adb` available.
+Instrumentation and emulator checks require `adb` and an Android emulator or
+connected device.
 
 ## GitHub Actions
 
-CI workflows will compile APK artifacts, run tests, run lint, upload reports,
-and provide emulator install and launch coverage where available.
+`.github/workflows/ci.yml` builds the debug APK, runs debug unit tests, runs
+debug lint, and uploads APK/report artifacts.
 
 ## ROM Integration
 
-ROM builds must be validated in a real Android platform tree. Platform Quickstep
-integration is PENDING until a ROM tree build is executed and recorded.
-
+ROM integration notes live under `tools/rom/`. Platform Quickstep and Recents
+validation is PENDING until a real ROM tree build is executed.

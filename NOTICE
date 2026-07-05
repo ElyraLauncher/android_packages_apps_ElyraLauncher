@@ -1,7 +1,13 @@
 ElyraLauncher
 Copyright 2026 FebriCahyaa
 
-This project is intended to be based on Android Open Source Project Launcher3
-and Quickstep components under the Apache License, Version 2.0. Upstream source
-details will be recorded in UPSTREAM.md when the Launcher3 base is imported.
+This project is based on Android Open Source Project Launcher3 and Quickstep
+components under the Apache License, Version 2.0.
 
+Portions of the standalone Gradle build and Launcher3-derived modifications are
+imported from Lawnchair Launcher, Copyright 2024 Lawnchair contributors, under
+the Apache License, Version 2.0.
+
+SystemUI library sources used by the standalone build are imported from the
+Lawnchair platform_frameworks_libs_systemui repository under the Apache License,
+Version 2.0.

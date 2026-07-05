@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --install "platforms;android-36" "build-tools;36.1.0"
+          sdkmanager --licenses >/dev/null
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build universal debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Run debug unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Run debug lint
+        run: ./gradlew lintDebug --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: elyra-launcher-debug-apk
+          path: build/outputs/apk/**/*.apk
+          if-no-files-found: error
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: elyra-launcher-reports
+          path: |
+            build/reports/**
+            **/build/reports/**
+          if-no-files-found: ignore
