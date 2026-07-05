@@ -37,12 +37,21 @@ jobs:
       - name: Build universal debug APK
         run: ./gradlew assembleLawnWithQuickstepGithubDebug --stacktrace --no-daemon
 
+      # The Gradle variant name (lawnWithQuickstepGithub) is intentionally kept
+      # to preserve upstream rebase compatibility; only the published artifact is
+      # given Elyra "universal debug" naming.
+      - name: Stage universal debug APK
+        run: |
+          mkdir -p artifacts
+          cp build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk \
+            artifacts/elyra-launcher-universal-debug.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: elyra-launcher-lawn-with-quickstep-github-debug-apk
-          path: build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk
+          name: elyra-launcher-universal-debug
+          path: artifacts/elyra-launcher-universal-debug.apk
           if-no-files-found: warn
 
       - name: Run debug unit tests
@@ -55,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: elyra-launcher-lawn-with-quickstep-github-debug-reports
+          name: elyra-launcher-universal-debug-reports
           path: |
             build/reports/**
             **/build/reports/**

@@ -13,6 +13,26 @@ Core Launcher3 paths are preserved, including Launcher, Workspace, CellLayout,
 Hotseat, All Apps, folders, widgets, model/database code, and Quickstep source
 paths.
 
+## Product Identity and Namespaces
+
+User-facing product identity is **Elyra Launcher**: app label, launcher label,
+settings and About titles, and normal in-app wording present Elyra as the app.
+Legal and license attribution to the Launcher3/Lawnchair open-source base is kept
+in `NOTICE`, `UPSTREAM.md`, and the in-app licenses/attribution section only.
+
+Internal upstream structure is intentionally preserved to keep future rebases
+onto upstream Launcher3/Lawnchair practical:
+
+- `com.android.launcher3` remains the Launcher3 core namespace.
+- `app.lawnchair` remains the imported Lawnchair namespace.
+- Existing upstream folders, packages, class names, resource names, and the
+  Gradle variant name (`lawnWithQuickstepGithub`) are left in place; a blanket
+  rename would create a huge, risky diff against upstream.
+
+New Elyra-specific code should live under the `com.elyra.launcher` namespace
+(see `ElyraBranding`), and new Elyra resources should use an `elyra_` prefix.
+This keeps Elyra additions separable from upstream so rebases stay mechanical.
+
 ## Targets
 
 ### Universal APK

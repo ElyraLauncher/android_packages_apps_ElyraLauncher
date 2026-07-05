@@ -40,7 +40,13 @@ Apache-2.0 and NOTICE records attribution.
 
 ## Known Deviations
 
-- Build output names are changed to ElyraLauncher artifacts.
+- Build output names are changed to ElyraLauncher artifacts. CI publishes the
+  universal debug APK as `elyra-launcher-universal-debug.apk`.
+- The Gradle variant name `lawnWithQuickstepGithub` is preserved. Renaming it
+  would diverge from upstream flavor structure and complicate rebases, so only
+  user-facing identity and published artifact names are rebranded.
+- New Elyra code uses the `com.elyra.launcher` namespace; upstream
+  `com.android.launcher3` and `app.lawnchair` packages are preserved.
 - Universal builds use the imported Gradle standalone configuration.
 - Universal APK must not claim privileged Recents behavior.
 - ROM Quickstep validation is PENDING until a real platform build is run.

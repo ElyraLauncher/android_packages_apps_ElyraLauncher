@@ -20,6 +20,7 @@ import com.android.launcher3.R
 import com.android.launcher3.model.DeviceGridState
 import com.android.launcher3.model.ModelDbController
 import com.android.launcher3.provider.RestoreDbTask
+import com.elyra.launcher.ElyraBranding
 import com.google.protobuf.Timestamp
 import java.io.File
 import java.io.FileInputStream
@@ -127,7 +128,10 @@ class LawnchairBackup(
         )
 
         fun generateBackupFileName(): String {
-            val fileName = "Lawnchair_Backup ${SimpleDateFormat.getDateTimeInstance().format(Date())}"
+            // User-visible prefix carries Elyra product identity; the
+            // ".lawnchairbackup" suffix is kept as the on-disk format marker so
+            // existing backups and upstream restore logic stay compatible.
+            val fileName = "${ElyraBranding.BACKUP_FILE_PREFIX} ${SimpleDateFormat.getDateTimeInstance().format(Date())}"
             return "$fileName.lawnchairbackup"
         }
 
