@@ -83,6 +83,7 @@ fun PreferencesDashboard(
 ) {
     val context = LocalContext.current
     val pref2 = preferenceManager2()
+    val navController = LocalNavController.current
 
     PreferenceLayout(
         label = stringResource(id = R.string.settings),
@@ -184,8 +185,8 @@ fun PreferencesDashboard(
                 label = stringResource(R.string.backup_restore_label),
                 description = stringResource(R.string.backup_restore_description),
                 iconResource = R.drawable.ic_upload,
-                onNavigate = { onNavigate(CreateBackup) },
-                isSelected = currentRoute is CreateBackup,
+                onNavigate = { navController.navigate(CreateBackup) },
+                isSelected = false,
             )
 
             PreferenceCategory(

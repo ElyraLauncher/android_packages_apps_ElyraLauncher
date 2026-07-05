@@ -31,21 +31,25 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Build universal debug APK
-        run: ./gradlew assembleLawnWithQuickstepGithubDebug --stacktrace
+        run: ./gradlew assembleLawnWithQuickstepGithubDebug --stacktrace --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: elyra-launcher-lawn-with-quickstep-github-debug-apk
           path: build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Run debug unit tests
-        run: ./gradlew testLawnWithQuickstepGithubDebugUnitTest --stacktrace
+        run: ./gradlew testLawnWithQuickstepGithubDebugUnitTest --stacktrace --no-daemon
 
       - name: Run debug lint
-        run: ./gradlew lintLawnWithQuickstepGithubDebug --stacktrace
+        run: ./gradlew lintLawnWithQuickstepGithubDebug --stacktrace --no-daemon
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
