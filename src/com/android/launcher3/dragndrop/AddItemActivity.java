@@ -25,6 +25,7 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 import static com.android.launcher3.widget.WidgetSections.NO_CATEGORY;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
@@ -386,7 +387,9 @@ public class AddItemActivity extends BaseActivity
     }
 
     @Override
+    @SuppressLint("MissingSuperCall")
     public void onBackPressed() {
+        // Back dismisses the add-item sheet; calling super would finish before the close animation.
         logCommand(LAUNCHER_ADD_EXTERNAL_ITEM_BACK);
         mSlideInView.close(/* animate= */ true);
     }

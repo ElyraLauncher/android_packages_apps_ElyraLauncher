@@ -38,8 +38,10 @@ connected device.
 
 ## GitHub Actions
 
-`.github/workflows/ci.yml` builds the debug APK, runs debug unit tests, runs
-debug lint, and uploads APK/report artifacts.
+`.github/workflows/ci.yml` builds the debug APK, uploads the APK artifact,
+runs debug unit tests, runs debug lint, and uploads report artifacts. The lint
+step uses `lint-baseline.xml` only for exact inherited import debt; new lint
+errors fail the workflow.
 
 ## ROM Integration
 

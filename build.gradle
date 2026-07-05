@@ -37,7 +37,7 @@ allprojects {
             }
             lint {
                 abortOnError true
-                checkReleaseBuilds false
+                baseline = rootProject.file("lint-baseline.xml")
             }
             compileOptions {
                 sourceCompatibility = libs.versions.jdkRelease.get()

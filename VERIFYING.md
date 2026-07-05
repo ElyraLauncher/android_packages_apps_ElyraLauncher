@@ -32,6 +32,14 @@ Verification results must use the following meanings:
 Emulator checks should install the APK, set or open the launcher as Home, press
 Home, open the app drawer, and fail on launcher package fatal exceptions.
 
+
+## Lint Baseline
+
+`lint-baseline.xml` records exact lint debt inherited with the Launcher3-derived
+Stage 1 import. Lint still runs with `abortOnError` enabled, and new issues not
+present in the baseline must fail verification. New API usage must be guarded or
+reviewed before being added to the baseline.
+
 ## Manifest Check
 
 Confirm the merged manifest contains a Home-capable launcher activity with:
