@@ -3,7 +3,6 @@ package app.lawnchair.deck
 import android.content.Context
 import android.util.Log
 import app.lawnchair.LawnchairLauncher
-import app.lawnchair.flowerpot.Flowerpot
 import app.lawnchair.launcher
 import app.lawnchair.launcherNullable
 import app.lawnchair.util.categorizeAppsWithSystemAndGoogle
@@ -191,29 +190,13 @@ class LawndeckManager(private val context: Context) {
 
         val intent = appInfo.intent
 
-        // Determine category: Google Apps > System Apps > Flowerpot categories
+        // Determine category using local package metadata only.
         val category = when {
             packageName.startsWith("com.google.") -> "Google Apps"
 
             intent != null && PackageManagerHelper.isSystemApp(context, intent) -> "System Apps"
 
-            else -> {
-                // Use flowerpot to categorize the app
-                val potsManager = Flowerpot.Manager.getInstance(context)
-                val categorizedApps = potsManager.categorizeApps(listOf(appInfo))
-
-                if (categorizedApps.isEmpty()) {
-                    // No category found, add directly to workspace
-                    ItemInstallQueue.INSTANCE.get(context).queueItem(packageName, user)
-                    return
-                }
-
-                // Get the category from flowerpot
-                categorizedApps.entries.firstOrNull()?.key ?: run {
-                    ItemInstallQueue.INSTANCE.get(context).queueItem(packageName, user)
-                    return
-                }
-            }
+            else -> "Other Apps"
         }
 
         // Check if there's already a folder for this category on workspace

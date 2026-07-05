@@ -1,15 +1,14 @@
 package app.lawnchair.util
 
 import android.content.Context
-import app.lawnchair.flowerpot.Flowerpot
 import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.PackageManagerHelper
 
 /**
- * Categorizes apps into System Apps, Google Apps, and Flowerpot categories.
+ * Categorizes apps using local package metadata.
  *
  * @param apps List of apps to categorize
- * @param context Context for checking system apps and accessing Flowerpot
+ * @param context Context for checking system apps
  * @return Map of category names to lists of apps in that category
  */
 fun categorizeAppsWithSystemAndGoogle(
@@ -32,11 +31,6 @@ fun categorizeAppsWithSystemAndGoogle(
         }
     }
 
-    // Use flowerpot to categorize other apps (non-system, non-Google)
-    val potsManager = Flowerpot.Manager.getInstance(context)
-    val categorizedApps = potsManager.categorizeApps(otherApps)
-
-    // Build final categorized apps map
     val finalCategorizedApps = mutableMapOf<String, List<AppInfo>>()
 
     if (systemApps.isNotEmpty()) {
@@ -47,8 +41,9 @@ fun categorizeAppsWithSystemAndGoogle(
         finalCategorizedApps["Google Apps"] = googleApps
     }
 
-    // Add flowerpot categorized apps
-    finalCategorizedApps.putAll(categorizedApps)
+    if (otherApps.isNotEmpty()) {
+        finalCategorizedApps["Other Apps"] = otherApps
+    }
 
     return finalCategorizedApps
 }

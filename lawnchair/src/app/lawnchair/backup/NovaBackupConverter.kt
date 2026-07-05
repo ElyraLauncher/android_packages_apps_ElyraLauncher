@@ -563,6 +563,6 @@ class NovaBackupConverter(
      *       to these categories.
      *
      * Note: Nova assigns items to these categories by crowdsourcing,
-     *       unlike our Flowerpot (v1) Azalea system that needs to be constantly updated manually.
+     *       unlike static local category rules that need to be updated manually.
      */
 }
