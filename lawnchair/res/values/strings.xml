@@ -15,7 +15,7 @@
   ~ limitations under the License.
   -->
 
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- TODO: Rename all strings to follow CONTRIBUTING.md guidelines -->
     <!--
 
@@ -931,8 +931,11 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="grant_requested_permissions_tap">Tap to grant permissions</string>
     <!-- Message shown when all home screen views are removed -->
     <string name="home_screen_all_views_removed_msg">Home screen cleared</string>
-    <string name="backup_restore_label">Backup &amp; restore</string>
-    <string name="backup_restore_description">Create and restore launcher backups</string>
-    <string name="elyra_open_source_attribution">Based on open-source Launcher3/Lawnchair components. See licenses for details.</string>
-    <string name="workspace_share_backup_hint">To share your current workspace, use Elyra Launcher\'s backup and restore system.</string>
+    <!-- Elyra-specific strings. Officially maintained in English (values) and Indonesian
+         (values-in); other inherited upstream locales are filled via translations over time,
+         so MissingTranslation is intentionally ignored for these until then. -->
+    <string name="backup_restore_label" tools:ignore="MissingTranslation">Backup &amp; restore</string>
+    <string name="backup_restore_description" tools:ignore="MissingTranslation">Create and restore launcher backups</string>
+    <string name="elyra_open_source_attribution" tools:ignore="MissingTranslation">Based on open-source Launcher3/Lawnchair components. See licenses for details.</string>
+    <string name="workspace_share_backup_hint" tools:ignore="MissingTranslation">To share your current workspace, use Elyra Launcher\'s backup and restore system.</string>
 </resources>

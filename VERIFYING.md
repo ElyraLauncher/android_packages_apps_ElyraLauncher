@@ -40,6 +40,19 @@ Stage 1 import. Lint still runs with `abortOnError` enabled, and new issues not
 present in the baseline must fail verification. New API usage must be guarded or
 reviewed before being added to the baseline.
 
+The baseline includes `MissingTranslation` entries for inherited upstream strings
+whose default (English) value was rebranded during Stage 1 (for example
+`smartspace_mode_lawnchair`, `restore_nova_subgrid_warning`, `dt2s_a11y_hint`,
+`recents_a11y_hint`, `hotseat_mode_lawnchair`). These strings already carry the
+same untranslated-locale debt as the rest of the imported base; only inherited
+upstream debt is baselined.
+
+Elyra-specific user-facing strings are maintained in English (`res/values`) and
+Indonesian (`res/values-in`). Because the imported base ships ~80 upstream locale
+folders that Elyra does not yet translate, those new strings carry a targeted
+`tools:ignore="MissingTranslation"` (never a global lint disable) until upstream
+locales are filled. New Elyra strings are not added to the lint baseline.
+
 ## Manifest Check
 
 Confirm the merged manifest contains a Home-capable launcher activity with:
