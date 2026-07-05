@@ -17,4 +17,51 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="generic_smartspace_concatenated_desc">%1$s, %2$s</string>
     <string name="accessibility_smartspace_page">Halaman %1$d dari %2$d</string>
+
+    <string name="managed_by_lawnchair">Default Elyra</string>
+    <string name="accessibility_service_description">Untuk melakukan tindakan tertentu (seperti mengunci ponsel) saat menggunakan gestur, Elyra Launcher memerlukan akses aksesibilitas.
+
+Elyra Launcher tidak memantau tindakan pengguna, meskipun izin ini diperlukan oleh semua layanan aksesibilitas. Elyra Launcher membuang peristiwa yang dikirim oleh sistem.
+
+Untuk mengunci ponsel atau membuka layar Recents, Elyra Launcher menggunakan metode aksesibilitas performGlobalAction.</string>
+    <string name="settings_button_text">Setelan Elyra</string>
+    <string name="general_label">Ikon</string>
+    <string name="general_description">Paket ikon, label, titik notifikasi</string>
+    <string name="home_screen_label">Layar utama</string>
+    <string name="home_screen_description">Feed, grid, ikon</string>
+    <string name="dock_label">Dock</string>
+    <string name="dock_description">Bilah pencarian, jumlah ikon</string>
+    <string name="app_drawer_label">Laci aplikasi</string>
+    <string name="app_drawer_description">Aplikasi tersembunyi, jumlah kolom, ikon</string>
+    <string name="drawer_search_label">Pencarian</string>
+    <string name="drawer_search_description">Pencarian aplikasi, hasil perangkat, saran web</string>
+    <string name="folders_label">Folder</string>
+    <string name="folders_description">Jumlah baris dan kolom</string>
+    <string name="gestures_label">Gestur</string>
+    <string name="gestures_description">Ketukan dan geser</string>
+    <string name="quickstep_label">Integrasi ROM</string>
+    <string name="quickstep_description">Opsi Recents istimewa untuk build ROM</string>
+    <string name="about_label">Tentang Elyra Launcher</string>
+    <string name="backup_restore_label">Cadangkan &amp; pulihkan</string>
+    <string name="backup_restore_description">Buat dan pulihkan cadangan launcher</string>
+    <string name="debug_restart_launcher">Mulai ulang Elyra Launcher</string>
+    <string name="set_default_launcher_tip">Untuk mengakses pintasan dan fitur layar utama, jadikan Elyra Launcher sebagai launcher default</string>
+    <string name="smartspace_widget_toggle_description">At a Glance dapat ditambahkan secara manual ke layar utama dengan menempatkan widget Elyra</string>
+    <string name="smartspace_mode_lawnchair">Elyra</string>
+    <string name="restore_nova_subgrid_warning">Cadangan ini menggunakan posisi subgrid Nova. Elyra Launcher tidak mendukung subgrid, jadi item dalam subgrid akan disejajarkan ke posisi grid terdekat.</string>
+    <string name="dt2s_admin_hint">Untuk menggunakan Ketuk Dua Kali untuk Tidur, jadikan Elyra Launcher sebagai aplikasi admin perangkat. Ketuk "Buka setelan", lalu ketuk "Aktifkan aplikasi admin perangkat ini."</string>
+    <string name="dt2s_a11y_hint">Untuk menggunakan Ketuk Dua Kali untuk Tidur, aktifkan layanan aksesibilitas Elyra Launcher. Ketuk "Buka setelan", pilih "Elyra Launcher", lalu aktifkan "Gunakan Elyra Launcher."
+
+Elyra Launcher menggunakan metode `performGlobalAction` dari Aksesibilitas untuk melakukan tindakan ini. Ini adalah izin sensitif yang memungkinkan pemantauan aplikasi lain. Namun, Elyra Launcher tidak dikonfigurasi untuk fungsi tersebut dan tidak menerima peristiwa.</string>
+    <string name="recents_a11y_hint">Untuk menggunakan Buka layar Recents, aktifkan layanan aksesibilitas Elyra Launcher. Ketuk "Buka setelan", pilih "Elyra Launcher", lalu aktifkan "Gunakan Elyra Launcher."
+
+Elyra Launcher menggunakan metode `performGlobalAction` dari Aksesibilitas untuk melakukan tindakan ini. Ini adalah izin sensitif yang memungkinkan pemantauan aplikasi lain. Namun, Elyra Launcher tidak dikonfigurasi untuk fungsi tersebut dan tidak menerima peristiwa.</string>
+    <string name="lawnchair_bug_report">Laporan bug Elyra Launcher</string>
+    <string name="hotseat_mode_lawnchair">Elyra</string>
+    <string name="search_provider_sponsored_description">%1$s dan Elyra Launcher memiliki perjanjian bagi hasil.
+
+Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
+    <string name="quickswitch_ignored_warning">Setelan ini akan diabaikan karena Elyra Launcher tidak disetel sebagai penyedia layar Recents</string>
+    <string name="elyra_open_source_attribution">Berdasarkan komponen open-source Launcher3/Lawnchair. Lihat lisensi untuk detail.</string>
+    <string name="workspace_share_backup_hint">Untuk membagikan ruang kerja saat ini, gunakan sistem cadangan dan pemulihan Elyra Launcher.</string>
 </resources>
