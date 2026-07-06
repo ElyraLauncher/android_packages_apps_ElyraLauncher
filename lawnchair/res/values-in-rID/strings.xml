@@ -706,5 +706,5 @@
     <string name="grant_requested_permissions_tap">Ketuk untuk memberikan izin</string>
     <!-- Message shown when all home screen views are removed -->
     <string name="home_screen_all_views_removed_msg">Layar beranda dibersihkan</string>
-    <string name="restore_nova_backup">Pulihkan cadangan Nova</string>
+    <string name="restore_nova_backup">Pulihkan cadangan pihak ketiga</string>
 </resources>
