@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
+
+     Monochrome (themed icon) variant of the Elyra "E" mark. The system tints the
+     white shape, so it stays a single flat colour. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M30,30h48v10h-48z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M30,49h38v10h-38z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M30,68h48v10h-48z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M70,40h10v28h-10z" />
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="11"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M40,36 L40,72 M40,36 L68,36 M40,54 L60,54 M40,72 L68,72" />
 </vector>

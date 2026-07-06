@@ -191,7 +191,7 @@ fun PreferencesDashboard(
 
             PreferenceCategory(
                 label = stringResource(R.string.about_label),
-                description = "${context.getString(R.string.derived_app_name)} ${BuildConfig.MAJOR_VERSION}",
+                description = context.getString(R.string.derived_app_name),
                 iconResource = R.drawable.ic_about,
                 onNavigate = { onNavigate(About) },
                 isSelected = currentRoute is About,

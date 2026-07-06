@@ -64,4 +64,6 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="quickswitch_ignored_warning">Setelan ini akan diabaikan karena Elyra Launcher tidak disetel sebagai penyedia layar Recents</string>
     <string name="elyra_open_source_attribution">Berdasarkan komponen open-source Launcher3/Lawnchair. Lihat lisensi untuk detail.</string>
     <string name="workspace_share_backup_hint">Untuk membagikan ruang kerja saat ini, gunakan sistem cadangan dan pemulihan Elyra Launcher.</string>
+    <string name="smartspace_widget">Sekilas</string>
+    <string name="restore_nova_backup">Pulihkan cadangan Nova</string>
 </resources>
