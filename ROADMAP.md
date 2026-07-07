@@ -13,7 +13,8 @@ Home-capable APK and the Stage 1 commit is clean.
 ## Stage 2: Feature Matrix
 
 Audit the local reference launcher without copying proprietary source or assets,
-then document neutral feature areas and acceptance criteria.
+then document neutral feature areas and acceptance criteria. See
+[docs/FEATURE_MATRIX.md](docs/FEATURE_MATRIX.md).
 
 ## Stage 3: Flags and Settings
 
