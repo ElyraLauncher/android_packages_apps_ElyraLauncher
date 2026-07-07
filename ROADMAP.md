@@ -23,8 +23,12 @@ Indonesian strings.
 
 ## Stage 4: Universal Home Baseline
 
-Harden install, Home role, workspace loading, drawer opening, app launch, and
-basic emulator coverage.
+Harden the universal APK as a real default Home launcher before visible feature
+work: confirm the Home/launcher intent, verify app-model, workspace, folder, and
+settings baseline paths, confirm feature flags default OFF and stay inert, add
+debug-only Elyra logging (`ElyraLog`, no telemetry/network), and add an opt-in
+emulator smoke test. See [VERIFYING.md](VERIFYING.md) for the baseline checklist
+and current PASSED/PENDING status. Privileged Quickstep/Recents stays ROM-only.
 
 ## Stage 5-13: User Features
 

@@ -36,6 +36,19 @@ Run available debug unit tests and lint with:
 Instrumentation and emulator checks require `adb` and an Android emulator or
 connected device.
 
+An opt-in emulator smoke test is provided in `.github/workflows/smoke-test.yml`
+(driven by `scripts/smoke-test.sh`). Run it from the GitHub Actions tab
+(**Emulator smoke test** → **Run workflow**), or locally against a device with:
+
+```sh
+./gradlew assembleLawnWithQuickstepGithubDebug
+./scripts/smoke-test.sh
+```
+
+It installs the universal debug APK, launches Elyra as Home, presses Home, and
+fails on a missing process or a `com.elyra.launcher` `FATAL EXCEPTION`. See
+`VERIFYING.md` for the full baseline verification checklist.
+
 ## GitHub Actions
 
 `.github/workflows/ci.yml` builds the debug APK, uploads the APK artifact,

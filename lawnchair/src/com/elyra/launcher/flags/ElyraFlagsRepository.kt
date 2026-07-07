@@ -17,6 +17,7 @@
 package com.elyra.launcher.flags
 
 import android.content.Context
+import com.elyra.launcher.ElyraLog
 import com.patrykmichalik.opto.core.firstBlocking
 import com.patrykmichalik.opto.core.setBlocking
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,7 @@ class ElyraFlagsRepository(private val store: ElyraFlagStore) {
     /** Persist a new value for a flag. */
     fun setEnabled(flag: ElyraFlag, enabled: Boolean) {
         store.preferenceFor(flag).setBlocking(enabled)
+        ElyraLog.d("flag ${flag.key} set to $enabled")
     }
 
     companion object {

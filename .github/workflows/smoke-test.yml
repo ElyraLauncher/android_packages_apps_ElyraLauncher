@@ -1,0 +1,73 @@
+name: Emulator smoke test
+
+# Manual/opt-in only. Emulator jobs are comparatively slow and flaky, so this is
+# deliberately kept off the push pipeline in .github/workflows/ci.yml (which stays
+# the stable build + lint source of truth). Run it from the Actions tab
+# ("Run workflow") to smoke-test the universal debug APK on a real Android image.
+#
+# The test is genuine: it boots an emulator, installs the universal debug APK,
+# makes Elyra the Home activity, launches it, presses Home, and fails if the
+# com.elyra.launcher process is missing or logs a FATAL EXCEPTION. It never fakes
+# a pass and does not claim privileged Quickstep/Recents support.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  emulator-smoke:
+    name: Universal debug smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses >/dev/null
+
+      - name: Install Android SDK components
+        run: sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.1.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build universal debug APK
+        run: ./gradlew assembleLawnWithQuickstepGithubDebug --stacktrace --no-daemon
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run smoke test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./scripts/smoke-test.sh
+
+      - name: Upload logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elyra-launcher-smoke-logcat
+          path: smoke-logcat.txt
+          if-no-files-found: warn

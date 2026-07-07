@@ -21,6 +21,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.android.launcher3.util.MainThreadInitializedObject
 import com.android.launcher3.util.SafeCloseable
+import com.elyra.launcher.ElyraLog
 import com.patrykmichalik.opto.core.PreferenceManager
 import com.patrykmichalik.opto.domain.Preference
 
@@ -46,6 +47,10 @@ class ElyraFlagStore private constructor(context: Context) :
                 defaultValue = flag.default,
             )
         }
+
+    init {
+        ElyraLog.d("flag store initialized (${flags.size} flags, all default OFF unless overridden)")
+    }
 
     /** The persistent preference backing a given flag. */
     fun preferenceFor(flag: ElyraFlag): Preference<Boolean, Boolean, *> = flags.getValue(flag)

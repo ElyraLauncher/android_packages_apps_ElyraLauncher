@@ -50,6 +50,7 @@ import com.android.launcher3.R
 import com.android.launcher3.Utilities
 import com.android.quickstep.RecentsActivity
 import com.android.systemui.shared.system.QuickStepContract
+import com.elyra.launcher.ElyraLog
 import java.io.File
 
 class LawnchairApp : Application() {
@@ -64,6 +65,7 @@ class LawnchairApp : Application() {
         super.onCreate()
         instance = this
         QuickStepContract.sRecentsDisabled = !recentsEnabled
+        ElyraLog.d("startup: recentsEnabled=$recentsEnabled (privileged Quickstep is ROM-only in the universal APK)")
     }
 
     fun hideClockInStatusBar() {

@@ -61,6 +61,79 @@ Confirm the merged manifest contains a Home-capable launcher activity with:
 - `android.intent.category.HOME`
 - `android.intent.category.DEFAULT`
 
+## Stage 4: Universal Baseline
+
+Stage 4 hardens the universal APK as a real default Home launcher before visible
+feature work begins. The table records how each baseline check is verified and its
+current status. Runtime checks are `PENDING` on hosts without an Android SDK,
+emulator, or device; they are exercised by the emulator smoke test (below) or a
+manual device run.
+
+| Check | How verified | Status |
+| --- | --- | --- |
+| Universal debug APK builds | `assembleLawnWithQuickstepGithubDebug` in CI | PASSED on CI (per-commit); PENDING locally (no SDK on maintainer host) |
+| Debug lint | `lintLawnWithQuickstepGithubDebug` in CI | PASSED on CI |
+| Debug unit tests | `testLawnWithQuickstepGithubDebugUnitTest` in CI | PASSED on CI |
+| Home/launcher intent filter | Static manifest review (`quickstep/AndroidManifest-launcher.xml`) | PASSED — `MAIN` + `HOME` + `DEFAULT`, `exported=true` |
+| Feature flags default OFF | Static code review (`ElyraFlag`, `ElyraFeatureFlags`) | PASSED — every flag `default = false`, unique-key guard |
+| Flags OFF preserve base behavior | Static review — no baseline code path reads a flag yet | PASSED — flags are inert no-ops until a feature consumes them |
+| Install + select as default Home | Emulator smoke test / manual device | PENDING |
+| Survives Home press + process recreation | Emulator smoke test / manual device | PENDING |
+| No `FATAL EXCEPTION` for `com.elyra.launcher` | Emulator smoke test / manual device | PENDING |
+| Drawer opens, app launch works | Manual device | PENDING |
+| Folders open and launch apps | Manual device | PENDING |
+| Widget picker path | Manual device | PENDING |
+| Elyra settings + Elyra Labs open, toggles persist | Manual device | PENDING |
+| About / Backup & restore screens open | Manual device | PENDING |
+| Privileged Quickstep/Recents | Not applicable to universal APK | ROM-only (deferred) — the universal APK must not claim it |
+
+### Emulator smoke test
+
+A real, opt-in smoke test lives in `.github/workflows/smoke-test.yml` and
+`scripts/smoke-test.sh`. It is triggered manually (Actions tab → **Emulator smoke
+test** → **Run workflow**) rather than on push, because emulator jobs are slower
+and flakier than the build/lint pipeline and must not destabilize it. The job:
+
+1. builds the universal debug APK,
+2. boots an `api-level 34` `google_apis` `x86_64` emulator,
+3. installs the APK and makes Elyra the Home activity,
+4. launches it, presses Home, and captures logcat,
+5. **fails** if the `com.elyra.launcher` process is missing or logs a
+   `FATAL EXCEPTION`, and uploads the logcat artifact either way.
+
+Status: **PENDING** — the workflow is committed but its first green run has not yet
+been recorded. It is not faked; run it from the Actions tab to produce a result.
+
+### Manual device smoke test
+
+With `adb` and a connected device or emulator:
+
+```sh
+# Install the universal debug APK
+adb install -r -g build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk
+
+# Make Elyra the Home activity (or pick it from the system Home chooser)
+adb shell cmd package set-home-activity com.elyra.launcher/app.lawnchair.LawnchairLauncher
+
+# Launch, then press Home
+adb shell am start -n com.elyra.launcher/app.lawnchair.LawnchairLauncher
+adb shell input keyevent KEYCODE_HOME
+
+# Watch Elyra baseline diagnostics (startup, settings, flag changes)
+adb logcat -s Elyra
+
+# Confirm the launcher process is alive and check for crashes
+adb shell pidof com.elyra.launcher
+adb logcat -d | grep -A3 "FATAL EXCEPTION" || echo "no fatal exception"
+```
+
+Then manually exercise: open the app drawer, launch an app, open a folder and
+launch from it, open Settings → Elyra Labs, toggle a flag and confirm it persists
+across a relaunch, and open the About and Backup & restore screens.
+
+The `Elyra` logcat tag is emitted only by debug builds (see `ElyraLog`); it carries
+no telemetry and performs no network or file upload.
+
 ## Contamination Checks
 
 Before release:
