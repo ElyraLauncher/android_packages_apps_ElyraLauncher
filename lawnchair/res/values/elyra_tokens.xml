@@ -7,8 +7,9 @@
      teal accent) and contains no values copied from any reference launcher.
      Dark-mode overrides live in values-night/elyra_tokens.xml. -->
 <resources>
-    <!-- Color tokens -->
-    <color name="elyra_accent">#FF1F9E86</color>
+    <!-- Color tokens. The primary accent is the existing brand color
+         @color/elyra_accent (defined in values/colors.xml); the tokens below
+         extend that palette and must not redeclare it. -->
     <color name="elyra_accent_variant">#FF12806B</color>
     <color name="elyra_background">#FFF3FBF8</color>
     <color name="elyra_surface">#FFFFFFFF</color>

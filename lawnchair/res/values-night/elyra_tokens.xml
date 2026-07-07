@@ -6,7 +6,8 @@
      tokens are shared from values/elyra_tokens.xml. Original Elyra palette; no
      values copied from any reference launcher. -->
 <resources>
-    <color name="elyra_accent">#FF29B398</color>
+    <!-- @color/elyra_accent (brand accent) is intentionally theme-neutral and has
+         no dark override; the extended tokens below carry dark counterparts. -->
     <color name="elyra_accent_variant">#FF8FF2D8</color>
     <color name="elyra_background">#FF08231F</color>
     <color name="elyra_surface">#FF0F332C</color>
