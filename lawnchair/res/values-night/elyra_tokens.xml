@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
+
+     Elyra design tokens (dark). High-contrast dark counterparts of the light
+     token palette. Only color tokens differ by theme; radius, spacing and sizing
+     tokens are shared from values/elyra_tokens.xml. Original Elyra palette; no
+     values copied from any reference launcher. -->
+<resources>
+    <color name="elyra_accent">#FF29B398</color>
+    <color name="elyra_accent_variant">#FF8FF2D8</color>
+    <color name="elyra_background">#FF08231F</color>
+    <color name="elyra_surface">#FF0F332C</color>
+    <color name="elyra_surface_elevated">#FF17453B</color>
+    <color name="elyra_text_primary">#FFEAF5F1</color>
+    <color name="elyra_text_secondary">#FFA9C7BE</color>
+</resources>

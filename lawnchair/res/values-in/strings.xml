@@ -68,4 +68,28 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="restore_nova_backup">Pulihkan cadangan pihak ketiga</string>
     <string name="create_backup">Buat cadangan</string>
     <string name="development_build_warning">Anda menggunakan build pengembangan yang mungkin berisi bug dan fitur yang belum stabil. Gunakan dengan risiko sendiri.</string>
+
+    <!-- Elyra Labs (fitur eksperimental) -->
+    <string name="elyra_labs_label">Lab Elyra</string>
+    <string name="elyra_experimental_features">Fitur eksperimental</string>
+    <string name="elyra_restart_may_be_required">Mungkin perlu memulai ulang</string>
+    <string name="elyra_rom_only_note">Memerlukan build terintegrasi ROM</string>
+    <string name="elyra_flag_bottom_search">Pencarian bawah</string>
+    <string name="elyra_flag_drawer_categories">Kategori laci</string>
+    <string name="elyra_flag_drawer_suggestions">Saran laci</string>
+    <string name="elyra_flag_az_rail">Bilah A-Z</string>
+    <string name="elyra_flag_wallpaper_themed_icons">Ikon bertema wallpaper</string>
+    <string name="elyra_flag_icon_resize">Ubah ukuran ikon</string>
+    <string name="elyra_flag_large_folders">Folder besar</string>
+    <string name="elyra_flag_folder_direct_launch">Peluncuran langsung folder</string>
+    <string name="elyra_flag_flow_motion">Gerak mengalir</string>
+    <string name="elyra_flag_progressive_blur">Buram progresif</string>
+    <string name="elyra_flag_contour_glow">Cahaya kontur</string>
+    <string name="elyra_flag_edit_mode">Mode edit</string>
+    <string name="elyra_flag_layout_lock">Kunci tata letak</string>
+    <string name="elyra_flag_layout_history">Riwayat tata letak</string>
+    <string name="elyra_flag_smart_arrange">Susun cerdas</string>
+    <string name="elyra_flag_hidden_apps">Aplikasi tersembunyi</string>
+    <string name="elyra_flag_taskbar_universal">Bilah tugas universal</string>
+    <string name="elyra_flag_quickstep_rom">Integrasi Quickstep ROM</string>
 </resources>

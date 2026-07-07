@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.Biotech
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Refresh
@@ -58,6 +59,7 @@ import app.lawnchair.ui.preferences.navigation.AppDrawer
 import app.lawnchair.ui.preferences.navigation.CreateBackup
 import app.lawnchair.ui.preferences.navigation.DebugMenu
 import app.lawnchair.ui.preferences.navigation.Dock
+import app.lawnchair.ui.preferences.navigation.ElyraLabs
 import app.lawnchair.ui.preferences.navigation.ExperimentalFeatures
 import app.lawnchair.ui.preferences.navigation.Folders
 import app.lawnchair.ui.preferences.navigation.General
@@ -306,6 +308,22 @@ fun RowScope.PreferencesOverflowMenu(
             },
             text = {
                 Text(text = stringResource(id = R.string.experimental_features_label))
+            },
+        )
+        DropdownMenuItem(
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Biotech,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            onClick = {
+                onNavigate(ElyraLabs)
+                hideMenu()
+            },
+            text = {
+                Text(text = stringResource(id = R.string.elyra_labs_label))
             },
         )
         PreferenceDivider(modifier = Modifier.padding(vertical = 8.dp))

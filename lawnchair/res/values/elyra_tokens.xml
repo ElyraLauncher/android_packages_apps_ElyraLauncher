@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
+
+     Elyra design tokens (light / default). These are additive foundation tokens:
+     no existing view references them yet, so they do not change current launcher
+     behavior. The palette is an original Elyra identity (deep emerald base, mint /
+     teal accent) and contains no values copied from any reference launcher.
+     Dark-mode overrides live in values-night/elyra_tokens.xml. -->
+<resources>
+    <!-- Color tokens -->
+    <color name="elyra_accent">#FF1F9E86</color>
+    <color name="elyra_accent_variant">#FF12806B</color>
+    <color name="elyra_background">#FFF3FBF8</color>
+    <color name="elyra_surface">#FFFFFFFF</color>
+    <color name="elyra_surface_elevated">#FFEAF5F1</color>
+    <color name="elyra_text_primary">#FF0C2E29</color>
+    <color name="elyra_text_secondary">#FF3B5A53</color>
+
+    <!-- Corner radius tokens -->
+    <dimen name="elyra_radius_small">8dp</dimen>
+    <dimen name="elyra_radius_medium">16dp</dimen>
+    <dimen name="elyra_radius_large">24dp</dimen>
+    <dimen name="elyra_radius_extra_large">32dp</dimen>
+
+    <!-- Icon size tokens -->
+    <dimen name="elyra_icon_size_small">40dp</dimen>
+    <dimen name="elyra_icon_size_default">48dp</dimen>
+    <dimen name="elyra_icon_size_large">56dp</dimen>
+
+    <!-- Spacing tokens -->
+    <dimen name="elyra_spacing_small">8dp</dimen>
+    <dimen name="elyra_spacing_medium">16dp</dimen>
+    <dimen name="elyra_spacing_large">24dp</dimen>
+
+    <!-- Layout surface tokens -->
+    <dimen name="elyra_search_bar_height">56dp</dimen>
+    <dimen name="elyra_card_radius">20dp</dimen>
+    <dimen name="elyra_folder_radius">28dp</dimen>
+    <dimen name="elyra_dock_radius">28dp</dimen>
+</resources>

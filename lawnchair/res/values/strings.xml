@@ -939,4 +939,30 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_open_source_attribution" tools:ignore="MissingTranslation">Built from open-source Launcher3/Lawnchair components. See licenses for details.</string>
     <string name="workspace_share_backup_hint" tools:ignore="MissingTranslation">To share your current workspace, use Elyra Launcher\'s backup and restore system.</string>
     <string name="development_build_warning" tools:ignore="MissingTranslation">You are using a development build, which may contain bugs and broken features. Use at your own risk!</string>
+
+    <!-- Elyra Labs (experimental feature flags). English + Indonesian are maintained;
+         other inherited upstream locales are filled over time, so MissingTranslation
+         is intentionally ignored for these Elyra-specific strings until then. -->
+    <string name="elyra_labs_label" tools:ignore="MissingTranslation">Elyra Labs</string>
+    <string name="elyra_experimental_features" tools:ignore="MissingTranslation">Experimental features</string>
+    <string name="elyra_restart_may_be_required" tools:ignore="MissingTranslation">Restart may be required</string>
+    <string name="elyra_rom_only_note" tools:ignore="MissingTranslation">Requires a ROM-integrated build</string>
+    <string name="elyra_flag_bottom_search" tools:ignore="MissingTranslation">Bottom search</string>
+    <string name="elyra_flag_drawer_categories" tools:ignore="MissingTranslation">Drawer categories</string>
+    <string name="elyra_flag_drawer_suggestions" tools:ignore="MissingTranslation">Drawer suggestions</string>
+    <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>
+    <string name="elyra_flag_wallpaper_themed_icons" tools:ignore="MissingTranslation">Wallpaper themed icons</string>
+    <string name="elyra_flag_icon_resize" tools:ignore="MissingTranslation">Icon resize</string>
+    <string name="elyra_flag_large_folders" tools:ignore="MissingTranslation">Large folders</string>
+    <string name="elyra_flag_folder_direct_launch" tools:ignore="MissingTranslation">Folder direct launch</string>
+    <string name="elyra_flag_flow_motion" tools:ignore="MissingTranslation">Flow motion</string>
+    <string name="elyra_flag_progressive_blur" tools:ignore="MissingTranslation">Progressive blur</string>
+    <string name="elyra_flag_contour_glow" tools:ignore="MissingTranslation">Contour glow</string>
+    <string name="elyra_flag_edit_mode" tools:ignore="MissingTranslation">Edit mode</string>
+    <string name="elyra_flag_layout_lock" tools:ignore="MissingTranslation">Layout lock</string>
+    <string name="elyra_flag_layout_history" tools:ignore="MissingTranslation">Layout history</string>
+    <string name="elyra_flag_smart_arrange" tools:ignore="MissingTranslation">Smart arrange</string>
+    <string name="elyra_flag_hidden_apps" tools:ignore="MissingTranslation">Hidden apps</string>
+    <string name="elyra_flag_taskbar_universal" tools:ignore="MissingTranslation">Universal taskbar</string>
+    <string name="elyra_flag_quickstep_rom" tools:ignore="MissingTranslation">ROM Quickstep integration</string>
 </resources>

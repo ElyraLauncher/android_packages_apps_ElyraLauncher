@@ -65,6 +65,10 @@ data object About : PreferenceRootRoute
 @Serializable
 data object ExperimentalFeatures : PreferenceRootRoute
 
+// Elyra experimental feature-flag screen ("Elyra Labs")
+@Serializable
+data object ElyraLabs : PreferenceRootRoute
+
 @Serializable
 data object DebugMenu : PreferenceRootRoute
 

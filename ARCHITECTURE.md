@@ -48,11 +48,33 @@ The ROM target keeps Launcher3/Quickstep integration ready for platform builds.
 Privileged permissions, system placement, and Recents integration are validated
 only in a ROM tree. ROM notes are under `tools/rom/`.
 
-## Feature Flags
+## Feature Flags and Design Tokens
 
-Major Elyra features will be gated behind flags so disabled features return as
-close as possible to upstream Launcher3-derived behavior. Stage 3 adds the Elyra
-flag foundation.
+Major Elyra features are gated behind flags so disabled features stay as close as
+possible to upstream Launcher3-derived behavior. The Stage 3 foundation lives
+under `com.elyra.launcher`:
+
+- `flags/ElyraFlag` — the enum of feature flags (stable key, default, `romOnly`).
+- `flags/ElyraFeatureFlags` — the pure-Kotlin registry (single source of truth,
+  unique-key guard).
+- `flags/ElyraFlagStore` — persistence via the existing opto `PreferenceManager`
+  over a dedicated `elyra_preferences` Jetpack DataStore file (no new storage
+  system, no DB mutation, no network, no telemetry).
+- `flags/ElyraFlagsRepository` — `isEnabled` / `observe` / `setEnabled` access for
+  feature code.
+
+Every flag defaults **OFF**, so adding a flag or a `flags.isEnabled(...)` gate
+never changes current launcher behavior; stable behavior is preserved when flags
+are off. New Elyra features must be gated behind their flag and must not fake
+unfinished behavior. Flags are exposed for development in the **Elyra Labs**
+settings screen (`com.elyra.launcher.ui.ElyraLabsPreferences`), reachable from the
+preferences overflow menu.
+
+Design tokens: color, spacing, radius, icon-size and layout-surface tokens are
+resources (`lawnchair/res/values/elyra_tokens.xml` plus a `-night` variant);
+motion and effect tokens are code constants (`com.elyra.launcher.theme`). These
+are additive — nothing consumes them in Stage 3 — and carry no values copied from
+any reference launcher.
 
 ## Model and Database Safety
 
