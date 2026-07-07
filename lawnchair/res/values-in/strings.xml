@@ -44,7 +44,7 @@ Untuk mengunci ponsel atau membuka layar Recents, Elyra Launcher menggunakan met
     <string name="about_label">Tentang Elyra Launcher</string>
     <string name="backup_restore_label">Cadangkan &amp; pulihkan</string>
     <string name="backup_restore_description">Buat dan pulihkan cadangan launcher</string>
-    <string name="debug_restart_launcher">Mulai ulang Elyra Launcher</string>
+    <string name="debug_restart_launcher">Muat ulang Elyra Launcher</string>
     <string name="set_default_launcher_tip">Untuk mengakses pintasan dan fitur layar utama, jadikan Elyra Launcher sebagai launcher default</string>
     <string name="smartspace_widget_toggle_description">At a Glance dapat ditambahkan secara manual ke layar utama dengan menempatkan widget Elyra</string>
     <string name="smartspace_mode_lawnchair">Elyra</string>
@@ -62,8 +62,10 @@ Elyra Launcher menggunakan metode `performGlobalAction` dari Aksesibilitas untuk
 
 Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="quickswitch_ignored_warning">Setelan ini akan diabaikan karena Elyra Launcher tidak disetel sebagai penyedia layar Recents</string>
-    <string name="elyra_open_source_attribution">Berdasarkan komponen open-source Launcher3/Lawnchair. Lihat lisensi untuk detail.</string>
+    <string name="elyra_open_source_attribution">Dibangun dari komponen open-source Launcher3/Lawnchair. Lihat lisensi untuk detail.</string>
     <string name="workspace_share_backup_hint">Untuk membagikan ruang kerja saat ini, gunakan sistem cadangan dan pemulihan Elyra Launcher.</string>
     <string name="smartspace_widget">Sekilas</string>
     <string name="restore_nova_backup">Pulihkan cadangan pihak ketiga</string>
+    <string name="create_backup">Buat cadangan</string>
+    <string name="development_build_warning">Anda menggunakan build pengembangan yang mungkin berisi bug dan fitur yang belum stabil. Gunakan dengan risiko sendiri.</string>
 </resources>

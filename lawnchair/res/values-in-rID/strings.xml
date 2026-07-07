@@ -138,7 +138,7 @@
     <string name="home_screen_label">Layar beranda</string>
     <string name="home_screen_description">Umpan, kisi, lambang</string>
     <string name="home_screen_actions">Tindakan layar beranda</string>
-    <string name="dock_label">Bilah</string>
+    <string name="dock_label">Dok</string>
     <string name="dock_description">Bilah pencarian, jumlah lambang</string>
     <string name="app_drawer_label">Laci aplikasi</string>
     <string name="app_drawer_description">Aplikasi tersembunyi, jumlah kolom, lambang</string>
@@ -150,7 +150,7 @@
     <string name="gestures_description">Ketukan dan usapan</string>
     <string name="quickstep_label">Layar terbaru</string>
     <string name="quickstep_description">Tombol Hapus Semua, radius sudut</string>
-    <string name="about_label">Tentang</string>
+    <string name="about_label">Tentang Elyra Launcher</string>
     <string name="app_info_drop_target_label">Info aplikasi</string>
     <string name="debug_restart_launcher">Muat ulang Elyra Launcher</string>
     <string name="experimental_features_label">Masa datang eksperimental</string>
@@ -707,4 +707,5 @@
     <!-- Message shown when all home screen views are removed -->
     <string name="home_screen_all_views_removed_msg">Layar beranda dibersihkan</string>
     <string name="restore_nova_backup">Pulihkan cadangan pihak ketiga</string>
+    <string name="development_build_warning">Anda menggunakan build pengembangan yang mungkin berisi bug dan fitur yang belum stabil. Gunakan dengan risiko sendiri.</string>
 </resources>

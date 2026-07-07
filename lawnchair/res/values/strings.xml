@@ -936,6 +936,7 @@ Searching with %1$s helps support Elyra Launcher.</string>
          so MissingTranslation is intentionally ignored for these until then. -->
     <string name="backup_restore_label" tools:ignore="MissingTranslation">Backup &amp; restore</string>
     <string name="backup_restore_description" tools:ignore="MissingTranslation">Create and restore launcher backups</string>
-    <string name="elyra_open_source_attribution" tools:ignore="MissingTranslation">Based on open-source Launcher3/Lawnchair components. See licenses for details.</string>
+    <string name="elyra_open_source_attribution" tools:ignore="MissingTranslation">Built from open-source Launcher3/Lawnchair components. See licenses for details.</string>
     <string name="workspace_share_backup_hint" tools:ignore="MissingTranslation">To share your current workspace, use Elyra Launcher\'s backup and restore system.</string>
+    <string name="development_build_warning" tools:ignore="MissingTranslation">You are using a development build, which may contain bugs and broken features. Use at your own risk!</string>
 </resources>

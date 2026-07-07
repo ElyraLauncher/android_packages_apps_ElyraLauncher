@@ -1,29 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
 
-     Original Elyra adaptive-icon foreground: a clean, rounded abstract "E" mark
-     drawn as bold round-capped strokes, kept inside the adaptive safe zone so it
-     reads well at small sizes. -->
+     Original Elyra adaptive-icon foreground. A bold, rounded abstract "E" built
+     from filled pill bars (stronger silhouette than a thin stroke), floated on a
+     soft rounded panel with a subtle drop shadow for premium layered depth. All
+     content stays inside the adaptive safe zone so it reads well at small sizes. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:strokeWidth="11"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M40,36 L40,72 M40,36 L68,36 M40,54 L60,54 M40,72 L68,72">
-        <aapt:attr name="android:strokeColor">
+
+    <!-- Soft glow panel: a rounded squircle halo that lifts the mark off the field. -->
+    <path android:pathData="M45,30 L63,30 A14,14 0 0 1 77,44 L77,64 A14,14 0 0 1 63,78 L45,78 A14,14 0 0 1 31,64 L31,44 A14,14 0 0 1 45,30 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="48"
+                android:gradientRadius="34"
+                android:startColor="#30FFFFFF"
+                android:centerColor="#17FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </aapt:attr>
+    </path>
+
+    <!-- Drop shadow of the E mark, offset for depth. -->
+    <group android:translateX="1.5" android:translateY="2.5">
+        <path
+            android:fillColor="#33041C15"
+            android:pathData="M50,40 L50,68 A6,6 0 0 1 38,68 L38,40 A6,6 0 0 1 50,40 Z M44,34 L66,34 A6,6 0 0 1 66,46 L44,46 A6,6 0 0 1 44,34 Z M44,48 L60,48 A6,6 0 0 1 60,60 L44,60 A6,6 0 0 1 44,48 Z M44,62 L66,62 A6,6 0 0 1 66,74 L44,74 A6,6 0 0 1 44,62 Z" />
+    </group>
+
+    <!-- The E mark itself, mint-to-teal gradient. -->
+    <path android:pathData="M50,40 L50,68 A6,6 0 0 1 38,68 L38,40 A6,6 0 0 1 50,40 Z M44,34 L66,34 A6,6 0 0 1 66,46 L44,46 A6,6 0 0 1 44,34 Z M44,48 L60,48 A6,6 0 0 1 60,60 L44,60 A6,6 0 0 1 44,48 Z M44,62 L66,62 A6,6 0 0 1 66,74 L44,74 A6,6 0 0 1 44,62 Z">
+        <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
                 android:startX="38"
-                android:startY="32"
-                android:endX="70"
+                android:startY="34"
+                android:endX="72"
                 android:endY="74"
-                android:startColor="#FF8FF2D8"
-                android:endColor="#FF29B398" />
+                android:startColor="#FF9FF7DD"
+                android:endColor="#FF1F9E86" />
         </aapt:attr>
     </path>
 </vector>

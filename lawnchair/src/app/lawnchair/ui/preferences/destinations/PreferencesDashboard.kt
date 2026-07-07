@@ -370,8 +370,7 @@ fun PreferencesDebugWarning(
         color = MaterialTheme.colorScheme.errorContainer,
     ) {
         WarningPreference(
-            // Don't move to strings.xml, no need to translate this warning
-            text = "You are using a development build, which may contain bugs and broken features. Use at your own risk!",
+            text = stringResource(id = R.string.development_build_warning),
         )
     }
 }

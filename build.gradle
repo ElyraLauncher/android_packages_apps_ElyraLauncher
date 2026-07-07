@@ -143,11 +143,15 @@ final def ciBuild = System.getenv("CI") == "true"
 final def ciRef = System.getenv("GITHUB_REF") ?: ""
 final def ciRunNumber = System.getenv("GITHUB_RUN_NUMBER") ?: ""
 final def isReleaseBuild = ciBuild && ciRef.contains("beta")
-final def devReleaseName = ciBuild ? "Dev.(#${ciRunNumber})" : "Dev.(${buildCommit})"
+final def buildTag = ciBuild ? "#${ciRunNumber}" : buildCommit
 final def version = "15"
 final def releaseName = "Beta 3"
-final def versionDisplayName = "${version}.${isReleaseBuild ? releaseName : devReleaseName}"
-final def majorVersion = versionDisplayName.split("\\.")[0]
+final def majorVersion = version
+// Human-facing label shown on the About screen. Keep the trailing "(#<n>)" so the
+// nightly update check can still parse the build number out of it.
+final def versionDisplayName = isReleaseBuild ? "${version} ${releaseName}" : "Universal Preview ${version}-dev (${buildTag})"
+// Compact, filename-safe version name used for APK outputs and system app info.
+final def internalVersionName = isReleaseBuild ? "${version}-beta3" : (ciBuild ? "${version}-dev.${ciRunNumber}" : "${version}-dev.${buildCommit}")
 
 final def quickstepMinSdk = "29"
 final def quickstepMaxSdk = "35"
@@ -158,7 +162,7 @@ android {
         // Lawnchair Launcher 15.0 Beta 3
         // See CONTRIBUTING.md#versioning-scheme
         versionCode 15_00_02_03_00
-        versionName "${versionDisplayName}"
+        versionName "${internalVersionName}"
         buildConfigField "String", "VERSION_DISPLAY_NAME", "\"${versionDisplayName}\""
         buildConfigField "String", "MAJOR_VERSION", "\"${majorVersion}\""
         buildConfigField "String", "COMMIT_HASH", "\"${buildCommit}\""

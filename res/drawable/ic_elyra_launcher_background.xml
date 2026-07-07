@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
 
-     Original Elyra adaptive-icon background: a deep dark green field with a soft
-     radial teal glow for subtle depth. Full 108x108 bleed. -->
+     Original Elyra adaptive-icon background: a deep emerald field with an off-centre
+     radial glow for premium depth, deepening to near-black green in the corners.
+     Full 108x108 bleed. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
@@ -13,12 +14,12 @@
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="radial"
-                android:centerX="40"
-                android:centerY="36"
-                android:gradientRadius="96"
-                android:startColor="#FF1B5346"
-                android:centerColor="#FF124038"
-                android:endColor="#FF0C2E29" />
+                android:centerX="42"
+                android:centerY="38"
+                android:gradientRadius="104"
+                android:startColor="#FF1D5C4C"
+                android:centerColor="#FF123E36"
+                android:endColor="#FF08231F" />
         </aapt:attr>
     </path>
 </vector>

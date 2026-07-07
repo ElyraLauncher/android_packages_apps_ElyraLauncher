@@ -1,41 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
 
-     Self-contained Elyra mark (deep dark green tile + rounded "E") for standalone
-     use. The launcher app icon itself is composed from the separate adaptive
-     foreground/background drawables. -->
+     Self-contained Elyra mark (deep emerald field + soft panel + bold rounded "E")
+     for standalone use such as the About screen. The launcher app icon itself is
+     composed from the separate adaptive foreground/background drawables. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Deep emerald field. -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="radial"
-                android:centerX="40"
-                android:centerY="36"
-                android:gradientRadius="96"
-                android:startColor="#FF1B5346"
-                android:centerColor="#FF124038"
-                android:endColor="#FF0C2E29" />
+                android:centerX="42"
+                android:centerY="38"
+                android:gradientRadius="104"
+                android:startColor="#FF1D5C4C"
+                android:centerColor="#FF123E36"
+                android:endColor="#FF08231F" />
         </aapt:attr>
     </path>
-    <path
-        android:strokeWidth="11"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M40,36 L40,72 M40,36 L68,36 M40,54 L60,54 M40,72 L68,72">
-        <aapt:attr name="android:strokeColor">
+
+    <!-- Soft glow panel. -->
+    <path android:pathData="M45,30 L63,30 A14,14 0 0 1 77,44 L77,64 A14,14 0 0 1 63,78 L45,78 A14,14 0 0 1 31,64 L31,44 A14,14 0 0 1 45,30 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="48"
+                android:gradientRadius="34"
+                android:startColor="#30FFFFFF"
+                android:centerColor="#17FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </aapt:attr>
+    </path>
+
+    <!-- Drop shadow of the E mark. -->
+    <group android:translateX="1.5" android:translateY="2.5">
+        <path
+            android:fillColor="#33041C15"
+            android:pathData="M50,40 L50,68 A6,6 0 0 1 38,68 L38,40 A6,6 0 0 1 50,40 Z M44,34 L66,34 A6,6 0 0 1 66,46 L44,46 A6,6 0 0 1 44,34 Z M44,48 L60,48 A6,6 0 0 1 60,60 L44,60 A6,6 0 0 1 44,48 Z M44,62 L66,62 A6,6 0 0 1 66,74 L44,74 A6,6 0 0 1 44,62 Z" />
+    </group>
+
+    <!-- The E mark, mint-to-teal gradient. -->
+    <path android:pathData="M50,40 L50,68 A6,6 0 0 1 38,68 L38,40 A6,6 0 0 1 50,40 Z M44,34 L66,34 A6,6 0 0 1 66,46 L44,46 A6,6 0 0 1 44,34 Z M44,48 L60,48 A6,6 0 0 1 60,60 L44,60 A6,6 0 0 1 44,48 Z M44,62 L66,62 A6,6 0 0 1 66,74 L44,74 A6,6 0 0 1 44,62 Z">
+        <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
                 android:startX="38"
-                android:startY="32"
-                android:endX="70"
+                android:startY="34"
+                android:endX="72"
                 android:endY="74"
-                android:startColor="#FF8FF2D8"
-                android:endColor="#FF29B398" />
+                android:startColor="#FF9FF7DD"
+                android:endColor="#FF1F9E86" />
         </aapt:attr>
     </path>
 </vector>
