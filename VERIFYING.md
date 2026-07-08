@@ -332,6 +332,42 @@ coverage is **PENDING** a test harness — it is not faked. Flag defaults (OFF) 
 guarded by the `ElyraFeatureFlags` key/default invariant and the OFF path is verified
 statically.
 
+### Stage 6.5: Expanded classifier and card model
+
+Stage 6.5 broadens the local category system behind `elyra_drawer_categories`. It is
+pure classification logic plus the existing category-grouping surface — no new drawer
+view type is added.
+
+| Check | How verified | Status |
+| --- | --- | --- |
+| Universal debug APK builds | `assembleLawnWithQuickstepGithubDebug` in CI | PENDING locally (no SDK); CI is source of truth |
+| Debug lint | `lintLawnWithQuickstepGithubDebug` in CI | PENDING locally; CI is source of truth |
+| Categories flag still controls grouping | Static review — `ElyraAppCategorizer.categorize` API unchanged; OFF path untouched | PASSED (static) |
+| Richer buckets (16 categories) | Static review — `ElyraAppCategoryClassifier` ordered rules; Games/Social/Google/Media/Photo & Video/Music & Audio/… | PASSED (static) |
+| Deterministic precedence | Static review — System → Google → Games → comms/media/etc → Android category → Other; first match wins | PASSED (static) |
+| Unknown apps → Other | Static review — `classify` returns `Other` with no rule and no metadata match | PASSED (static) |
+| Empty categories hidden | Static review — `ElyraCategoryCardModel.build` drops empty buckets | PASSED (static) |
+| Card preview uses real apps | Static review — preview is the leading N of the real installed-app bucket, recency-ordered | PASSED (static) |
+| Fully local (no network/Play API) | Static review — package/label hints + `ApplicationInfo.category` only | PASSED (static) |
+| Category grouping renders / launches | Manual device / emulator | PENDING |
+
+Manual verification: enable **Drawer categories** in Elyra Labs → open the drawer →
+apps are grouped into the richer local categories (e.g. Games contains installed
+games, Google contains Google apps, Photo & Video vs Music & Audio are separated) →
+open a category group and launch a real app → confirm bottom search still works and
+web/provider rows stay hidden by default.
+
+Deferred (not this stage): the dedicated segmented **All Apps / Categories** tab and
+the 2-column large category-card grid. `ElyraCategoryCardModel` (with its `preview`
+cluster) is the model that view will consume; it is built and unit-testable now, but
+the bespoke tab/card view is device-verified UI work left for a follow-up so the real
+drawer is not put at risk without on-device testing.
+
+Stage 6.5 tests (PENDING a harness, same as Stage 6, not faked): `classify` is pure —
+known game/social/Google/finance packages map to their category, unknown → Other,
+precedence is stable; `ElyraCategoryCardModel.build` hides empty categories, keeps
+`ElyraAppCategory` order, and previews real app entries bounded by the preview count.
+
 ## Contamination Checks
 
 Before release:

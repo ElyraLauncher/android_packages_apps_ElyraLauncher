@@ -84,16 +84,21 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_flag_drawer_suggestions_description">Tampilkan saran aplikasi lokal di laci aplikasi.</string>
     <string name="elyra_flag_az_rail">Bilah A-Z</string>
     <string name="elyra_flag_az_rail_description">Tampilkan bilah gulir cepat di laci aplikasi.</string>
-    <!-- Label kategori laci lokal Elyra (Stage 6). -->
+    <!-- Label kategori laci lokal Elyra (Stage 6, diperluas di Stage 6.5). -->
     <string name="elyra_category_communication">Komunikasi</string>
     <string name="elyra_category_social">Sosial</string>
+    <string name="elyra_category_google">Google</string>
     <string name="elyra_category_media">Media</string>
+    <string name="elyra_category_photo_video">Foto &amp; Video</string>
+    <string name="elyra_category_music_audio">Musik &amp; Audio</string>
     <string name="elyra_category_games">Game</string>
     <string name="elyra_category_tools">Alat</string>
     <string name="elyra_category_productivity">Produktivitas</string>
     <string name="elyra_category_finance">Keuangan</string>
     <string name="elyra_category_shopping">Belanja</string>
     <string name="elyra_category_travel">Perjalanan</string>
+    <string name="elyra_category_education">Pendidikan</string>
+    <string name="elyra_category_health">Kesehatan</string>
     <string name="elyra_category_system">Sistem</string>
     <string name="elyra_category_other">Lainnya</string>
     <string name="elyra_flag_wallpaper_themed_icons">Ikon bertema wallpaper</string>

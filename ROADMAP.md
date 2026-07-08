@@ -64,6 +64,24 @@ flag is OFF the drawer is unchanged, and Stage 5 bottom search stays local-first
 (search uses the search-results path, so categories/suggestions do not affect it).
 See [VERIFYING.md](VERIFYING.md) for the Stage 6 checks.
 
+## Stage 6.5: Expanded Category Classifier and Card Model
+
+Broaden the local category system behind `elyra_drawer_categories`. The classifier
+is restructured into reusable, testable pieces — `ElyraAppCategory` (16 buckets),
+`ElyraCategoryRule`, `ElyraAppCategoryClassifier` (ordered package/label/metadata
+rules with a fixed precedence: System → Google → Games → the rest), and
+`ElyraCategoryCardModel` (builds non-empty category cards with real installed-app
+previews, ordered by the local recency signal). The drawer category grouping now
+uses these, so categories cover Games, Social, Communication, Google, Media,
+Photo & Video, Music & Audio, Productivity, Tools, Finance, Shopping, Travel,
+Education, Health, System, and Other, with unknown apps in Other. Still fully local
+and deterministic — no network, cloud, or Play Store category API.
+
+The dedicated segmented **All Apps / Categories** tab and 2-column large-card view
+that `ElyraCategoryCardModel` is designed to back are deferred (device-verified UI
+work): the model and classifier are ready, and categories currently surface as
+richer tappable category groups in the drawer.
+
 ## Stage 7-13: User Features
 
 Implement wallpaper-adaptive icons, icon and grid controls, large folders, edit
