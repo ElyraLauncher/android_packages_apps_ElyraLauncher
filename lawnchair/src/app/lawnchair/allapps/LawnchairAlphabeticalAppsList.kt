@@ -52,7 +52,7 @@ class LawnchairAlphabeticalAppsList<T>(
     private val viewModel: FolderViewModel by (context as ComponentActivity).viewModels()
     private var folderList = mutableListOf<FolderInfo>()
     private val filteredList = mutableListOf<AppInfo>()
-    private var elyraCategoryCardsMode = false
+    private var elyraDrawerMode = ElyraDrawerMode.ALL_APPS
     private var elyraSelectedCategory: ElyraAppCategory? = null
 
     private val folderOrder = FolderOrderUtils.stringToIntList(prefs.drawerListOrder.get())
@@ -100,11 +100,13 @@ class LawnchairAlphabeticalAppsList<T>(
         val validApps = appList.mapNotNull { it }
 
         if (elyraCategories) {
-            mAdapterItems.add(AdapterItem.asElyraCategoryTabs(elyraCategoryCardsMode))
+            mAdapterItems.add(
+                AdapterItem.asElyraCategoryTabs(elyraDrawerMode != ElyraDrawerMode.ALL_APPS)
+            )
             position++
 
             val cards = ElyraCategoryCardModel.build(validApps, context)
-            if (elyraCategoryCardsMode) {
+            if (elyraDrawerMode == ElyraDrawerMode.CATEGORIES_ROOT) {
                 cards.forEach { card ->
                     mAdapterItems.add(AdapterItem.asElyraCategoryCard(card))
                     position++
@@ -112,14 +114,21 @@ class LawnchairAlphabeticalAppsList<T>(
                 return position
             }
 
-            elyraSelectedCategory?.let { selectedCategory ->
+            if (elyraDrawerMode == ElyraDrawerMode.CATEGORY_DETAIL) {
+                val selectedCategory = elyraSelectedCategory
                 val selectedCard = cards.firstOrNull { it.category == selectedCategory }
                 if (selectedCard != null) {
                     mAdapterItems.add(AdapterItem.asElyraCategoryHeader(selectedCard.label))
                     position++
                     return super.addAppsWithSections(selectedCard.apps, position)
                 }
+                elyraDrawerMode = ElyraDrawerMode.CATEGORIES_ROOT
                 elyraSelectedCategory = null
+                cards.forEach { card ->
+                    mAdapterItems.add(AdapterItem.asElyraCategoryCard(card))
+                    position++
+                }
+                return position
             }
         }
 
@@ -173,30 +182,46 @@ class LawnchairAlphabeticalAppsList<T>(
 
     override fun isElyraCategoryTabsEnabled(): Boolean = elyraCategories
 
-    override fun isElyraCategoryCardsMode(): Boolean = elyraCategories && elyraCategoryCardsMode
+    override fun isElyraCategoryCardsMode(): Boolean =
+        elyraCategories && elyraDrawerMode == ElyraDrawerMode.CATEGORIES_ROOT
 
     override fun showElyraAllApps() {
         if (!elyraCategories) return
-        elyraCategoryCardsMode = false
+        elyraDrawerMode = ElyraDrawerMode.ALL_APPS
         elyraSelectedCategory = null
         updateAdapterItems()
     }
 
     override fun showElyraCategoryCards() {
         if (!elyraCategories) return
-        elyraCategoryCardsMode = true
+        elyraDrawerMode = ElyraDrawerMode.CATEGORIES_ROOT
         elyraSelectedCategory = null
         updateAdapterItems()
     }
 
     override fun selectElyraCategory(category: ElyraAppCategory) {
         if (!elyraCategories) return
-        elyraCategoryCardsMode = false
+        elyraDrawerMode = ElyraDrawerMode.CATEGORY_DETAIL
         elyraSelectedCategory = category
         updateAdapterItems()
     }
 
+    override fun canHandleElyraCategoryBack(): Boolean =
+        elyraCategories && elyraDrawerMode == ElyraDrawerMode.CATEGORY_DETAIL
+
+    override fun handleElyraCategoryBack(): Boolean {
+        if (!canHandleElyraCategoryBack()) return false
+        showElyraCategoryCards()
+        return true
+    }
+
     override fun onIdpChanged(modelPropertiesChanged: Boolean) {
         onAppsUpdated()
+    }
+
+    private enum class ElyraDrawerMode {
+        ALL_APPS,
+        CATEGORIES_ROOT,
+        CATEGORY_DETAIL,
     }
 }

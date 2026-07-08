@@ -1422,6 +1422,14 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mAH.get(MAIN).mAppsList;
     }
 
+    public boolean canHandleElyraCategoryBack() {
+        return getPersonalAppList().canHandleElyraCategoryBack();
+    }
+
+    public boolean handleElyraCategoryBack() {
+        return getPersonalAppList().handleElyraCategoryBack();
+    }
+
     public FloatingHeaderView getFloatingHeaderView() {
         return mHeader;
     }

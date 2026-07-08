@@ -315,7 +315,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         LinearLayout card = new LinearLayout(parent.getContext());
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setMinimumHeight(dp(128));
+        card.setMinimumHeight(dp(152));
         card.setPadding(dp(14), dp(12), dp(14), dp(12));
         card.setClickable(true);
         card.setFocusable(true);
@@ -323,7 +323,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
         TextView label = new TextView(parent.getContext());
         label.setSingleLine(true);
-        label.setTextSize(14);
+        label.setTextSize(15);
         label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         label.setTextColor(Themes.getAttrColor(parent.getContext(), android.R.attr.textColorPrimary));
         label.setGravity(Gravity.START);
@@ -352,7 +352,9 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         header.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         header.setTextColor(Themes.getAttrColor(parent.getContext(), android.R.attr.textColorPrimary));
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(dp(16), dp(4), dp(16), dp(8));
+        header.setClickable(true);
+        header.setFocusable(true);
+        header.setPadding(dp(16), dp(8), dp(16), dp(12));
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(0, 0, 0, dp(4));
@@ -368,8 +370,14 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         categories.setText(R.string.elyra_drawer_tab_categories);
         bindElyraSegment(all, !item.elyraCategoryCardsSelected);
         bindElyraSegment(categories, item.elyraCategoryCardsSelected);
-        all.setOnClickListener(view -> mApps.showElyraAllApps());
-        categories.setOnClickListener(view -> mApps.showElyraCategoryCards());
+        all.setOnClickListener(view -> {
+            mApps.showElyraAllApps();
+            scrollElyraActiveRecyclerViewToTop();
+        });
+        categories.setOnClickListener(view -> {
+            mApps.showElyraCategoryCards();
+            scrollElyraActiveRecyclerViewToTop();
+        });
     }
 
     private void bindElyraSegment(TextView button, boolean selected) {
@@ -392,7 +400,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         GridLayout preview = (GridLayout) card.getChildAt(1);
         label.setText(categoryCard.getLabel());
         card.setContentDescription(categoryCard.getLabel());
-        card.setOnClickListener(view -> mApps.selectElyraCategory(categoryCard.getCategory()));
+        card.setOnClickListener(view -> {
+            mApps.selectElyraCategory(categoryCard.getCategory());
+            scrollElyraActiveRecyclerViewToTop();
+        });
 
         preview.removeAllViews();
         for (AppInfo app : categoryCard.getPreview()) {
@@ -401,15 +412,32 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             icon.setContentDescription(app.title);
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = dp(32);
-            lp.height = dp(32);
+            lp.width = dp(36);
+            lp.height = dp(36);
             lp.setMargins(0, 0, dp(8), dp(8));
             preview.addView(icon, lp);
         }
     }
 
     private void bindElyraCategoryHeader(TextView header, CharSequence label) {
-        header.setText(label == null ? "" : label);
+        CharSequence safeLabel = label == null ? "" : label;
+        header.setText("< " + safeLabel);
+        header.setContentDescription(safeLabel);
+        header.setOnClickListener(view -> {
+            mApps.showElyraCategoryCards();
+            scrollElyraActiveRecyclerViewToTop();
+        });
+    }
+
+    private void scrollElyraActiveRecyclerViewToTop() {
+        ActivityAllAppsContainerView<?> appsView = mActivityContext.getAppsView();
+        if (appsView == null) {
+            return;
+        }
+        AllAppsRecyclerView recyclerView = appsView.getActiveRecyclerView();
+        if (recyclerView != null) {
+            recyclerView.scrollToTop();
+        }
     }
 
     private GradientDrawable roundedDrawable(int color, int radius) {

@@ -678,6 +678,11 @@ public class Launcher extends StatefulActivity<LauncherState>
             return topView;
         }
 
+        ActivityAllAppsContainerView<Launcher> appsView = mAppsView;
+        if (appsView != null && appsView.canHandleElyraCategoryBack()) {
+            return () -> appsView.handleElyraCategoryBack();
+        }
+
         // #4 state handler
         return new OnBackPressedHandler() {
             @Override

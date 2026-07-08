@@ -422,6 +422,16 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
     public void selectElyraCategory(ElyraAppCategory category) {
     }
 
+    /** Returns true when category detail should consume back before the drawer closes. */
+    public boolean canHandleElyraCategoryBack() {
+        return false;
+    }
+
+    /** Handles back from category detail to the category card grid. */
+    public boolean handleElyraCategoryBack() {
+        return false;
+    }
+
     protected int addAppsWithSections(List<AppInfo> appList, int startPosition) {
         String lastSectionName = null;
         boolean hasPrivateApps = false;
