@@ -146,12 +146,19 @@ adb logcat -v time > elyra-smoke-logcat.txt   # run through: Home, Settings, dra
 A run PASSES when, for `com.elyra.launcher`:
 
 - **No** `FATAL EXCEPTION` / `AndroidRuntime` crash for the launcher process.
+- **No** repeated `ThemeUtils: … is an AppCompat widget …` errors from
+  launcher-owned views (`CustomButton`, `DoubleShadowTextView`, `IcuDateTextView`) —
+  these now extend platform widgets (see the note below).
 - **No** default-layout `Favorite not found` for common absent apps on a clean
   install — the universal default layouts use only generic intent `<resolve>`
-  fallbacks (dialer, messaging, browser, camera, market, settings) with no
-  device-specific hardcoded packages, so a bare ROM does not log missing favorites.
-- **No** hotseat out-of-bounds or `LoaderCursor: Item position overlap` from the
-  shipped default layout on a clean install.
+  fallbacks (dialer, messaging, browser, camera, settings) with no device-specific
+  hardcoded packages, so a bare ROM does not log missing favorites.
+- **No** hotseat out-of-bounds (e.g. `position 4 out of bounds: 0 to 3`) — the
+  universal default hotseat is capped at positions `0..3`.
+- **No** `LoaderCursor: Item position overlap` from the shipped default layout on a
+  clean install.
+- **No** `DefaultLayoutParser` `APP_MARKET` / `market://` warnings — the fragile
+  market placeholders were removed from the universal default layouts.
 - The `Displayed .../LawnchairLauncher: +…` first-frame time is **recorded as
   observed** (emulator cold starts are slow; record the real number, never a faked
   target).
@@ -161,23 +168,30 @@ The following are **non-fatal and acceptable**:
 - Emulator OpenGL / `FrameEvents` / `eglMakeCurrent` noise unrelated to launcher
   correctness.
 - `DefaultLayoutParser: No preference or single system activity found` for a
-  generic `<resolve>` whose intent has zero or several handlers on the device —
-  this is expected `<resolve>` behavior, not a layout defect.
+  generic non-market `<resolve>` whose intent has zero or several handlers on the
+  device — this is expected `<resolve>` behavior, not a layout defect.
 
-### Known non-fatal baseline log noise
+### AppCompat theme warnings (fixed)
 
-`ThemeUtils: View class app.lawnchair.views.CustomButton / …smartspace.DoubleShadowTextView /
-…smartspace.IcuDateTextView is an AppCompat widget that can only be used with a
-Theme.AppCompat theme` is **inherited upstream debt**, not an Elyra regression, and
-is non-fatal — the views render correctly. Root cause: the launcher activity theme
-chain `AppTheme → LauncherTheme → BaseLauncherTheme` parents the platform themes
+The `ThemeUtils: View class app.lawnchair.views.CustomButton /
+…smartspace.DoubleShadowTextView / …smartspace.IcuDateTextView is an AppCompat
+widget that can only be used with a Theme.AppCompat theme` errors are **fixed**.
+
+Root cause: the launcher activity theme chain
+`AppTheme → LauncherTheme → BaseLauncherTheme` parents the platform themes
 `Theme.DeviceDefault.Light` / `Theme.Material.Light` (as launchers do, for wallpaper
-and system integration), while those custom views extend AppCompat widgets. A
-correct fix (re-theming the widgets' inflation context or migrating the widget base
-classes) changes rendered colors on the Home surface and must be validated on a
-device; it is deliberately deferred to a dedicated theming pass rather than changed
-blind, so the Home theme is not destabilized. It must not be silenced without a real
-theme fix.
+and system integration), while these custom views extended AppCompat widgets and so
+tripped AppCompat's theme check on every inflation.
+
+Fix (smallest safe change, no theme rewrite): the base classes now extend the
+platform widgets instead — `CustomButton` extends `android.widget.Button` and
+`CustomTextView` (parent of `DoubleShadowTextView` → `IcuDateTextView`) extends
+`android.widget.TextView`. These views use no AppCompat-only behavior (`FontManager`
+operates on a plain `TextView`, and no support-tinting/auto-size APIs are used;
+`minSdk 26` provides the platform equivalents), and they are already styled with
+platform styles (e.g. `Widget.DeviceDefault.Button.Borderless`), so rendering is
+unchanged while the AppCompat theme requirement — and its warning — is gone. The
+launcher/Home theme was **not** converted to AppCompat.
 
 ## Contamination Checks
 
