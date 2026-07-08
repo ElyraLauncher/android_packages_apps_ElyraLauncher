@@ -315,7 +315,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         LinearLayout card = new LinearLayout(parent.getContext());
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setMinHeight(dp(128));
+        card.setMinimumHeight(dp(128));
         card.setPadding(dp(14), dp(12), dp(14), dp(12));
         card.setClickable(true);
         card.setFocusable(true);
