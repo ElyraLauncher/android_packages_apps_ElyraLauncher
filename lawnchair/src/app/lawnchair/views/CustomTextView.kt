@@ -2,19 +2,19 @@ package app.lawnchair.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
 import app.lawnchair.font.FontManager
 
-// Extends the platform TextView (not AppCompatTextView): the launcher activity uses
-// a platform (DeviceDefault/Material) theme, so smartspace text views built on this
-// base emitted "AppCompat widget ... requires Theme.AppCompat" warnings without
-// needing any AppCompat-only behavior (no support tinting/auto-size APIs are used;
-// minSdk 26 provides the platform equivalents). FontManager.overrideFont takes a
-// plain TextView.
+// Extends AppCompatTextView: the AppCompatCustomView lint check requires custom
+// TextView subclasses in this AppCompat-enabled project to use the AppCompat base
+// (this also covers the DoubleShadowTextView -> IcuDateTextView smartspace chain).
+// Any residual ThemeUtils "requires Theme.AppCompat" logcat warning must be handled
+// via the inflation context/theme for the affected subtree, not by downgrading this
+// base class.
 abstract class CustomTextView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-) : TextView(context, attrs) {
+) : AppCompatTextView(context, attrs) {
 
     init {
         @Suppress("LeakingThis")

@@ -146,9 +146,10 @@ adb logcat -v time > elyra-smoke-logcat.txt   # run through: Home, Settings, dra
 A run PASSES when, for `com.elyra.launcher`:
 
 - **No** `FATAL EXCEPTION` / `AndroidRuntime` crash for the launcher process.
-- **No** repeated `ThemeUtils: … is an AppCompat widget …` errors from
-  launcher-owned views (`CustomButton`, `DoubleShadowTextView`, `IcuDateTextView`) —
-  these now extend platform widgets (see the note below).
+- The `ThemeUtils: … is an AppCompat widget …` logcat lines for launcher-owned
+  views (`CustomButton`, `DoubleShadowTextView`, `IcuDateTextView`) are **non-fatal**
+  and are pending a theme/context fix (see the note below); they must not be
+  "resolved" by downgrading the AppCompat base classes.
 - **No** default-layout `Favorite not found` for common absent apps on a clean
   install — the universal default layouts use only generic intent `<resolve>`
   fallbacks (dialer, messaging, browser, camera, settings) with no device-specific
@@ -171,27 +172,31 @@ The following are **non-fatal and acceptable**:
   generic non-market `<resolve>` whose intent has zero or several handlers on the
   device — this is expected `<resolve>` behavior, not a layout defect.
 
-### AppCompat theme warnings (fixed)
+### AppCompat theme warnings (pending theme/context fix)
 
 The `ThemeUtils: View class app.lawnchair.views.CustomButton /
 …smartspace.DoubleShadowTextView / …smartspace.IcuDateTextView is an AppCompat
-widget that can only be used with a Theme.AppCompat theme` errors are **fixed**.
+widget that can only be used with a Theme.AppCompat theme` lines are **non-fatal**
+logcat warnings — the views render correctly.
 
 Root cause: the launcher activity theme chain
 `AppTheme → LauncherTheme → BaseLauncherTheme` parents the platform themes
 `Theme.DeviceDefault.Light` / `Theme.Material.Light` (as launchers do, for wallpaper
-and system integration), while these custom views extended AppCompat widgets and so
-tripped AppCompat's theme check on every inflation.
+and system integration), while these custom views extend AppCompat widgets, so
+AppCompat's theme check fires on every inflation.
 
-Fix (smallest safe change, no theme rewrite): the base classes now extend the
-platform widgets instead — `CustomButton` extends `android.widget.Button` and
-`CustomTextView` (parent of `DoubleShadowTextView` → `IcuDateTextView`) extends
-`android.widget.TextView`. These views use no AppCompat-only behavior (`FontManager`
-operates on a plain `TextView`, and no support-tinting/auto-size APIs are used;
-`minSdk 26` provides the platform equivalents), and they are already styled with
-platform styles (e.g. `Widget.DeviceDefault.Button.Borderless`), so rendering is
-unchanged while the AppCompat theme requirement — and its warning — is gone. The
-launcher/Home theme was **not** converted to AppCompat.
+Constraint: these views **must** keep their AppCompat base classes — `CustomButton`
+extends `androidx.appcompat.widget.AppCompatButton` and `CustomTextView` (parent of
+`DoubleShadowTextView` → `IcuDateTextView`) extends
+`androidx.appcompat.widget.AppCompatTextView`. Downgrading them to
+`android.widget.Button` / `TextView` silences the warning but fails the
+`AppCompatCustomView` lint check (an error), so that approach is rejected.
+
+The correct fix, deferred to a focused follow-up, is to make the inflation
+context/theme AppCompat-compatible for the affected view subtree (e.g. a
+`ContextThemeWrapper` / theme overlay), **without** converting the whole launcher/Home
+theme to AppCompat. Until then the warning is accepted as non-fatal and must not be
+silenced by changing the base classes.
 
 ## Contamination Checks
 
