@@ -96,6 +96,7 @@ import com.android.launcher3.views.RecyclerViewFastScroller;
 import com.android.launcher3.views.ScrimView;
 import com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip;
 import com.elyra.launcher.allapps.ElyraBottomSearch;
+import com.elyra.launcher.drawer.ElyraDrawer;
 import com.patrykmichalik.opto.core.PreferenceExtensionsKt;
 
 import java.util.ArrayList;
@@ -294,7 +295,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
      * onFinishInflate -> onPostCreate
      */
     protected void initContent() {
-        showFastScroller = PreferenceExtensionsKt.firstBlocking(pref2.getShowScrollbar());
+        // Elyra A-Z rail (elyra_az_rail) reveals the existing fast-scroll rail; when
+        // the flag is off, only the base scrollbar preference decides visibility.
+        showFastScroller = PreferenceExtensionsKt.firstBlocking(pref2.getShowScrollbar())
+                || ElyraDrawer.azRailEnabled(getContext());
 
         mMainAdapterProvider = mSearchUiDelegate.createMainAdapterProvider();
 

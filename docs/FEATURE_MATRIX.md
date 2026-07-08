@@ -58,8 +58,8 @@ APK where applicable.
 |---|---|---|---|---|---|---|---|
 | Bottom search | YES | YES | NO | 5 | `elyra_bottom_search` | Search field anchored at the bottom, reachable one-handed, focus/dismiss correct | Instrumentation, device |
 | Local app search | YES | YES | NO | 5 | `elyra_local_search` | Typed query filters installed apps locally, no network | Unit (matcher), instrumentation |
-| App suggestions | YES | YES | NO | 6 | `elyra_suggestions` | Suggestion row from local usage signals; hideable | Unit, instrumentation |
-| Category tabs | YES | YES | NO | 6 | `elyra_categories` | Apps grouped into categories/tabs; switching is stable | Unit, instrumentation |
+| App suggestions | YES | YES | NO | 6 | `elyra_drawer_suggestions` | Local suggestion section from on-device signals; hideable | Unit, instrumentation |
+| Drawer categories | YES | YES | NO | 6 | `elyra_drawer_categories` | Apps grouped into local categories (deterministic classifier) | Unit, instrumentation |
 | A-Z rail | YES | YES | NO | 6 | `elyra_az_rail` | Fast-scroll alphabet rail jumps to sections | Instrumentation, device |
 | Empty/no-result states | YES | YES | NO | 5/6 | `elyra_drawer_empty_states` | Clear empty and no-result UI shown appropriately | Instrumentation |
 | Work profile compatibility | PARTIAL | YES | NO | 6 | `elyra_work_profile` | Work tab lists work apps; respects quiet mode where the platform allows | Instrumentation, device (managed profile) |
@@ -141,7 +141,7 @@ APK where applicable.
 | Feature | Universal APK | ROM build | Priv dep | Stage | Flag | Acceptance | Test |
 |---|---|---|---|---|---|---|---|
 | Hidden apps | YES | YES | NO | 13 | `elyra_hidden_apps` | Selected apps hidden from drawer; reveal path defined | Instrumentation, device |
-| Local suggestions | YES | YES | NO | 6 | `elyra_local_suggestions` | Suggestions derive only from on-device signals | Unit, instrumentation |
+| Local suggestions | YES | YES | NO | 6 | `elyra_drawer_suggestions` | Suggestions derive only from on-device signals | Unit, instrumentation |
 | No telemetry | YES | YES | NO | 3 | `elyra_no_telemetry` | No analytics/telemetry collection in the app | Code review, unit (no-network) |
 | No hidden network calls | YES | YES | NO | 3 | `elyra_no_hidden_network` | No background network beyond explicitly opted-in features | Instrumentation (network assertion) |
 | Optional protected access | PARTIAL | YES | NO | 13 | `elyra_protected_access` | Optional lock/auth gate for protected surfaces where the platform allows | Instrumentation, device |

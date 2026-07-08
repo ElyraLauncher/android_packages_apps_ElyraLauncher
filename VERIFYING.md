@@ -268,6 +268,70 @@ bottom-search branches are inert when the flag is off, and drawer search resolve
 `LawnchairAppSearchAlgorithm` with the market row suppressed whenever bottom search is
 on and drawer web results are off.
 
+## Stage 6: Drawer Categories, Suggestions, A-Z Rail
+
+Stage 6 adds three local drawer-organization features on the real AllApps model,
+each behind a Stage 3 flag (default OFF). All reuse existing adapter/scroller
+primitives — no new drawer view type or fake screen is introduced — and the
+deterministic cores are pure Kotlin (`ElyraAppCategorizer`, `ElyraDrawerSuggestions`,
+`ElyraAzSection`).
+
+| Check | How verified | Status |
+| --- | --- | --- |
+| Universal debug APK builds | `assembleLawnWithQuickstepGithubDebug` in CI | PENDING locally (no SDK); CI is source of truth |
+| Debug lint | `lintLawnWithQuickstepGithubDebug` in CI | PENDING locally; CI is source of truth |
+| All Stage 6 flags OFF preserve base drawer | Static review — the Elyra branch is skipped when both list flags are off; fast scroller falls back to the base scrollbar pref | PASSED (static) |
+| Categories group the real app list locally | Static review — `ElyraAppCategorizer` (deterministic, `ApplicationInfo.category` + package hints) drives the existing folder/app adapter items | PASSED (static) |
+| Unknown apps fall to Other | Static review — `categoryFor` returns `Other` when no rule matches | PASSED (static) |
+| Suggestions are local + deterministic | Static review — `ElyraDrawerSuggestions` ranks by package recency + label tiebreak; no web/provider/network | PASSED (static) |
+| A-Z rail reveals the real fast scroller | Static review — `elyra_az_rail` ORs into `showFastScroller` | PASSED (static) |
+| Stage 5 bottom search unaffected | Static review — search uses the search-results path (`hasSearchResults()`), so categories/suggestions never run during search; local-first search preserved | PASSED (static) |
+| Work/private profile safe | Static review — the Elyra branch is skipped for work/private profiles (`isWorkOrPrivateSpace` guard kept) | PASSED (static) |
+| Category/suggestion app launch, rail scroll, no crash | Manual device / emulator | PENDING |
+
+### Manual Stage 6 smoke steps
+
+1. Install the APK and set Elyra as the default Home app; open **Settings → Elyra Labs**.
+2. Enable only **Drawer categories** → open the drawer; apps are grouped into the
+   local category buckets; opening a group and tapping an app launches the real app.
+3. Enable only **Drawer suggestions** → open the drawer; a small local suggestions
+   section appears at the top; tapping a suggestion launches the real app.
+4. Enable only **A-Z rail** → open the drawer; the fast-scroll rail appears; dragging
+   it scrolls to the matching section with the letter popup.
+5. Enable **Bottom search** + all three Stage 6 flags → open the drawer, tap the
+   bottom search, type an app name; results are local installed apps with **no**
+   web/provider/store rows; launch a result; clear the query; Back dismisses the
+   keyboard first. Then browse: switch/scan categories, scroll with the A-Z rail,
+   launch a suggested app; return Home.
+
+Capture logcat during the run and confirm, for `com.elyra.launcher`: no
+`FATAL EXCEPTION` / `AndroidRuntime`, and no `InflateException`,
+`NullPointerException`, or `IllegalStateException` from the AllApps / search /
+fast-scroll path.
+
+### Stage 6 known limitations
+
+- Categories currently surface as **local category grouping** in the drawer list
+  (reusing the existing folder/app items). A category chip/tab bar with an explicit
+  "All" filter is a follow-up refinement, not this stage.
+- The A-Z rail is most meaningful over the flat app list; with category grouping on,
+  the base list does not emit per-letter sections, so the rail scrolls the grouped
+  list without letter sectioning (it does not crash).
+- Suggestions use package recency as the local signal (no launch-frequency data is
+  tracked locally yet); the `ElyraDrawerSuggestions` usage-score hook is reserved for
+  when the launcher tracks launches locally.
+
+### Stage 6 tests
+
+The deterministic cores are written as pure Kotlin (`categoryFor`, `rank`,
+`sectionFor`) specifically so they can be unit tested (known package/category →
+category, unknown → Other, stable ordering, label → section with `#` fallback).
+However, no JVM unit-test source set is wired for the app module (see the Stage 5
+note), and the drawer UI path needs an instrumentation host, so automated Stage 6
+coverage is **PENDING** a test harness — it is not faked. Flag defaults (OFF) are
+guarded by the `ElyraFeatureFlags` key/default invariant and the OFF path is verified
+statically.
+
 ## Contamination Checks
 
 Before release:

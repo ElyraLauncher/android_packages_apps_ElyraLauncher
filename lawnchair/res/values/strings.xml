@@ -952,8 +952,23 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_flag_drawer_web_results" tools:ignore="MissingTranslation">Web results in drawer search</string>
     <string name="elyra_flag_drawer_web_results_description" tools:ignore="MissingTranslation">Show optional web/provider results below local app results.</string>
     <string name="elyra_flag_drawer_categories" tools:ignore="MissingTranslation">Drawer categories</string>
+    <string name="elyra_flag_drawer_categories_description" tools:ignore="MissingTranslation">Group apps into local categories.</string>
     <string name="elyra_flag_drawer_suggestions" tools:ignore="MissingTranslation">Drawer suggestions</string>
+    <string name="elyra_flag_drawer_suggestions_description" tools:ignore="MissingTranslation">Show local app suggestions in the app drawer.</string>
     <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>
+    <string name="elyra_flag_az_rail_description" tools:ignore="MissingTranslation">Show a fast scroll rail in the app drawer.</string>
+    <!-- Elyra local drawer category labels (Stage 6). -->
+    <string name="elyra_category_communication" tools:ignore="MissingTranslation">Communication</string>
+    <string name="elyra_category_social" tools:ignore="MissingTranslation">Social</string>
+    <string name="elyra_category_media" tools:ignore="MissingTranslation">Media</string>
+    <string name="elyra_category_games" tools:ignore="MissingTranslation">Games</string>
+    <string name="elyra_category_tools" tools:ignore="MissingTranslation">Tools</string>
+    <string name="elyra_category_productivity" tools:ignore="MissingTranslation">Productivity</string>
+    <string name="elyra_category_finance" tools:ignore="MissingTranslation">Finance</string>
+    <string name="elyra_category_shopping" tools:ignore="MissingTranslation">Shopping</string>
+    <string name="elyra_category_travel" tools:ignore="MissingTranslation">Travel</string>
+    <string name="elyra_category_system" tools:ignore="MissingTranslation">System</string>
+    <string name="elyra_category_other" tools:ignore="MissingTranslation">Other</string>
     <string name="elyra_flag_wallpaper_themed_icons" tools:ignore="MissingTranslation">Wallpaper themed icons</string>
     <string name="elyra_flag_icon_resize" tools:ignore="MissingTranslation">Icon resize</string>
     <string name="elyra_flag_large_folders" tools:ignore="MissingTranslation">Large folders</string>

@@ -42,11 +42,33 @@ byte-for-byte the upstream top-search layout. See [VERIFYING.md](VERIFYING.md) f
 the Stage 5 drawer-search check. Categories, suggestions, and the A-Z rail remain
 deferred to Stage 6.
 
-## Stage 6-13: User Features
+## Stage 6: Drawer Categories, Suggestions, A-Z Rail
 
-Implement categories, suggestions, A-Z rail, wallpaper-adaptive icons, icon and
-grid controls, large folders, edit tools, layout lock, layout history, motion,
-blur, glow, widgets, hidden apps, backup, and settings polish.
+Add local drawer organization on top of the real AllApps model, each behind its
+Stage 3 flag (default OFF):
+
+- `elyra_drawer_categories` — groups the drawer app list into local category buckets
+  (Communication, Social, Media, Games, Tools, Productivity, Finance, Shopping,
+  Travel, System, Other) using a deterministic on-device classifier
+  (`ElyraAppCategorizer`, from `ApplicationInfo.category` + package hints). No cloud,
+  network, or proprietary classifier.
+- `elyra_drawer_suggestions` — prepends a small local suggestions section
+  (`ElyraDrawerSuggestions`, deterministic package-recency ranking with a label
+  tiebreak; a usage-score hook is reserved for later). Local only — no web/provider
+  rows, no network, no telemetry.
+- `elyra_az_rail` — reveals the existing Launcher3 fast-scroll rail (A-Z with the
+  section popup) on the drawer.
+
+All three reuse existing adapter/scroller primitives and add no fake screen. When a
+flag is OFF the drawer is unchanged, and Stage 5 bottom search stays local-first
+(search uses the search-results path, so categories/suggestions do not affect it).
+See [VERIFYING.md](VERIFYING.md) for the Stage 6 checks.
+
+## Stage 7-13: User Features
+
+Implement wallpaper-adaptive icons, icon and grid controls, large folders, edit
+tools, layout lock, layout history, motion, blur, glow, widgets, hidden apps,
+backup, and settings polish.
 
 ## Stage 14: ROM Quickstep Path
 
