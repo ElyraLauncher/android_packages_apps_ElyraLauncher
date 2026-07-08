@@ -75,6 +75,7 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_restart_may_be_required">Mungkin perlu memulai ulang</string>
     <string name="elyra_rom_only_note">Memerlukan build terintegrasi ROM</string>
     <string name="elyra_flag_bottom_search">Pencarian bawah</string>
+    <string name="elyra_flag_bottom_search_description">Tempatkan bilah pencarian laci aplikasi di bagian bawah agar lebih mudah dijangkau.</string>
     <string name="elyra_flag_drawer_categories">Kategori laci</string>
     <string name="elyra_flag_drawer_suggestions">Saran laci</string>
     <string name="elyra_flag_az_rail">Bilah A-Z</string>

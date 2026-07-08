@@ -56,18 +56,30 @@ fun ElyraLabsPreferences(
             description = stringResource(id = R.string.elyra_restart_may_be_required),
         ) {
             ElyraFlag.entries.forEach { flag ->
+                val descriptionRes = flag.descriptionRes()
                 SwitchPreference(
                     adapter = store.preferenceFor(flag).getAdapter(),
                     label = stringResource(id = flag.labelRes()),
-                    description = if (flag.romOnly) {
-                        stringResource(id = R.string.elyra_rom_only_note)
-                    } else {
-                        null
+                    description = when {
+                        flag.romOnly -> stringResource(id = R.string.elyra_rom_only_note)
+                        descriptionRes != null -> stringResource(id = descriptionRes)
+                        else -> null
                     },
                 )
             }
         }
     }
+}
+
+/**
+ * Optional one-line description shown under a flag toggle. Only flags whose
+ * behavior benefits from a short explanation return a value; the rest return null
+ * and render as a plain toggle (ROM-only flags are annotated separately).
+ */
+@StringRes
+private fun ElyraFlag.descriptionRes(): Int? = when (this) {
+    ElyraFlag.BottomSearch -> R.string.elyra_flag_bottom_search_description
+    else -> null
 }
 
 @StringRes

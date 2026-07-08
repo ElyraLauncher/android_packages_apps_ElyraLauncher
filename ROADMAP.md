@@ -30,11 +30,23 @@ debug-only Elyra logging (`ElyraLog`, no telemetry/network), and add an opt-in
 emulator smoke test. See [VERIFYING.md](VERIFYING.md) for the baseline checklist
 and current PASSED/PENDING status. Privileged Quickstep/Recents stays ROM-only.
 
-## Stage 5-13: User Features
+## Stage 5: Bottom Search App Drawer
 
-Implement bottom search, categories, suggestions, A-Z rail, wallpaper-adaptive
-icons, icon and grid controls, large folders, edit tools, layout lock, layout
-history, motion, blur, glow, widgets, hidden apps, backup, and settings polish.
+Move the real All Apps search surface to the bottom of the drawer behind the
+`elyra_bottom_search` flag (default OFF). Reuses the existing Launcher3/Lawnchair
+All Apps model and search primitives — the search bar is re-anchored to the bottom
+of the drawer (above the gesture/nav inset), the lists fill from the top and clear
+the bar with extra bottom padding, and the search itself (focus, keyboard, live
+filtering, clear, app launch) is unchanged. When the flag is OFF the drawer is
+byte-for-byte the upstream top-search layout. See [VERIFYING.md](VERIFYING.md) for
+the Stage 5 drawer-search check. Categories, suggestions, and the A-Z rail remain
+deferred to Stage 6.
+
+## Stage 6-13: User Features
+
+Implement categories, suggestions, A-Z rail, wallpaper-adaptive icons, icon and
+grid controls, large folders, edit tools, layout lock, layout history, motion,
+blur, glow, widgets, hidden apps, backup, and settings polish.
 
 ## Stage 14: ROM Quickstep Path
 

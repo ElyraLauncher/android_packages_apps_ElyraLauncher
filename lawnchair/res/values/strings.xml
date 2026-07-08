@@ -948,6 +948,7 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_restart_may_be_required" tools:ignore="MissingTranslation">Restart may be required</string>
     <string name="elyra_rom_only_note" tools:ignore="MissingTranslation">Requires a ROM-integrated build</string>
     <string name="elyra_flag_bottom_search" tools:ignore="MissingTranslation">Bottom search</string>
+    <string name="elyra_flag_bottom_search_description" tools:ignore="MissingTranslation">Place the app drawer search bar near the bottom for easier reach.</string>
     <string name="elyra_flag_drawer_categories" tools:ignore="MissingTranslation">Drawer categories</string>
     <string name="elyra_flag_drawer_suggestions" tools:ignore="MissingTranslation">Drawer suggestions</string>
     <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>

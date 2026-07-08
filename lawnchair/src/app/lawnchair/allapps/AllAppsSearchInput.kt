@@ -18,6 +18,7 @@ import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.isInvisible
@@ -53,6 +54,7 @@ import com.android.launcher3.allapps.SearchUiManager
 import com.android.launcher3.allapps.search.AllAppsSearchBarController
 import com.android.launcher3.search.SearchCallback
 import com.android.launcher3.util.Themes
+import com.elyra.launcher.allapps.ElyraBottomSearch
 import com.patrykmichalik.opto.core.firstBlocking
 import java.util.Locale
 import kotlin.math.max
@@ -77,6 +79,14 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     private val qsbMarginTopAdjusting = resources.getDimensionPixelSize(R.dimen.qsb_margin_top_adjusting)
     private val allAppsSearchVerticalOffset = resources.getDimensionPixelSize(R.dimen.all_apps_search_vertical_offset)
+
+    // Elyra: when the bottom-search flag is on, this search surface is anchored to
+    // the bottom of the drawer (above the nav/gesture inset) instead of the top.
+    // The read mirrors ActivityAllAppsContainerView#isElyraBottomSearch() so both
+    // sides agree; when off, all positioning below is the unchanged upstream path.
+    private val bottomAligned = ElyraBottomSearch.isEnabled(context)
+    private val bottomSearchInsetMargin =
+        resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium)
 
     private val launcher = context.launcher
     private val searchBarController = AllAppsSearchBarController()
@@ -400,6 +410,23 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     override fun setInsets(insets: Rect) {
+        // Bottom search only applies when this bar is a child of the RelativeLayout
+        // All Apps container (the drawer). In the taskbar/floating case the parent is
+        // the drag layer, so we fall through to the unchanged upstream positioning.
+        val relativeParams = layoutParams as? RelativeLayout.LayoutParams
+        if (bottomAligned && relativeParams != null) {
+            // Anchor to the bottom of the drawer, held above the gesture/nav bar by
+            // the system bottom inset plus a comfortable margin. The window uses
+            // adjustPan, so a focused input is panned above the IME by the system.
+            relativeParams.apply {
+                removeRule(RelativeLayout.ALIGN_PARENT_TOP)
+                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                topMargin = 0
+                bottomMargin = if (isInvisible) 0 else insets.bottom + bottomSearchInsetMargin
+            }
+            requestLayout()
+            return
+        }
         (layoutParams as MarginLayoutParams).apply {
             topMargin = if (isInvisible) {
                 insets.top - allAppsSearchVerticalOffset
@@ -412,7 +439,13 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
-        offsetTopAndBottom(allAppsSearchVerticalOffset)
+        // The vertical offset lifts the top-anchored bar into the header; it must
+        // not be applied when the bar is anchored to the bottom of the drawer. The
+        // RelativeLayout.LayoutParams check keeps the taskbar/floating case upstream.
+        val bottomAnchored = bottomAligned && layoutParams is RelativeLayout.LayoutParams
+        if (!bottomAnchored) {
+            offsetTopAndBottom(allAppsSearchVerticalOffset)
+        }
     }
 
     override fun getEditText() = input

@@ -95,6 +95,7 @@ import com.android.launcher3.views.BaseDragLayer;
 import com.android.launcher3.views.RecyclerViewFastScroller;
 import com.android.launcher3.views.ScrimView;
 import com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip;
+import com.elyra.launcher.allapps.ElyraBottomSearch;
 import com.patrykmichalik.opto.core.PreferenceExtensionsKt;
 
 import java.util.ArrayList;
@@ -183,6 +184,14 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     protected View mSearchContainer;
     protected SearchUiManager mSearchUiManager;
     protected boolean mUsingTabs;
+
+    /**
+     * Elyra: when {@code true}, the app-drawer search surface is anchored to the
+     * bottom of the drawer instead of the top (feature flag
+     * {@code elyra_bottom_search}). Read once at construction; when {@code false}
+     * every layout path below behaves exactly like upstream.
+     */
+    private final boolean mElyraBottomSearch;
     protected RecyclerViewFastScroller mTouchHandler;
 
     /**
@@ -226,6 +235,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mAllAppsStore = new AllAppsStore<>(mActivityContext);
         pref2 = PreferenceManager2.getInstance(mActivityContext);
         pref = PreferenceManager.getInstance(mActivityContext);
+        mElyraBottomSearch = ElyraBottomSearch.isEnabled(context);
         mScrimColor = ColorTokens.AllAppsScrimColor.resolveColor(context);
         mHeaderThreshold = getResources().getDimensionPixelSize(
                 R.dimen.dynamic_grid_cell_border_spacing);
@@ -676,7 +686,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 mAllAppsStore.getRecyclerViewPool());
         setupHeader();
 
-        if (isSearchBarFloating()) {
+        if (isSearchBarFloating() || isElyraBottomSearch()) {
             // Keep the scroller above the search bar.
             RelativeLayout.LayoutParams scrollerLayoutParams = (LayoutParams) mFastScroller.getLayoutParams();
             scrollerLayoutParams.bottomMargin = mSearchContainer.getHeight()
@@ -762,7 +772,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         removeCustomRules(getSearchRecyclerView());
         if (!isSearchSupported()) {
             layoutWithoutSearchContainer(rvContainer, showTabs);
-        } else if (isSearchBarFloating()) {
+        } else if (isSearchBarFloating() || isElyraBottomSearch()) {
+            // Bottom search: the search bar sits at the bottom, so the lists fill
+            // from the top and clear the bar via the extra bottom padding applied in
+            // AdapterHolder#applyPadding().
             alignParentTop(rvContainer, showTabs);
             alignParentTop(getSearchRecyclerView(), /* tabs= */ false);
         } else {
@@ -796,7 +809,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         removeCustomRules(mHeader);
         if (!isSearchSupported()) {
             layoutWithoutSearchContainer(mHeader, false /* includeTabsMargin */);
-        } else if (isSearchBarFloating()) {
+        } else if (isSearchBarFloating() || isElyraBottomSearch()) {
             alignParentTop(mHeader, false /* includeTabsMargin */);
         } else {
             layoutBelowSearchContainer(mHeader, false /* includeTabsMargin */);
@@ -856,6 +869,17 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
      */
     protected boolean isSearchBarFloating() {
         return mSearchUiDelegate.isSearchBarFloating();
+    }
+
+    /**
+     * Elyra: whether the app-drawer search surface is anchored to the bottom of the
+     * drawer (feature flag {@code elyra_bottom_search}). Unlike
+     * {@link #isSearchBarFloating()} the search container stays a child of this view
+     * (not the drag layer); only its anchor and the sibling layout rules change, so
+     * the real All Apps model and search primitives are untouched.
+     */
+    public boolean isElyraBottomSearch() {
+        return mElyraBottomSearch;
     }
 
     /**
@@ -1680,7 +1704,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                         bottomOffset = mPrivateSpaceBottomExtraSpace;
                     }
                 }
-                if (isSearchBarFloating()) {
+                if (isSearchBarFloating() || isElyraBottomSearch()) {
                     bottomOffset += mSearchContainer.getHeight();
                 }
                 mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,

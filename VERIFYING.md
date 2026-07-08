@@ -198,6 +198,55 @@ context/theme AppCompat-compatible for the affected view subtree (e.g. a
 theme to AppCompat. Until then the warning is accepted as non-fatal and must not be
 silenced by changing the base classes.
 
+## Stage 5: Bottom Search App Drawer
+
+Stage 5 moves the real All Apps search surface to the bottom of the drawer behind
+the `elyra_bottom_search` flag (default OFF). It reuses the existing
+Launcher3/Lawnchair All Apps model and search primitives; only the search bar's
+anchor and the sibling layout rules change. The gate lives in one place
+(`ElyraBottomSearch.isEnabled`), read by `ActivityAllAppsContainerView` and
+`AllAppsSearchInput`.
+
+| Check | How verified | Status |
+| --- | --- | --- |
+| Universal debug APK builds | `assembleLawnWithQuickstepGithubDebug` in CI | PENDING locally (no SDK); CI is source of truth |
+| Debug lint | `lintLawnWithQuickstepGithubDebug` in CI | PENDING locally; CI is source of truth |
+| Flag OFF preserves upstream drawer | Static review — every bottom-search branch is `false` when the flag is off, so the top-search layout is unchanged | PASSED (static) |
+| Flag ON anchors search to bottom | Static review — `alignParentTop` for lists/header + `ALIGN_PARENT_BOTTOM` for the bar + RV bottom padding | PASSED (static) |
+| Search stays real (filter + launch) | Static review — search controller/algorithm/adapter untouched; only positioning changed | PASSED (static) |
+| Keyboard shows above the bottom bar | Manual device — window uses `adjustPan`, focused input is panned above the IME | PENDING |
+| Insets: bar rests above gesture/nav bar | Manual device — `setInsets` bottom margin = system bottom inset + `elyra_spacing_medium` | PENDING |
+| Rotation (portrait/landscape) | Manual device | PENDING |
+| No crash on focus/type/clear/launch | Manual device / emulator smoke | PENDING |
+
+### Manual Stage 5 smoke steps
+
+1. Install the universal debug APK and set Elyra as the default Home app.
+2. Open the app drawer with `elyra_bottom_search` **OFF** — the search bar is at the
+   top exactly as upstream (baseline confirmation).
+3. Open **Settings → Elyra Labs** and enable **Bottom search**. Return Home.
+4. Open the drawer again — the search bar is now anchored at the bottom, above the
+   gesture/navigation bar, visually attached to the drawer.
+5. Tap the search bar — it focuses and the keyboard opens without covering the input.
+6. Type an installed app name — the app list filters to real results.
+7. Launch an app from the results — it starts the real app.
+8. Clear the query (the clear button) — results reset to the full drawer.
+9. Rotate the device (if supported) and repeat 5–7.
+10. Press Back — the keyboard/search dismisses before the drawer closes.
+
+Capture logcat (`adb logcat`) during the run and confirm, for
+`com.elyra.launcher`: no `FATAL EXCEPTION` / `AndroidRuntime` crash, and no repeated
+All Apps / search inflation or keyboard/insets exceptions.
+
+### Stage 5 tests
+
+No JVM unit-test source set is wired for the app module (`testLawnWithQuickstep…`
+runs zero app tests today), and the drawer/search path is a UI flow that requires an
+instrumentation host. Automated Stage 5 coverage is therefore **PENDING** an
+instrumentation/emulator harness; it is not faked. The flag's default-OFF contract is
+guarded at construction by the `ElyraFeatureFlags` key/default invariant, and the OFF
+path is verified statically (every bottom-search branch is inert when the flag is off).
+
 ## Contamination Checks
 
 Before release:
