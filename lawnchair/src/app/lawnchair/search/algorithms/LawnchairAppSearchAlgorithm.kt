@@ -21,7 +21,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class LawnchairAppSearchAlgorithm(context: Context) : LawnchairSearchAlgorithm(context) {
+/**
+ * Local installed-app search. Matches the query against the installed app list (and
+ * shortcuts for a single result); it never runs a network/provider search.
+ *
+ * @param includeMarketSearch when `false`, the trailing Play Store "search more apps"
+ *   row is omitted. Elyra's local-first drawer search sets this off so no store/
+ *   provider row appears unless the user opts into drawer web results.
+ */
+class LawnchairAppSearchAlgorithm(
+    context: Context,
+    private val includeMarketSearch: Boolean = true,
+) : LawnchairSearchAlgorithm(context) {
 
     private val appState = LauncherAppState.getInstance(context)
     private val resultHandler = Handler(Executors.MAIN_EXECUTOR.looper)
@@ -100,7 +111,9 @@ class LawnchairAppSearchAlgorithm(context: Context) : LawnchairSearchAlgorithm(c
             searchTargets.add(searchTargetFactory.createHeaderTarget(SPACE))
         }
 
-        searchTargetFactory.createMarketSearchTarget(query)?.let { searchTargets.add(it) }
+        if (includeMarketSearch) {
+            searchTargetFactory.createMarketSearchTarget(query)?.let { searchTargets.add(it) }
+        }
 
         setFirstItemQuickLaunch(searchTargets)
         val adapterItems = transformSearchResults(searchTargets)

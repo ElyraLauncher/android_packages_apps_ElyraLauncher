@@ -207,13 +207,26 @@ anchor and the sibling layout rules change. The gate lives in one place
 (`ElyraBottomSearch.isEnabled`), read by `ActivityAllAppsContainerView` and
 `AllAppsSearchInput`.
 
+**Local-first search.** When bottom search is ON, the drawer runs local
+installed-app search only (`LawnchairAppSearchAlgorithm` with the Play Store row
+suppressed): no web suggestions, no search-provider row, no "more apps"/Play Store
+row, and no network/provider search. Optional web/provider results are gated behind
+the `elyra_drawer_web_results` flag (default OFF); when it is ON the drawer honors
+the base search-algorithm preference (which may include the provider algorithms).
+The provider implementations (`LawnchairLocalSearchAlgorithm`, the web/contacts/
+files/settings providers) are **not removed** — they are preserved for a future
+home/global search surface, and only skipped for the drawer by default. When bottom
+search is OFF the base search-algorithm preference is honored unchanged.
+
 | Check | How verified | Status |
 | --- | --- | --- |
 | Universal debug APK builds | `assembleLawnWithQuickstepGithubDebug` in CI | PENDING locally (no SDK); CI is source of truth |
 | Debug lint | `lintLawnWithQuickstepGithubDebug` in CI | PENDING locally; CI is source of truth |
 | Flag OFF preserves upstream drawer | Static review — every bottom-search branch is `false` when the flag is off, so the top-search layout is unchanged | PASSED (static) |
 | Flag ON anchors search to bottom | Static review — `alignParentTop` for lists/header + `ALIGN_PARENT_BOTTOM` for the bar + RV bottom padding | PASSED (static) |
-| Search stays real (filter + launch) | Static review — search controller/algorithm/adapter untouched; only positioning changed | PASSED (static) |
+| Search stays real (filter + launch) | Static review — search controller/adapter untouched; only algorithm selection + positioning changed | PASSED (static) |
+| Drawer is local-first (no web/store rows) | Static review — bottom search forces `LawnchairAppSearchAlgorithm` with `includeMarketSearch = false` when `elyra_drawer_web_results` is OFF | PASSED (static) |
+| Web/provider rows only when opted in | Static review — `elyra_drawer_web_results` (default OFF) gates the provider path; providers preserved, not removed | PASSED (static) |
 | Keyboard shows above the bottom bar | Manual device — window uses `adjustPan`, focused input is panned above the IME | PENDING |
 | Insets: bar rests above gesture/nav bar | Manual device — `setInsets` bottom margin = system bottom inset + `elyra_spacing_medium` | PENDING |
 | Rotation (portrait/landscape) | Manual device | PENDING |
@@ -228,11 +241,16 @@ anchor and the sibling layout rules change. The gate lives in one place
 4. Open the drawer again — the search bar is now anchored at the bottom, above the
    gesture/navigation bar, visually attached to the drawer.
 5. Tap the search bar — it focuses and the keyboard opens without covering the input.
-6. Type an installed app name — the app list filters to real results.
+6. Type `chrome` — the installed Chrome/Chrome Beta app result appears, with **no**
+   "Dari web" / "From web" row, **no** "Cari di Google" / "Search Google" row, and
+   **no** "Cari lebih banyak aplikasi" / Play Store "more apps" row.
 7. Launch an app from the results — it starts the real app.
 8. Clear the query (the clear button) — results reset to the full drawer.
 9. Rotate the device (if supported) and repeat 5–7.
 10. Press Back — the keyboard/search dismisses before the drawer closes.
+11. (Optional) Enable **Web results in drawer search** in Elyra Labs and repeat
+    step 6 — provider/web rows may now appear below the local app results (this
+    requires the base search-algorithm preference to include a provider algorithm).
 
 Capture logcat (`adb logcat`) during the run and confirm, for
 `com.elyra.launcher`: no `FATAL EXCEPTION` / `AndroidRuntime` crash, and no repeated
@@ -243,9 +261,12 @@ All Apps / search inflation or keyboard/insets exceptions.
 No JVM unit-test source set is wired for the app module (`testLawnWithQuickstep…`
 runs zero app tests today), and the drawer/search path is a UI flow that requires an
 instrumentation host. Automated Stage 5 coverage is therefore **PENDING** an
-instrumentation/emulator harness; it is not faked. The flag's default-OFF contract is
-guarded at construction by the `ElyraFeatureFlags` key/default invariant, and the OFF
-path is verified statically (every bottom-search branch is inert when the flag is off).
+instrumentation/emulator harness; it is not faked. Both flags' default-OFF contract
+(`elyra_bottom_search`, `elyra_drawer_web_results`) is guarded at construction by the
+`ElyraFeatureFlags` key/default invariant, and the paths are verified statically: the
+bottom-search branches are inert when the flag is off, and drawer search resolves to
+`LawnchairAppSearchAlgorithm` with the market row suppressed whenever bottom search is
+on and drawer web results are off.
 
 ## Contamination Checks
 

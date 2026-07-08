@@ -352,7 +352,12 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     override fun initializeSearch(appsView: ActivityAllAppsContainerView<*>) {
         apps = appsView.searchResultList as LawnchairAlphabeticalAppsList<*>
         this.appsView = appsView
-        val algorithm = LawnchairSearchAlgorithm.create(context)
+        // Elyra bottom search is a local app drawer search: unless the user opts into
+        // drawer web results, force local installed-app search so no web/provider/store
+        // rows appear and no network/provider search runs. When bottom search is off,
+        // the base search-algorithm preference is honored unchanged.
+        val localAppsOnly = bottomAligned && !ElyraBottomSearch.webResultsEnabled(context)
+        val algorithm = LawnchairSearchAlgorithm.create(context, localAppsOnly)
         this.searchAlgorithm = algorithm
         searchBarController.initialize(
             algorithm,

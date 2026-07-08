@@ -37,6 +37,7 @@ enum class ElyraFlag(
     val romOnly: Boolean = false,
 ) {
     BottomSearch(key = "elyra_bottom_search", default = false),
+    DrawerWebResults(key = "elyra_drawer_web_results", default = false),
     DrawerCategories(key = "elyra_drawer_categories", default = false),
     DrawerSuggestions(key = "elyra_drawer_suggestions", default = false),
     AzRail(key = "elyra_az_rail", default = false),

@@ -79,12 +79,14 @@ fun ElyraLabsPreferences(
 @StringRes
 private fun ElyraFlag.descriptionRes(): Int? = when (this) {
     ElyraFlag.BottomSearch -> R.string.elyra_flag_bottom_search_description
+    ElyraFlag.DrawerWebResults -> R.string.elyra_flag_drawer_web_results_description
     else -> null
 }
 
 @StringRes
 private fun ElyraFlag.labelRes(): Int = when (this) {
     ElyraFlag.BottomSearch -> R.string.elyra_flag_bottom_search
+    ElyraFlag.DrawerWebResults -> R.string.elyra_flag_drawer_web_results
     ElyraFlag.DrawerCategories -> R.string.elyra_flag_drawer_categories
     ElyraFlag.DrawerSuggestions -> R.string.elyra_flag_drawer_suggestions
     ElyraFlag.AzRail -> R.string.elyra_flag_az_rail

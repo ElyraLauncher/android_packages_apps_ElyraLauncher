@@ -39,4 +39,15 @@ object ElyraBottomSearch {
     @JvmStatic
     fun isEnabled(context: Context): Boolean =
         ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.BottomSearch)
+
+    /**
+     * Whether optional web/provider results (web suggestions, the search-provider
+     * row, the Play Store "more apps" row) may appear below local app results in the
+     * drawer. Defaults OFF: the drawer is local-installed-apps first and runs no
+     * network/provider search unless the user explicitly opts in. The provider
+     * implementations are preserved for a future home/global search surface.
+     */
+    @JvmStatic
+    fun webResultsEnabled(context: Context): Boolean =
+        ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerWebResults)
 }

@@ -217,7 +217,19 @@ sealed class LawnchairSearchAlgorithm(
             return true
         }
 
-        fun create(context: Context): LawnchairSearchAlgorithm {
+        /**
+         * @param localAppsOnly when `true`, always use local installed-app search and
+         *   omit the Play Store row, ignoring the global search-algorithm preference.
+         *   Elyra's bottom drawer search passes this so drawer search is local-first
+         *   and runs no web/provider/network search unless the user opts in; the
+         *   provider algorithms below are preserved for a future home/global search.
+         */
+        @JvmOverloads
+        fun create(context: Context, localAppsOnly: Boolean = false): LawnchairSearchAlgorithm {
+            if (localAppsOnly) {
+                return LawnchairAppSearchAlgorithm(context, includeMarketSearch = false)
+            }
+
             val prefs = PreferenceManager2.getInstance(context)
             val searchAlgorithm = prefs.searchAlgorithm.firstBlocking()
 
