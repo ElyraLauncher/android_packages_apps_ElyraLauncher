@@ -86,6 +86,23 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_drawer_tab_categories">Kategori</string>
     <string name="elyra_flag_az_rail">Bilah A-Z</string>
     <string name="elyra_flag_az_rail_description">Tampilkan bilah gulir cepat di laci aplikasi.</string>
+    <string name="elyra_flag_drawer_color_search">Pencarian warna aplikasi</string>
+    <string name="elyra_flag_drawer_color_search_description">Tampilkan tombol filter warna di bilah pencarian laci aplikasi.</string>
+    <string name="elyra_color_filter">Filter warna aplikasi</string>
+    <string name="elyra_color_filter_clear">Hapus</string>
+    <string name="elyra_color_red">Merah</string>
+    <string name="elyra_color_orange">Oranye</string>
+    <string name="elyra_color_yellow">Kuning</string>
+    <string name="elyra_color_green">Hijau</string>
+    <string name="elyra_color_teal">Toska</string>
+    <string name="elyra_color_blue">Biru</string>
+    <string name="elyra_color_purple">Ungu</string>
+    <string name="elyra_color_pink">Merah muda</string>
+    <string name="elyra_color_brown">Cokelat</string>
+    <string name="elyra_color_gray">Abu-abu</string>
+    <string name="elyra_color_black">Hitam</string>
+    <string name="elyra_color_white">Putih</string>
+    <string name="elyra_color_multicolor">Multiwarna</string>
     <!-- Label kategori laci lokal Elyra (Stage 6, diperluas di Stage 6.5). -->
     <string name="elyra_category_communication">Komunikasi</string>
     <string name="elyra_category_social">Sosial</string>

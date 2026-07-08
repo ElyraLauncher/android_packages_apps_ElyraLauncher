@@ -83,6 +83,7 @@ private fun ElyraFlag.descriptionRes(): Int? = when (this) {
     ElyraFlag.DrawerCategories -> R.string.elyra_flag_drawer_categories_description
     ElyraFlag.DrawerSuggestions -> R.string.elyra_flag_drawer_suggestions_description
     ElyraFlag.AzRail -> R.string.elyra_flag_az_rail_description
+    ElyraFlag.DrawerColorSearch -> R.string.elyra_flag_drawer_color_search_description
     else -> null
 }
 
@@ -93,6 +94,7 @@ private fun ElyraFlag.labelRes(): Int = when (this) {
     ElyraFlag.DrawerCategories -> R.string.elyra_flag_drawer_categories
     ElyraFlag.DrawerSuggestions -> R.string.elyra_flag_drawer_suggestions
     ElyraFlag.AzRail -> R.string.elyra_flag_az_rail
+    ElyraFlag.DrawerColorSearch -> R.string.elyra_flag_drawer_color_search
     ElyraFlag.WallpaperThemedIcons -> R.string.elyra_flag_wallpaper_themed_icons
     ElyraFlag.IconResize -> R.string.elyra_flag_icon_resize
     ElyraFlag.LargeFolders -> R.string.elyra_flag_large_folders

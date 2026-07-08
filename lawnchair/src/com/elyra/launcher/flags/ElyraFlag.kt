@@ -41,6 +41,7 @@ enum class ElyraFlag(
     DrawerCategories(key = "elyra_drawer_categories", default = false),
     DrawerSuggestions(key = "elyra_drawer_suggestions", default = false),
     AzRail(key = "elyra_az_rail", default = false),
+    DrawerColorSearch(key = "elyra_drawer_color_search", default = false),
     WallpaperThemedIcons(key = "elyra_wallpaper_themed_icons", default = false),
     IconResize(key = "elyra_icon_resize", default = false),
     LargeFolders(key = "elyra_large_folders", default = false),

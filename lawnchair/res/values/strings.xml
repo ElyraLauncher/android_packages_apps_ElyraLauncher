@@ -959,6 +959,23 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_drawer_tab_categories" tools:ignore="MissingTranslation">Categories</string>
     <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>
     <string name="elyra_flag_az_rail_description" tools:ignore="MissingTranslation">Show a fast scroll rail in the app drawer.</string>
+    <string name="elyra_flag_drawer_color_search" tools:ignore="MissingTranslation">App color search</string>
+    <string name="elyra_flag_drawer_color_search_description" tools:ignore="MissingTranslation">Show a color filter button in the app drawer search bar.</string>
+    <string name="elyra_color_filter" tools:ignore="MissingTranslation">App color filter</string>
+    <string name="elyra_color_filter_clear" tools:ignore="MissingTranslation">Clear</string>
+    <string name="elyra_color_red" tools:ignore="MissingTranslation">Red</string>
+    <string name="elyra_color_orange" tools:ignore="MissingTranslation">Orange</string>
+    <string name="elyra_color_yellow" tools:ignore="MissingTranslation">Yellow</string>
+    <string name="elyra_color_green" tools:ignore="MissingTranslation">Green</string>
+    <string name="elyra_color_teal" tools:ignore="MissingTranslation">Teal</string>
+    <string name="elyra_color_blue" tools:ignore="MissingTranslation">Blue</string>
+    <string name="elyra_color_purple" tools:ignore="MissingTranslation">Purple</string>
+    <string name="elyra_color_pink" tools:ignore="MissingTranslation">Pink</string>
+    <string name="elyra_color_brown" tools:ignore="MissingTranslation">Brown</string>
+    <string name="elyra_color_gray" tools:ignore="MissingTranslation">Gray</string>
+    <string name="elyra_color_black" tools:ignore="MissingTranslation">Black</string>
+    <string name="elyra_color_white" tools:ignore="MissingTranslation">White</string>
+    <string name="elyra_color_multicolor" tools:ignore="MissingTranslation">Multicolor</string>
     <!-- Elyra local drawer category labels (Stage 6, expanded in Stage 6.5). -->
     <string name="elyra_category_communication" tools:ignore="MissingTranslation">Communication</string>
     <string name="elyra_category_social" tools:ignore="MissingTranslation">Social</string>

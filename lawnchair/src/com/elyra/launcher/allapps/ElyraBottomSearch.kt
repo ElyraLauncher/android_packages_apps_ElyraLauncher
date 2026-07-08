@@ -50,4 +50,8 @@ object ElyraBottomSearch {
     @JvmStatic
     fun webResultsEnabled(context: Context): Boolean =
         ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerWebResults)
+
+    @JvmStatic
+    fun colorSearchEnabled(context: Context): Boolean =
+        ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerColorSearch)
 }

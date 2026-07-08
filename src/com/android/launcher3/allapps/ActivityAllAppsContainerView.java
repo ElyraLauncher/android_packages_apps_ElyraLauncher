@@ -215,6 +215,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private float mBottomSheetAlpha = 1f;
     private boolean mForceBottomSheetVisible;
     private int mTabsProtectionAlpha;
+    private int mElyraBottomSearchImeInset;
 
     private final PreferenceManager2 pref2;
     private final PreferenceManager pref;
@@ -884,6 +885,15 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
      */
     public boolean isElyraBottomSearch() {
         return mElyraBottomSearch;
+    }
+
+    public void setElyraBottomSearchImeInset(int imeInset) {
+        int boundedInset = Math.max(0, imeInset);
+        if (mElyraBottomSearchImeInset == boundedInset) {
+            return;
+        }
+        mElyraBottomSearchImeInset = boundedInset;
+        mAH.forEach(AdapterHolder::applyPadding);
     }
 
     /**
@@ -1718,6 +1728,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 }
                 if (isSearchBarFloating() || isElyraBottomSearch()) {
                     bottomOffset += mSearchContainer.getHeight();
+                    if (isElyraBottomSearch()) {
+                        bottomOffset += mElyraBottomSearchImeInset;
+                    }
                 }
                 mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,
                         mPadding.bottom + bottomOffset);
