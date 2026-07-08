@@ -1,75 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2009 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+
+<!-- Universal split-display default: generic intent hotseat only, with no
+     device-specific hardcoded packages so the layout is valid on any ROM. -->
 <favorites xmlns:launcher="http://schemas.android.com/apk/res-auto/com.android.launcher3">
-    <favorite
-        launcher:className="com.google.android.dialer.extensions.GoogleDialtactsActivity"
+
+    <!-- Hotseat: Dialer, Messaging, Browser, Camera (generic intents) -->
+    <resolve
         launcher:container="-101"
-        launcher:packageName="com.google.android.dialer"
         launcher:screen="0"
         launcher:x="0"
-        launcher:y="0"/>
-    <favorite
-        launcher:className="com.google.android.apps.messaging.ui.ConversationListActivity"
+        launcher:y="0" >
+        <favorite launcher:uri="#Intent;action=android.intent.action.DIAL;end" />
+        <favorite launcher:uri="tel:123" />
+        <favorite launcher:uri="#Intent;action=android.intent.action.CALL_BUTTON;end" />
+    </resolve>
+
+    <resolve
         launcher:container="-101"
-        launcher:packageName="com.google.android.apps.messaging"
         launcher:screen="1"
         launcher:x="1"
-        launcher:y="0"/>
-    <favorite
-        launcher:className="com.google.android.apps.chrome.Main"
+        launcher:y="0" >
+        <favorite launcher:uri="#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_MESSAGING;end" />
+        <favorite launcher:uri="sms:" />
+        <favorite launcher:uri="smsto:" />
+        <favorite launcher:uri="mms:" />
+        <favorite launcher:uri="mmsto:" />
+    </resolve>
+
+    <resolve
         launcher:container="-101"
-        launcher:packageName="com.android.chrome"
         launcher:screen="2"
         launcher:x="2"
-        launcher:y="0"/>
-    <favorite
-        launcher:className="com.android.camera.CameraLauncher"
+        launcher:y="0" >
+        <favorite launcher:uri="#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_BROWSER;end" />
+        <favorite launcher:uri="http://www.example.com/" />
+    </resolve>
+
+    <resolve
         launcher:container="-101"
-        launcher:packageName="com.google.android.GoogleCamera"
         launcher:screen="3"
         launcher:x="3"
-        launcher:y="0"/>
-    <favorite
-        launcher:className="com.android.vending.AssetBrowserActivity"
-        launcher:packageName="com.android.vending"
-        launcher:screen="0"
-        launcher:x="0"
-        launcher:y="4"/>
-    <favorite
-        launcher:className="com.google.android.gm.ConversationListActivityGmail"
-        launcher:packageName="com.google.android.gm"
-        launcher:screen="0"
-        launcher:x="1"
-        launcher:y="4"/>
-    <favorite
-        launcher:className="com.google.android.apps.photos.home.HomeActivity"
-        launcher:packageName="com.google.android.apps.photos"
-        launcher:screen="0"
-        launcher:x="2"
-        launcher:y="4"/>
-    <favorite
-        launcher:className="com.google.android.youtube.app.honeycomb.Shell$HomeActivity"
-        launcher:packageName="com.google.android.youtube"
-        launcher:screen="0"
-        launcher:x="3"
-        launcher:y="4"/>
-    <appwidget
-        launcher:className="com.google.android.apps.search.assistant.verticals.snapshot.widgets.weather.WeatherWidget_Receiver"
-        launcher:packageName="com.google.android.googlequicksearchbox"
-        launcher:screen="1"
-        launcher:spanX="4"
-        launcher:spanY="3"
-        launcher:x="0"
-        launcher:y="0">
-        <extra
-            launcher:key="is_default_appwidget"
-            launcher:value="true"/>
-    </appwidget>
-    <appwidget
-        launcher:className="com.android.calendar.widget.CalendarAppWidgetProvider"
-        launcher:packageName="com.google.android.calendar"
-        launcher:screen="1"
-        launcher:spanX="4"
-        launcher:spanY="2"
-        launcher:x="0"
-        launcher:y="3"/>
+        launcher:y="0" >
+        <favorite launcher:uri="#Intent;action=android.media.action.STILL_IMAGE_CAMERA;end" />
+        <favorite launcher:uri="#Intent;action=android.intent.action.CAMERA_BUTTON;end" />
+    </resolve>
+
 </favorites>

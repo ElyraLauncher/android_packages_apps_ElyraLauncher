@@ -134,6 +134,51 @@ across a relaunch, and open the About and Backup & restore screens.
 The `Elyra` logcat tag is emitted only by debug builds (see `ElyraLog`); it carries
 no telemetry and performs no network or file upload.
 
+### Logcat smoke criteria
+
+Capture a clean-install run and inspect it:
+
+```sh
+adb logcat -c
+adb logcat -v time > elyra-smoke-logcat.txt   # run through: Home, Settings, drawer, folder
+```
+
+A run PASSES when, for `com.elyra.launcher`:
+
+- **No** `FATAL EXCEPTION` / `AndroidRuntime` crash for the launcher process.
+- **No** default-layout `Favorite not found` for common absent apps on a clean
+  install — the universal default layouts use only generic intent `<resolve>`
+  fallbacks (dialer, messaging, browser, camera, market, settings) with no
+  device-specific hardcoded packages, so a bare ROM does not log missing favorites.
+- **No** hotseat out-of-bounds or `LoaderCursor: Item position overlap` from the
+  shipped default layout on a clean install.
+- The `Displayed .../LawnchairLauncher: +…` first-frame time is **recorded as
+  observed** (emulator cold starts are slow; record the real number, never a faked
+  target).
+
+The following are **non-fatal and acceptable**:
+
+- Emulator OpenGL / `FrameEvents` / `eglMakeCurrent` noise unrelated to launcher
+  correctness.
+- `DefaultLayoutParser: No preference or single system activity found` for a
+  generic `<resolve>` whose intent has zero or several handlers on the device —
+  this is expected `<resolve>` behavior, not a layout defect.
+
+### Known non-fatal baseline log noise
+
+`ThemeUtils: View class app.lawnchair.views.CustomButton / …smartspace.DoubleShadowTextView /
+…smartspace.IcuDateTextView is an AppCompat widget that can only be used with a
+Theme.AppCompat theme` is **inherited upstream debt**, not an Elyra regression, and
+is non-fatal — the views render correctly. Root cause: the launcher activity theme
+chain `AppTheme → LauncherTheme → BaseLauncherTheme` parents the platform themes
+`Theme.DeviceDefault.Light` / `Theme.Material.Light` (as launchers do, for wallpaper
+and system integration), while those custom views extend AppCompat widgets. A
+correct fix (re-theming the widgets' inflation context or migrating the widget base
+classes) changes rendered colors on the Home surface and must be validated on a
+device; it is deliberately deferred to a dedicated theming pass rather than changed
+blind, so the Home theme is not destabilized. It must not be silenced without a real
+theme fix.
+
 ## Contamination Checks
 
 Before release:
