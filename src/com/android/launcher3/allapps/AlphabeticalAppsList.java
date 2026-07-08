@@ -39,6 +39,7 @@ import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.util.LabelComparator;
 import com.android.launcher3.views.ActivityContext;
+import com.elyra.launcher.drawer.ElyraAppCategory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -397,6 +398,28 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
         position = addAppsWithSections(split.get(false), position);
 
         return position;
+    }
+
+    /** Returns true when Elyra's drawer-only All/Categories tabs should be shown. */
+    public boolean isElyraCategoryTabsEnabled() {
+        return false;
+    }
+
+    /** Returns true when the current Elyra drawer tab is showing category cards. */
+    public boolean isElyraCategoryCardsMode() {
+        return false;
+    }
+
+    /** Switches Elyra drawer categories back to the normal All Apps grid. */
+    public void showElyraAllApps() {
+    }
+
+    /** Switches Elyra drawer categories to the category card grid. */
+    public void showElyraCategoryCards() {
+    }
+
+    /** Opens the requested category as a filtered real All Apps grid. */
+    public void selectElyraCategory(ElyraAppCategory category) {
     }
 
     protected int addAppsWithSections(List<AppInfo> appList, int startPosition) {

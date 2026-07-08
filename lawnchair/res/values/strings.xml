@@ -955,6 +955,8 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_flag_drawer_categories_description" tools:ignore="MissingTranslation">Group apps into local categories.</string>
     <string name="elyra_flag_drawer_suggestions" tools:ignore="MissingTranslation">Drawer suggestions</string>
     <string name="elyra_flag_drawer_suggestions_description" tools:ignore="MissingTranslation">Show local app suggestions in the app drawer.</string>
+    <string name="elyra_drawer_tab_all" tools:ignore="MissingTranslation">All</string>
+    <string name="elyra_drawer_tab_categories" tools:ignore="MissingTranslation">Categories</string>
     <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>
     <string name="elyra_flag_az_rail_description" tools:ignore="MissingTranslation">Show a fast scroll rail in the app drawer.</string>
     <!-- Elyra local drawer category labels (Stage 6, expanded in Stage 6.5). -->

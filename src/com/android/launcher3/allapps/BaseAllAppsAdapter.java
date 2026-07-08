@@ -26,13 +26,20 @@ import static com.android.launcher3.allapps.UserProfileManager.STATE_DISABLED;
 import static com.android.launcher3.allapps.UserProfileManager.STATE_ENABLED;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
+import android.view.Gravity;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -50,6 +57,7 @@ import com.android.launcher3.model.data.AppInfo;
 import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
+import com.elyra.launcher.drawer.ElyraCategoryCardModel;
 
 /**
  * Adapter for all the apps.
@@ -79,7 +87,11 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
     public static final int VIEW_TYPE_FOLDER = 1 << 9;
 
-    public static final int NEXT_ID = 10;
+    public static final int VIEW_TYPE_ELYRA_CATEGORY_TABS = 1 << 23;
+    public static final int VIEW_TYPE_ELYRA_CATEGORY_CARD = 1 << 24;
+    public static final int VIEW_TYPE_ELYRA_CATEGORY_HEADER = 1 << 25;
+
+    public static final int NEXT_ID = 26;
 
     // Common view type masks
     public static final int VIEW_TYPE_MASK_DIVIDER = VIEW_TYPE_ALL_APPS_DIVIDER;
@@ -123,6 +135,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         
         public FolderInfo folderInfo = new FolderInfo();
 
+        public ElyraCategoryCardModel.CategoryCard elyraCategoryCard = null;
+        public boolean elyraCategoryCardsSelected = false;
+        public CharSequence elyraCategoryLabel = null;
+
         // Private App Decorator
         public SectionDecorationInfo decorationInfo = null;
 
@@ -145,6 +161,25 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             return item;
         }
 
+        public static AdapterItem asElyraCategoryTabs(boolean categoryCardsSelected) {
+            AdapterItem item = new AdapterItem(VIEW_TYPE_ELYRA_CATEGORY_TABS);
+            item.elyraCategoryCardsSelected = categoryCardsSelected;
+            return item;
+        }
+
+        public static AdapterItem asElyraCategoryCard(
+                ElyraCategoryCardModel.CategoryCard categoryCard) {
+            AdapterItem item = new AdapterItem(VIEW_TYPE_ELYRA_CATEGORY_CARD);
+            item.elyraCategoryCard = categoryCard;
+            return item;
+        }
+
+        public static AdapterItem asElyraCategoryHeader(CharSequence categoryLabel) {
+            AdapterItem item = new AdapterItem(VIEW_TYPE_ELYRA_CATEGORY_HEADER);
+            item.elyraCategoryLabel = categoryLabel;
+            return item;
+        }
+
         public static AdapterItem asAppWithDecorationInfo(AppInfo appInfo,
                 SectionDecorationInfo decorationInfo) {
             AdapterItem item = asApp(appInfo);
@@ -153,7 +188,8 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         }
 
         protected boolean isCountedForAccessibility() {
-            return viewType == VIEW_TYPE_ICON || viewType == VIEW_TYPE_FOLDER;
+            return viewType == VIEW_TYPE_ICON || viewType == VIEW_TYPE_FOLDER
+                    || viewType == VIEW_TYPE_ELYRA_CATEGORY_CARD;
         }
 
         /**
@@ -240,6 +276,153 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
      */
     public abstract RecyclerView.LayoutManager getLayoutManager();
 
+
+    private View createElyraCategoryTabsView(ViewGroup parent) {
+        LinearLayout tabs = new LinearLayout(parent.getContext());
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        tabs.setGravity(Gravity.CENTER);
+        tabs.setPadding(dp(4), dp(4), dp(4), dp(4));
+        tabs.setBackground(roundedDrawable(Themes.getColorBackgroundFloating(parent.getContext()), dp(20)));
+
+        TextView all = createElyraSegmentButton(parent.getContext());
+        TextView categories = createElyraSegmentButton(parent.getContext());
+        tabs.addView(all);
+        tabs.addView(categories);
+
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(16), dp(8), dp(16), dp(12));
+        tabs.setLayoutParams(lp);
+        return tabs;
+    }
+
+    private TextView createElyraSegmentButton(Context context) {
+        TextView button = new TextView(context);
+        button.setGravity(Gravity.CENTER);
+        button.setSingleLine(true);
+        button.setTextSize(14);
+        button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        button.setClickable(true);
+        button.setFocusable(true);
+        button.setMinHeight(dp(40));
+        button.setPadding(dp(12), 0, dp(12), 0);
+        button.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        return button;
+    }
+
+    private LinearLayout createElyraCategoryCardView(ViewGroup parent) {
+        LinearLayout card = new LinearLayout(parent.getContext());
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setMinHeight(dp(128));
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setBackground(roundedDrawable(Themes.getColorBackgroundFloating(parent.getContext()), dp(18)));
+
+        TextView label = new TextView(parent.getContext());
+        label.setSingleLine(true);
+        label.setTextSize(14);
+        label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        label.setTextColor(Themes.getAttrColor(parent.getContext(), android.R.attr.textColorPrimary));
+        label.setGravity(Gravity.START);
+        card.addView(label, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        GridLayout preview = new GridLayout(parent.getContext());
+        preview.setColumnCount(3);
+        preview.setRowCount(2);
+        LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        previewLp.topMargin = dp(10);
+        card.addView(preview, previewLp);
+
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(6), dp(6), dp(6), dp(6));
+        card.setLayoutParams(lp);
+        return card;
+    }
+
+    private TextView createElyraCategoryHeaderView(ViewGroup parent) {
+        TextView header = new TextView(parent.getContext());
+        header.setSingleLine(true);
+        header.setTextSize(16);
+        header.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        header.setTextColor(Themes.getAttrColor(parent.getContext(), android.R.attr.textColorPrimary));
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(dp(16), dp(4), dp(16), dp(8));
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(0, 0, 0, dp(4));
+        header.setLayoutParams(lp);
+        return header;
+    }
+
+    private void bindElyraCategoryTabs(View itemView, AdapterItem item) {
+        LinearLayout tabs = (LinearLayout) itemView;
+        TextView all = (TextView) tabs.getChildAt(0);
+        TextView categories = (TextView) tabs.getChildAt(1);
+        all.setText(R.string.elyra_drawer_tab_all);
+        categories.setText(R.string.elyra_drawer_tab_categories);
+        bindElyraSegment(all, !item.elyraCategoryCardsSelected);
+        bindElyraSegment(categories, item.elyraCategoryCardsSelected);
+        all.setOnClickListener(view -> mApps.showElyraAllApps());
+        categories.setOnClickListener(view -> mApps.showElyraCategoryCards());
+    }
+
+    private void bindElyraSegment(TextView button, boolean selected) {
+        int textColor = Themes.getAttrColor(button.getContext(), android.R.attr.textColorPrimary);
+        button.setTextColor(textColor);
+        button.setSelected(selected);
+        button.setBackground(selected
+                ? roundedDrawable(Themes.getColorBackground(button.getContext()), dp(16))
+                : roundedDrawable(Color.TRANSPARENT, dp(16)));
+    }
+
+    private void bindElyraCategoryCard(LinearLayout card,
+            ElyraCategoryCardModel.CategoryCard categoryCard) {
+        if (categoryCard == null) {
+            card.setVisibility(GONE);
+            return;
+        }
+        card.setVisibility(View.VISIBLE);
+        TextView label = (TextView) card.getChildAt(0);
+        GridLayout preview = (GridLayout) card.getChildAt(1);
+        label.setText(categoryCard.getLabel());
+        card.setContentDescription(categoryCard.getLabel());
+        card.setOnClickListener(view -> mApps.selectElyraCategory(categoryCard.getCategory()));
+
+        preview.removeAllViews();
+        for (AppInfo app : categoryCard.getPreview()) {
+            ImageView icon = new ImageView(card.getContext());
+            icon.setImageDrawable(app.newIcon(card.getContext(), false));
+            icon.setContentDescription(app.title);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+            lp.width = dp(32);
+            lp.height = dp(32);
+            lp.setMargins(0, 0, dp(8), dp(8));
+            preview.addView(icon, lp);
+        }
+    }
+
+    private void bindElyraCategoryHeader(TextView header, CharSequence label) {
+        header.setText(label == null ? "" : label);
+    }
+
+    private GradientDrawable roundedDrawable(int color, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(radius);
+        return drawable;
+    }
+
+    private int dp(int value) {
+        return Math.round(value * mActivityContext.getResources().getDisplayMetrics().density);
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         switch (viewType) {
@@ -276,6 +459,12 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
                 return new ViewHolder(fl);
+            case VIEW_TYPE_ELYRA_CATEGORY_TABS:
+                return new ViewHolder(createElyraCategoryTabsView(parent));
+            case VIEW_TYPE_ELYRA_CATEGORY_CARD:
+                return new ViewHolder(createElyraCategoryCardView(parent));
+            case VIEW_TYPE_ELYRA_CATEGORY_HEADER:
+                return new ViewHolder(createElyraCategoryHeaderView(parent));
             default:
                 if (mAdapterProvider.isViewSupported(viewType)) {
                     return mAdapterProvider.onCreateViewHolder(mLayoutInflater, parent, viewType);
@@ -358,6 +547,17 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
                 container.removeAllViews();
                 container.addView(FolderIcon.inflateFolderAndIcon(R.layout.all_apps_folder_icon, mActivityContext,
                     container, folderInfo));
+                break;
+            case VIEW_TYPE_ELYRA_CATEGORY_TABS:
+                bindElyraCategoryTabs(holder.itemView, mApps.getAdapterItems().get(position));
+                break;
+            case VIEW_TYPE_ELYRA_CATEGORY_CARD:
+                bindElyraCategoryCard((LinearLayout) holder.itemView,
+                        mApps.getAdapterItems().get(position).elyraCategoryCard);
+                break;
+            case VIEW_TYPE_ELYRA_CATEGORY_HEADER:
+                bindElyraCategoryHeader((TextView) holder.itemView,
+                        mApps.getAdapterItems().get(position).elyraCategoryLabel);
                 break;
             default:
                 if (mAdapterProvider.isViewSupported(holder.getItemViewType())) {

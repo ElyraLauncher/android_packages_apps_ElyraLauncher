@@ -22,7 +22,8 @@ import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.model.data.FolderInfo
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.views.ActivityContext
-import com.elyra.launcher.drawer.ElyraAppCategorizer
+import com.elyra.launcher.drawer.ElyraAppCategory
+import com.elyra.launcher.drawer.ElyraCategoryCardModel
 import com.elyra.launcher.drawer.ElyraDrawer
 import com.elyra.launcher.drawer.ElyraDrawerSuggestions
 import com.patrykmichalik.opto.core.onEach
@@ -51,6 +52,8 @@ class LawnchairAlphabeticalAppsList<T>(
     private val viewModel: FolderViewModel by (context as ComponentActivity).viewModels()
     private var folderList = mutableListOf<FolderInfo>()
     private val filteredList = mutableListOf<AppInfo>()
+    private var elyraCategoryCardsMode = false
+    private var elyraSelectedCategory: ElyraAppCategory? = null
 
     private val folderOrder = FolderOrderUtils.stringToIntList(prefs.drawerListOrder.get())
 
@@ -91,40 +94,46 @@ class LawnchairAlphabeticalAppsList<T>(
         filteredList.clear()
         var position = startPosition
 
-        // Show app drawer folders only on main profile, to prevent state complexity
+        // Show app drawer folders only on main profile, to prevent state complexity.
         if (isWorkOrPrivateSpace(appList)) return super.addAppsWithSections(appList, position)
 
-        // Elyra Stage 6: local suggestions and local category grouping (main profile
-        // only). Both use only on-device signals and reuse the existing app/folder
-        // adapter items, so no fake screen or new view type is introduced.
-        if (elyraSuggestions || elyraCategories) {
-            val validApps = appList.mapNotNull { it }
-            if (elyraSuggestions) {
-                ElyraDrawerSuggestions.suggest(context, validApps).forEach { app ->
-                    mAdapterItems.add(AdapterItem.asApp(app))
+        val validApps = appList.mapNotNull { it }
+
+        if (elyraCategories) {
+            mAdapterItems.add(AdapterItem.asElyraCategoryTabs(elyraCategoryCardsMode))
+            position++
+
+            val cards = ElyraCategoryCardModel.build(validApps, context)
+            if (elyraCategoryCardsMode) {
+                cards.forEach { card ->
+                    mAdapterItems.add(AdapterItem.asElyraCategoryCard(card))
                     position++
                 }
-            }
-            if (elyraCategories) {
-                ElyraAppCategorizer.categorize(validApps, context).forEach { (title, apps) ->
-                    if (apps.size == 1) {
-                        mAdapterItems.add(AdapterItem.asApp(apps.first()))
-                    } else {
-                        val folderInfo = FolderInfo().apply {
-                            this.title = title
-                            apps.forEach { add(it) }
-                        }
-                        mAdapterItems.add(AdapterItem.asFolder(folderInfo))
-                    }
-                    position++
-                }
-                // Category grouping replaces the flat listing for the drawer.
                 return position
             }
-            // Suggestions only: fall through so the full app list follows below.
+
+            elyraSelectedCategory?.let { selectedCategory ->
+                val selectedCard = cards.firstOrNull { it.category == selectedCategory }
+                if (selectedCard != null) {
+                    mAdapterItems.add(AdapterItem.asElyraCategoryHeader(selectedCard.label))
+                    position++
+                    return super.addAppsWithSections(selectedCard.apps, position)
+                }
+                elyraSelectedCategory = null
+            }
         }
 
-        if (!drawerListDefault) {
+        // Elyra drawer suggestions stay local-first and prepend real app entries to
+        // the normal All tab only. Category cards never emit FolderInfo rows and
+        // never mutate workspace data; workspace smart folders are deferred.
+        if (elyraSuggestions) {
+            ElyraDrawerSuggestions.suggest(context, validApps).forEach { app ->
+                mAdapterItems.add(AdapterItem.asApp(app))
+                position++
+            }
+        }
+
+        if (!elyraCategories && !drawerListDefault) {
             val validApps = appList.mapNotNull { it }
             val finalCategorizedApps = categorizeAppsWithSystemAndGoogle(validApps, context)
 
@@ -160,6 +169,31 @@ class LawnchairAlphabeticalAppsList<T>(
         }
 
         return position
+    }
+
+    override fun isElyraCategoryTabsEnabled(): Boolean = elyraCategories
+
+    override fun isElyraCategoryCardsMode(): Boolean = elyraCategories && elyraCategoryCardsMode
+
+    override fun showElyraAllApps() {
+        if (!elyraCategories) return
+        elyraCategoryCardsMode = false
+        elyraSelectedCategory = null
+        updateAdapterItems()
+    }
+
+    override fun showElyraCategoryCards() {
+        if (!elyraCategories) return
+        elyraCategoryCardsMode = true
+        elyraSelectedCategory = null
+        updateAdapterItems()
+    }
+
+    override fun selectElyraCategory(category: ElyraAppCategory) {
+        if (!elyraCategories) return
+        elyraCategoryCardsMode = false
+        elyraSelectedCategory = category
+        updateAdapterItems()
     }
 
     override fun onIdpChanged(modelPropertiesChanged: Boolean) {

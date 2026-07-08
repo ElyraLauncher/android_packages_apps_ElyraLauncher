@@ -224,6 +224,8 @@ public class AllAppsGridAdapter<T extends Context & ActivityContext> extends
             int viewType = items.get(position).viewType;
             if (isIconViewType(viewType)) {
                 return totalSpans / mAppsPerRow;
+            } else if (viewType == VIEW_TYPE_ELYRA_CATEGORY_CARD) {
+                return totalSpans / 2;
             } else {
                 if (mAdapterProvider.isViewSupported(viewType)) {
                     return totalSpans / mAdapterProvider.getItemsPerRow(viewType, mAppsPerRow);

@@ -82,6 +82,8 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_flag_drawer_categories_description">Kelompokkan aplikasi ke kategori lokal.</string>
     <string name="elyra_flag_drawer_suggestions">Saran laci</string>
     <string name="elyra_flag_drawer_suggestions_description">Tampilkan saran aplikasi lokal di laci aplikasi.</string>
+    <string name="elyra_drawer_tab_all">Semua</string>
+    <string name="elyra_drawer_tab_categories">Kategori</string>
     <string name="elyra_flag_az_rail">Bilah A-Z</string>
     <string name="elyra_flag_az_rail_description">Tampilkan bilah gulir cepat di laci aplikasi.</string>
     <!-- Label kategori laci lokal Elyra (Stage 6, diperluas di Stage 6.5). -->
