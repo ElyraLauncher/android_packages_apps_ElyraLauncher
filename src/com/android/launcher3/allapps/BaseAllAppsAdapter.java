@@ -283,7 +283,8 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         capsule.setPadding(dp(4), dp(4), dp(4), dp(4));
         capsule.setMinimumHeight(dp(48));
         capsule.setBackground(roundedDrawable(translucentColor(
-                Themes.getColorBackgroundFloating(context), 176), dp(24)));
+                Themes.getColorBackgroundFloating(context),
+                surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(24)));
 
         View selectedPill = new View(context);
         selectedPill.setBackground(roundedDrawable(Themes.getColorBackground(context), dp(20)));
@@ -332,9 +333,11 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         card.setClickable(true);
         card.setFocusable(true);
         card.setBackground(roundedDrawableWithStroke(
-                translucentColor(Themes.getColorBackgroundFloating(context), 188),
+                translucentColor(Themes.getColorBackgroundFloating(context),
+                        surfaceAlpha(R.integer.elyra_surface_alpha_card)),
                 dp(18),
-                translucentColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary), 28),
+                translucentColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary),
+                        surfaceAlpha(R.integer.elyra_surface_alpha_hairline)),
                 dp(1)));
 
         TextView label = new TextView(context);
@@ -508,6 +511,11 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
     private int translucentColor(int color, int alpha) {
         return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
+    }
+
+    /** Shared drawer surface alpha (0-255) from the Elyra design tokens. */
+    private int surfaceAlpha(int resId) {
+        return mActivityContext.getResources().getInteger(resId);
     }
 
     private int dp(int value) {

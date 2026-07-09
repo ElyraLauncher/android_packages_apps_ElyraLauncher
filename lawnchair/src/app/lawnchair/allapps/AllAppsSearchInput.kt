@@ -3,7 +3,10 @@ package app.lawnchair.allapps
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.InsetDrawable
+import android.graphics.drawable.LayerDrawable
 import android.graphics.Rect
 import android.provider.SearchRecentSuggestions
 import android.text.Selection
@@ -638,17 +641,18 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     private fun createColorDot(bucket: ElyraAppColorBucket?, label: String): TextView {
         val selected = selectedColorBucket == bucket
-        val size = resources.getDimensionPixelSize(R.dimen.search_box_height) -
-            resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium)
+        val size = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_size)
         return TextView(context).apply {
-            text = if (bucket == null) "C" else ""
+            // "×" (multiplication sign) reads universally as clear/reset; the
+            // colored swatches carry no glyph so the color is the whole affordance.
+            text = if (bucket == null) "×" else ""
             gravity = Gravity.CENTER
-            textSize = 12f
+            textSize = 13f
             setSingleLine(true)
-            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorSecondary))
             contentDescription = label
             background = colorDotBackground(bucket, selected)
-            val margin = resources.getDimensionPixelSize(R.dimen.elyra_spacing_small) / 2
+            val margin = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_spacing)
             layoutParams = LinearLayout.LayoutParams(size, size).apply {
                 marginStart = margin
                 marginEnd = margin
@@ -667,24 +671,47 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         }
     }
 
-    private fun colorDotBackground(bucket: ElyraAppColorBucket?, selected: Boolean): GradientDrawable {
-        val strokeColor = Themes.getAttrColor(context, android.R.attr.textColorPrimary)
-        val fillColor = bucket?.swatchColor ?: Color.TRANSPARENT
-        return GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(fillColor)
-            setStroke(
-                resources.getDimensionPixelSize(R.dimen.search_decoration_padding) * if (selected) 3 else 1,
-                strokeColor,
-            )
+    private fun colorDotBackground(bucket: ElyraAppColorBucket?, selected: Boolean): Drawable {
+        val hairline = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_hairline)
+        val outline = Themes.getAttrColor(context, android.R.attr.textColorTertiary)
+
+        // The reset swatch is a neutral outlined circle so it reads distinctly from
+        // the color swatches rather than as another selectable color.
+        if (bucket == null) {
+            return GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.TRANSPARENT)
+                setStroke(hairline, outline)
+            }
         }
+
+        val fill = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(bucket.swatchColor)
+            setStroke(hairline, Color.argb(40, Color.red(outline), Color.green(outline), Color.blue(outline)))
+        }
+        if (!selected) return fill
+
+        // Selected: an accent highlight ring around the swatch with a small gap, so
+        // the active color is unmistakable without recoloring the swatch itself.
+        val ringWidth = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_ring)
+        val gap = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_ring_gap)
+        val ring = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.TRANSPARENT)
+            setStroke(ringWidth, Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+        }
+        val inset = ringWidth + gap
+        val insetFill = InsetDrawable(fill, inset, inset, inset, inset)
+        return LayerDrawable(arrayOf(ring, insetFill))
     }
 
     private fun roundedPanelBackground(): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = resources.getDimensionPixelSize(R.dimen.search_group_radius).toFloat()
         val base = Themes.getColorBackgroundFloating(context)
-        setColor(Color.argb(210, Color.red(base), Color.green(base), Color.blue(base)))
+        val alpha = resources.getInteger(R.integer.elyra_surface_alpha_panel)
+        setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
         setStroke(
             resources.getDimensionPixelSize(R.dimen.search_decoration_padding),
             Themes.getAttrColor(context, android.R.attr.textColorTertiary),

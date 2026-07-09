@@ -38,4 +38,22 @@
     <dimen name="elyra_card_radius">20dp</dimen>
     <dimen name="elyra_folder_radius">28dp</dimen>
     <dimen name="elyra_dock_radius">28dp</dimen>
+
+    <!-- Drawer color-filter panel tokens (Stage 6.7). A compact, evenly spaced
+         row of color swatches with a clear highlight ring on the selected dot.
+         Sizing lives here so the panel stays consistent and future-tunable. -->
+    <dimen name="elyra_color_dot_size">22dp</dimen>
+    <dimen name="elyra_color_dot_spacing">5dp</dimen>
+    <dimen name="elyra_color_dot_ring">2dp</dimen>
+    <dimen name="elyra_color_dot_ring_gap">2dp</dimen>
+    <dimen name="elyra_color_dot_hairline">1dp</dimen>
+
+    <!-- Coherent translucent surface alphas (0-255) for drawer chrome. Shared by
+         the segmented capsule, category cards and the color panel so the drawer
+         reads as one Elyra/Material surface language. Prepared for future
+         user-facing surface customization; adopt incrementally. -->
+    <integer name="elyra_surface_alpha_panel">218</integer>
+    <integer name="elyra_surface_alpha_capsule">176</integer>
+    <integer name="elyra_surface_alpha_card">190</integer>
+    <integer name="elyra_surface_alpha_hairline">30</integer>
 </resources>
