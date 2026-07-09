@@ -525,6 +525,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             removeRule(RelativeLayout.ALIGN_PARENT_TOP)
             addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
             topMargin = 0
+            // Respect left/right system insets symmetrically so the row stays
+            // centered and unclipped on devices with cutouts or landscape nav.
+            leftMargin = latestInsets.left
+            rightMargin = latestInsets.right
             bottomMargin = if (isInvisible) 0 else bottomInset + bottomSearchInsetMargin
         }
         if (::appsView.isInitialized) {
