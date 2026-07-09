@@ -437,6 +437,10 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
         return false;
     }
 
+    /** Re-reads Elyra drawer flags and rebuilds the drawer list. No-op upstream. */
+    public void refreshElyraDrawer() {
+    }
+
     protected int addAppsWithSections(List<AppInfo> appList, int startPosition) {
         String lastSectionName = null;
         boolean hasPrivateApps = false;

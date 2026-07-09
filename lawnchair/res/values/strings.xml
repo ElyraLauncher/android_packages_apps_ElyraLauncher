@@ -957,6 +957,11 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_flag_drawer_suggestions_description" tools:ignore="MissingTranslation">Show local app suggestions in the app drawer.</string>
     <string name="elyra_drawer_tab_all" tools:ignore="MissingTranslation">All</string>
     <string name="elyra_drawer_tab_categories" tools:ignore="MissingTranslation">Categories</string>
+    <string name="elyra_drawer_options_title" tools:ignore="MissingTranslation">App drawer options</string>
+    <string name="elyra_drawer_option_categories" tools:ignore="MissingTranslation">App categories</string>
+    <string name="elyra_drawer_option_color_search" tools:ignore="MissingTranslation">App color search</string>
+    <string name="elyra_drawer_option_suggestions" tools:ignore="MissingTranslation">App suggestions</string>
+    <string name="elyra_drawer_option_az_index" tools:ignore="MissingTranslation">A-Z index</string>
     <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>
     <string name="elyra_flag_az_rail_description" tools:ignore="MissingTranslation">Show a fast scroll rail in the app drawer.</string>
     <string name="elyra_flag_drawer_color_search" tools:ignore="MissingTranslation">App color search</string>

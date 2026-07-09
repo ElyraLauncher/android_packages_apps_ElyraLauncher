@@ -38,6 +38,7 @@ import android.view.ViewGroup;
 import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -58,6 +59,7 @@ import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 import com.elyra.launcher.drawer.ElyraCategoryCardModel;
+import com.elyra.launcher.drawer.ElyraDrawerOptions;
 
 /**
  * Adapter for all the apps.
@@ -279,15 +281,24 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
     private View createElyraCategoryTabsView(ViewGroup parent) {
         Context context = parent.getContext();
+
+        // Header row: [ rounded segmented capsule (weight 1) ] [ overflow button ].
+        LinearLayout header = new LinearLayout(context);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
         FrameLayout capsule = new FrameLayout(context);
         capsule.setPadding(dp(4), dp(4), dp(4), dp(4));
         capsule.setMinimumHeight(dp(48));
+        // A clearly visible rounded surface; the selected pill uses the Elyra brand
+        // accent so the active tab reads with strong contrast in light and dark.
         capsule.setBackground(roundedDrawable(translucentColor(
                 Themes.getColorBackgroundFloating(context),
                 surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(24)));
 
         View selectedPill = new View(context);
-        selectedPill.setBackground(roundedDrawable(Themes.getColorBackground(context), dp(20)));
+        selectedPill.setBackground(roundedDrawable(
+                context.getColor(R.color.elyra_accent), dp(20)));
         FrameLayout.LayoutParams pillLp = new FrameLayout.LayoutParams(0, dp(40));
         pillLp.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
         capsule.addView(selectedPill, pillLp);
@@ -300,11 +311,26 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         capsule.addView(tabs, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        LinearLayout.LayoutParams capsuleLp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        capsuleLp.gravity = Gravity.CENTER_VERTICAL;
+        header.addView(capsule, capsuleLp);
+
+        ImageButton overflow = new ImageButton(context);
+        overflow.setImageResource(R.drawable.elyra_ic_more_vert);
+        overflow.setBackgroundResource(R.drawable.pill_ripple);
+        overflow.setScaleType(ImageView.ScaleType.CENTER);
+        overflow.setContentDescription(context.getString(R.string.elyra_drawer_options_title));
+        LinearLayout.LayoutParams overflowLp = new LinearLayout.LayoutParams(dp(44), dp(44));
+        overflowLp.setMarginStart(dp(6));
+        overflowLp.gravity = Gravity.CENTER_VERTICAL;
+        header.addView(overflow, overflowLp);
+
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(40), dp(8), dp(40), dp(12));
-        capsule.setLayoutParams(lp);
-        return capsule;
+        lp.setMargins(dp(16), dp(8), dp(12), dp(12));
+        header.setLayoutParams(lp);
+        return header;
     }
 
     private TextView createElyraSegmentButton(Context context) {
@@ -382,7 +408,9 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     }
 
     private void bindElyraCategoryTabs(View itemView, AdapterItem item) {
-        FrameLayout capsule = (FrameLayout) itemView;
+        LinearLayout header = (LinearLayout) itemView;
+        FrameLayout capsule = (FrameLayout) header.getChildAt(0);
+        ImageButton overflow = (ImageButton) header.getChildAt(1);
         LinearLayout tabs = (LinearLayout) capsule.getChildAt(1);
         TextView all = (TextView) tabs.getChildAt(0);
         TextView categories = (TextView) tabs.getChildAt(1);
@@ -399,14 +427,17 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             mApps.showElyraCategoryCards();
             scrollElyraActiveRecyclerViewToTop();
         });
+        overflow.setOnClickListener(view ->
+                ElyraDrawerOptions.show(view, mApps::refreshElyraDrawer));
         updateElyraDrawerVisualState();
     }
 
     private void bindElyraSegment(TextView button, boolean selected) {
         button.setSelected(selected);
-        int selectedColor = Themes.getAttrColor(button.getContext(), android.R.attr.textColorPrimary);
+        // Selected text sits on the accent pill, so it uses a fixed light color for
+        // guaranteed contrast; the unselected tab stays on the neutral capsule.
         int unselectedColor = Themes.getAttrColor(button.getContext(), android.R.attr.textColorSecondary);
-        button.setTextColor(selected ? selectedColor : unselectedColor);
+        button.setTextColor(selected ? Color.WHITE : unselectedColor);
         button.setBackgroundColor(Color.TRANSPARENT);
     }
 

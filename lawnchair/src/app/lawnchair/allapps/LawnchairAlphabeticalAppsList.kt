@@ -43,11 +43,11 @@ class LawnchairAlphabeticalAppsList<T>(
     private val prefs2 = PreferenceManager2.getInstance(context)
     private val prefs = PreferenceManager.getInstance(context)
 
-    // Elyra Stage 6 drawer flags, read once when the list is built (a toggle takes
-    // effect on the next drawer rebuild). When both are off, the list is built
-    // exactly as upstream.
-    private val elyraCategories = ElyraDrawer.categoriesEnabled(context)
-    private val elyraSuggestions = ElyraDrawer.suggestionsEnabled(context)
+    // Elyra Stage 6 drawer flags. Re-read on each list rebuild so the header
+    // overflow toggles apply immediately (see refreshElyraDrawer). When both are
+    // off, the list is built exactly as upstream.
+    private var elyraCategories = ElyraDrawer.categoriesEnabled(context)
+    private var elyraSuggestions = ElyraDrawer.suggestionsEnabled(context)
 
     private val viewModel: FolderViewModel by (context as ComponentActivity).viewModels()
     private var folderList = mutableListOf<FolderInfo>()
@@ -89,6 +89,10 @@ class LawnchairAlphabeticalAppsList<T>(
     }
 
     override fun addAppsWithSections(appList: List<AppInfo?>?, startPosition: Int): Int {
+        // Re-read the drawer flags so overflow-menu toggles take effect on the next
+        // rebuild without recreating the whole drawer.
+        elyraCategories = ElyraDrawer.categoriesEnabled(context)
+        elyraSuggestions = ElyraDrawer.suggestionsEnabled(context)
         if (appList.isNullOrEmpty()) return startPosition
         val drawerListDefault = prefs.drawerList.get()
         filteredList.clear()
@@ -216,6 +220,10 @@ class LawnchairAlphabeticalAppsList<T>(
         if (!canHandleElyraCategoryBack()) return false
         showElyraCategoryCards()
         return true
+    }
+
+    override fun refreshElyraDrawer() {
+        updateAdapterItems()
     }
 
     override fun onIdpChanged(modelPropertiesChanged: Boolean) {
