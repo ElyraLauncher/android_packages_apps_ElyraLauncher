@@ -278,22 +278,32 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
 
     private View createElyraCategoryTabsView(ViewGroup parent) {
-        LinearLayout tabs = new LinearLayout(parent.getContext());
+        Context context = parent.getContext();
+        FrameLayout capsule = new FrameLayout(context);
+        capsule.setPadding(dp(4), dp(4), dp(4), dp(4));
+        capsule.setMinimumHeight(dp(48));
+        capsule.setBackground(roundedDrawable(translucentColor(
+                Themes.getColorBackgroundFloating(context), 176), dp(24)));
+
+        View selectedPill = new View(context);
+        selectedPill.setBackground(roundedDrawable(Themes.getColorBackground(context), dp(20)));
+        FrameLayout.LayoutParams pillLp = new FrameLayout.LayoutParams(0, dp(40));
+        pillLp.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
+        capsule.addView(selectedPill, pillLp);
+
+        LinearLayout tabs = new LinearLayout(context);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         tabs.setGravity(Gravity.CENTER);
-        tabs.setPadding(dp(4), dp(4), dp(4), dp(4));
-        tabs.setBackground(roundedDrawable(Themes.getColorBackgroundFloating(parent.getContext()), dp(20)));
-
-        TextView all = createElyraSegmentButton(parent.getContext());
-        TextView categories = createElyraSegmentButton(parent.getContext());
-        tabs.addView(all);
-        tabs.addView(categories);
+        tabs.addView(createElyraSegmentButton(context));
+        tabs.addView(createElyraSegmentButton(context));
+        capsule.addView(tabs, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(16), dp(8), dp(16), dp(12));
-        tabs.setLayoutParams(lp);
-        return tabs;
+        lp.setMargins(dp(40), dp(8), dp(40), dp(12));
+        capsule.setLayoutParams(lp);
+        return capsule;
     }
 
     private TextView createElyraSegmentButton(Context context) {
@@ -306,36 +316,42 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         button.setFocusable(true);
         button.setMinHeight(dp(40));
         button.setPadding(dp(12), 0, dp(12), 0);
+        button.setBackgroundColor(Color.TRANSPARENT);
         button.setLayoutParams(new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         return button;
     }
 
     private LinearLayout createElyraCategoryCardView(ViewGroup parent) {
-        LinearLayout card = new LinearLayout(parent.getContext());
+        Context context = parent.getContext();
+        LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setMinimumHeight(dp(152));
+        card.setMinimumHeight(dp(148));
         card.setPadding(dp(14), dp(12), dp(14), dp(12));
         card.setClickable(true);
         card.setFocusable(true);
-        card.setBackground(roundedDrawable(Themes.getColorBackgroundFloating(parent.getContext()), dp(18)));
+        card.setBackground(roundedDrawableWithStroke(
+                translucentColor(Themes.getColorBackgroundFloating(context), 188),
+                dp(18),
+                translucentColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary), 28),
+                dp(1)));
 
-        TextView label = new TextView(parent.getContext());
+        TextView label = new TextView(context);
         label.setSingleLine(true);
         label.setTextSize(15);
         label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        label.setTextColor(Themes.getAttrColor(parent.getContext(), android.R.attr.textColorPrimary));
+        label.setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary));
         label.setGravity(Gravity.START);
         card.addView(label, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        GridLayout preview = new GridLayout(parent.getContext());
+        GridLayout preview = new GridLayout(context);
         preview.setColumnCount(3);
         preview.setRowCount(2);
         LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        previewLp.topMargin = dp(10);
+        previewLp.topMargin = dp(12);
         card.addView(preview, previewLp);
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
@@ -348,13 +364,13 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     private TextView createElyraCategoryHeaderView(ViewGroup parent) {
         TextView header = new TextView(parent.getContext());
         header.setSingleLine(true);
-        header.setTextSize(16);
+        header.setTextSize(17);
         header.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         header.setTextColor(Themes.getAttrColor(parent.getContext(), android.R.attr.textColorPrimary));
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setClickable(true);
-        header.setFocusable(true);
-        header.setPadding(dp(16), dp(8), dp(16), dp(12));
+        header.setClickable(false);
+        header.setFocusable(false);
+        header.setPadding(dp(24), dp(8), dp(24), dp(12));
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(0, 0, 0, dp(4));
@@ -363,13 +379,15 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     }
 
     private void bindElyraCategoryTabs(View itemView, AdapterItem item) {
-        LinearLayout tabs = (LinearLayout) itemView;
+        FrameLayout capsule = (FrameLayout) itemView;
+        LinearLayout tabs = (LinearLayout) capsule.getChildAt(1);
         TextView all = (TextView) tabs.getChildAt(0);
         TextView categories = (TextView) tabs.getChildAt(1);
         all.setText(R.string.elyra_drawer_tab_all);
         categories.setText(R.string.elyra_drawer_tab_categories);
         bindElyraSegment(all, !item.elyraCategoryCardsSelected);
         bindElyraSegment(categories, item.elyraCategoryCardsSelected);
+        updateElyraSegmentPill(capsule, item.elyraCategoryCardsSelected);
         all.setOnClickListener(view -> {
             mApps.showElyraAllApps();
             scrollElyraActiveRecyclerViewToTop();
@@ -378,15 +396,42 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             mApps.showElyraCategoryCards();
             scrollElyraActiveRecyclerViewToTop();
         });
+        updateElyraDrawerVisualState();
     }
 
     private void bindElyraSegment(TextView button, boolean selected) {
-        int textColor = Themes.getAttrColor(button.getContext(), android.R.attr.textColorPrimary);
-        button.setTextColor(textColor);
         button.setSelected(selected);
-        button.setBackground(selected
-                ? roundedDrawable(Themes.getColorBackground(button.getContext()), dp(16))
-                : roundedDrawable(Color.TRANSPARENT, dp(16)));
+        int selectedColor = Themes.getAttrColor(button.getContext(), android.R.attr.textColorPrimary);
+        int unselectedColor = Themes.getAttrColor(button.getContext(), android.R.attr.textColorSecondary);
+        button.setTextColor(selected ? selectedColor : unselectedColor);
+        button.setBackgroundColor(Color.TRANSPARENT);
+    }
+
+    private void updateElyraSegmentPill(FrameLayout capsule, boolean categoriesSelected) {
+        View pill = capsule.getChildAt(0);
+        capsule.post(() -> {
+            int innerWidth = capsule.getWidth() - capsule.getPaddingLeft() - capsule.getPaddingRight();
+            if (innerWidth <= 0) {
+                return;
+            }
+            int pillWidth = innerWidth / 2;
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) pill.getLayoutParams();
+            if (lp.width != pillWidth) {
+                lp.width = pillWidth;
+                lp.height = capsule.getHeight() - capsule.getPaddingTop() - capsule.getPaddingBottom();
+                pill.setLayoutParams(lp);
+            }
+            float target = categoriesSelected ? pillWidth : 0f;
+            Object previous = pill.getTag();
+            if (previous == null) {
+                pill.setTranslationX(target);
+            } else if (!previous.equals(categoriesSelected)) {
+                pill.animate().translationX(target).setDuration(180).start();
+            } else {
+                pill.setTranslationX(target);
+            }
+            pill.setTag(categoriesSelected);
+        });
     }
 
     private void bindElyraCategoryCard(LinearLayout card,
@@ -417,16 +462,15 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             lp.setMargins(0, 0, dp(8), dp(8));
             preview.addView(icon, lp);
         }
+        updateElyraDrawerVisualState();
     }
 
     private void bindElyraCategoryHeader(TextView header, CharSequence label) {
         CharSequence safeLabel = label == null ? "" : label;
-        header.setText("< " + safeLabel);
+        header.setText(safeLabel);
         header.setContentDescription(safeLabel);
-        header.setOnClickListener(view -> {
-            mApps.showElyraCategoryCards();
-            scrollElyraActiveRecyclerViewToTop();
-        });
+        header.setOnClickListener(null);
+        updateElyraDrawerVisualState();
     }
 
     private void scrollElyraActiveRecyclerViewToTop() {
@@ -438,6 +482,14 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         if (recyclerView != null) {
             recyclerView.scrollToTop();
         }
+        appsView.updateElyraDrawerVisualState();
+    }
+
+    private void updateElyraDrawerVisualState() {
+        ActivityAllAppsContainerView<?> appsView = mActivityContext.getAppsView();
+        if (appsView != null) {
+            appsView.updateElyraDrawerVisualState();
+        }
     }
 
     private GradientDrawable roundedDrawable(int color, int radius) {
@@ -445,6 +497,17 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         drawable.setColor(color);
         drawable.setCornerRadius(radius);
         return drawable;
+    }
+
+    private GradientDrawable roundedDrawableWithStroke(int color, int radius, int strokeColor,
+            int strokeWidth) {
+        GradientDrawable drawable = roundedDrawable(color, radius);
+        drawable.setStroke(strokeWidth, strokeColor);
+        return drawable;
+    }
+
+    private int translucentColor(int color, int alpha) {
+        return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
     }
 
     private int dp(int value) {

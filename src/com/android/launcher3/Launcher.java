@@ -679,6 +679,9 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
 
         ActivityAllAppsContainerView<Launcher> appsView = mAppsView;
+        if (appsView != null && appsView.canHandleElyraColorPanelBack()) {
+            return () -> appsView.handleElyraColorPanelBack();
+        }
         if (appsView != null && appsView.canHandleElyraCategoryBack()) {
             return () -> appsView.handleElyraCategoryBack();
         }

@@ -185,6 +185,9 @@ class LawnchairAlphabeticalAppsList<T>(
     override fun isElyraCategoryCardsMode(): Boolean =
         elyraCategories && elyraDrawerMode == ElyraDrawerMode.CATEGORIES_ROOT
 
+    override fun isElyraCategoryUiMode(): Boolean =
+        elyraCategories && elyraDrawerMode != ElyraDrawerMode.ALL_APPS
+
     override fun showElyraAllApps() {
         if (!elyraCategories) return
         elyraDrawerMode = ElyraDrawerMode.ALL_APPS

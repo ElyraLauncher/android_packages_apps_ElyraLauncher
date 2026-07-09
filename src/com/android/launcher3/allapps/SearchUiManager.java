@@ -82,4 +82,14 @@ public interface SearchUiManager {
     default boolean inZeroState() {
         return false;
     }
+
+    /** Returns whether the search surface has a drawer-local color panel open. */
+    default boolean canHandleElyraColorPanelBack() {
+        return false;
+    }
+
+    /** Handles back from the drawer-local color panel. */
+    default boolean handleElyraColorPanelBack() {
+        return false;
+    }
 }

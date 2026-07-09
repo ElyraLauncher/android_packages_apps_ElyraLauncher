@@ -317,7 +317,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mSearchRecyclerView = findViewById(R.id.search_results_list_view);
         mFastScroller = findViewById(R.id.fast_scroller);
         mFastScroller.setPopupView(findViewById(R.id.fast_scroller_popup));
-        mFastScroller.setVisibility(showFastScroller ? VISIBLE : INVISIBLE);
+        mFastScroller.setVisibility(getElyraFastScrollerVisibility());
         mSearchContainer = inflateSearchBar();
         if (!isSearchBarFloating()) {
             // Add the search box above everything else in this container (if the flag is
@@ -441,14 +441,14 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         if (!mSearchTransitionController.isRunning() && goingToSearch == isSearching()) {
             return;
         }
-        mFastScroller.setVisibility(goingToSearch ? INVISIBLE : VISIBLE);
+        mFastScroller.setVisibility(goingToSearch ? INVISIBLE : getElyraFastScrollerVisibility());
         if (goingToSearch) {
             // Fade out the button to pause work apps.
             mWorkManager.onActivePageChanged(SEARCH);
         } else if (mAllAppsTransitionController != null) {
             // If exiting search, revert predictive back scale on all apps
             mAllAppsTransitionController.animateAllAppsToNoScale();
-            mFastScroller.setVisibility(showFastScroller ? VISIBLE : INVISIBLE);
+            mFastScroller.setVisibility(getElyraFastScrollerVisibility());
         }
         mSearchTransitionController.animateToState(goingToSearch, durationMs,
                 /* onEndRunnable = */ () -> {
@@ -1432,12 +1432,35 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mAH.get(MAIN).mAppsList;
     }
 
+    public boolean canHandleElyraColorPanelBack() {
+        return mSearchUiManager != null && mSearchUiManager.canHandleElyraColorPanelBack();
+    }
+
+    public boolean handleElyraColorPanelBack() {
+        return mSearchUiManager != null && mSearchUiManager.handleElyraColorPanelBack();
+    }
+
     public boolean canHandleElyraCategoryBack() {
         return getPersonalAppList().canHandleElyraCategoryBack();
     }
 
     public boolean handleElyraCategoryBack() {
         return getPersonalAppList().handleElyraCategoryBack();
+    }
+
+    public boolean isElyraCategoryUiMode() {
+        return getPersonalAppList().isElyraCategoryUiMode();
+    }
+
+    public void updateElyraDrawerVisualState() {
+        if (mFastScroller != null) {
+            mFastScroller.setVisibility(getElyraFastScrollerVisibility());
+        }
+    }
+
+    private int getElyraFastScrollerVisibility() {
+        return showFastScroller && !isSearching() && !isElyraCategoryUiMode()
+                && !canHandleElyraColorPanelBack() ? VISIBLE : INVISIBLE;
     }
 
     public FloatingHeaderView getFloatingHeaderView() {

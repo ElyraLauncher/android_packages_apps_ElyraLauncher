@@ -410,6 +410,11 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
         return false;
     }
 
+    /** Returns true when Elyra drawer categories own the visible All Apps content. */
+    public boolean isElyraCategoryUiMode() {
+        return false;
+    }
+
     /** Switches Elyra drawer categories back to the normal All Apps grid. */
     public void showElyraAllApps() {
     }
