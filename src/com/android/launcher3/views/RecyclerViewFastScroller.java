@@ -44,6 +44,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.FastScrollRecyclerView;
+import com.android.launcher3.allapps.AllAppsRecyclerView;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.graphics.FastScrollThumbDrawable;
@@ -62,7 +63,7 @@ public class RecyclerViewFastScroller extends View {
     private static final boolean DEBUG = false;
     private static final int FASTSCROLL_THRESHOLD_MILLIS = 10;
     private static final int SCROLL_DELTA_THRESHOLD_DP = 4;
-    private static final String INDEX_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String INDEX_LETTERS = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     // Track is very narrow to target and correctly. This is especially the case if a user is
     // using a hardware case. Even if x is offset by following amount, we consider it to be valid.
@@ -367,7 +368,20 @@ public class RecyclerViewFastScroller extends View {
         // Update the fastscroller section name at this touch position
         int bottom = mRv.getScrollbarTrackHeight() - mThumbHeight;
         float boundedY = (float) Math.max(0, Math.min(bottom, y - mTouchOffsetY));
-        CharSequence sectionName = mRv.scrollToPositionAtProgress(boundedY / bottom);
+        float progress = bottom == 0 ? 0f : boundedY / bottom;
+        CharSequence sectionName;
+        if (mCompactPopup && mRv instanceof AllAppsRecyclerView) {
+            float directProgress = Utilities.boundToRange(
+                    y / (float) Math.max(1, mRv.getScrollbarTrackHeight()), 0f, 0.9999f);
+            int index = Utilities.boundToRange(
+                    (int) (directProgress * INDEX_LETTERS.length()),
+                    0, INDEX_LETTERS.length() - 1);
+            String target = String.valueOf(INDEX_LETTERS.charAt(index));
+            ((AllAppsRecyclerView) mRv).scrollToSectionName(target);
+            sectionName = target;
+        } else {
+            sectionName = mRv.scrollToPositionAtProgress(progress);
+        }
         if (!sectionName.equals(mPopupSectionName)) {
             mPopupSectionName = sectionName;
             mPopupView.setText(sectionName);

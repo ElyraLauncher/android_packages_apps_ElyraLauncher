@@ -76,6 +76,7 @@ fun ElyraLabsPreferences(
 private val drawerBaselineFlags = setOf(
     ElyraFlag.BottomSearch,
     ElyraFlag.DrawerCategories,
+    ElyraFlag.DrawerSuggestions,
     ElyraFlag.AzRail,
     ElyraFlag.DrawerColorSearch,
 )

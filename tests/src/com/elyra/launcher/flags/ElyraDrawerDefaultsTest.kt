@@ -10,6 +10,7 @@ class ElyraDrawerDefaultsTest {
     fun coreDrawerPresentationShipsEnabled() {
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.BottomSearch))
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.DrawerCategories))
+        assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.DrawerSuggestions))
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.AzRail))
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.DrawerColorSearch))
     }

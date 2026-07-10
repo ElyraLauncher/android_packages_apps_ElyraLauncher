@@ -199,6 +199,25 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         return section.sectionName;
     }
 
+    /** Immediately aligns fast scrolling to a visible alphabetical section. */
+    public void scrollToSectionName(String target) {
+        List<AlphabeticalAppsList.FastScrollSectionInfo> sections =
+                mApps.getFastScrollerSections();
+        if (sections.isEmpty()) {
+            return;
+        }
+        AlphabeticalAppsList.FastScrollSectionInfo selected = sections.get(0);
+        if (!"#".equals(target)) {
+            for (AlphabeticalAppsList.FastScrollSectionInfo section : sections) {
+                selected = section;
+                if (section.sectionName.toString().compareToIgnoreCase(target) >= 0) {
+                    break;
+                }
+            }
+        }
+        scrollToPosition(selected.position);
+    }
+
     @Override
     public void onFastScrollCompleted() {
         super.onFastScrollCompleted();

@@ -16,55 +16,132 @@
 
 package com.elyra.launcher.drawer
 
-import android.view.Menu
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
 import android.view.View
-import android.widget.PopupMenu
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.Switch
+import android.widget.TextView
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.android.launcher3.R
+import com.android.launcher3.util.Themes
 import com.elyra.launcher.flags.ElyraFlag
 import com.elyra.launcher.flags.ElyraFlagsRepository
 
 /**
  * Drawer-scoped overflow menu for the app-drawer header three-dot button.
  *
- * This is intentionally *not* an entry point into Elyra Labs or the full Elyra
- * settings: it only exposes the local drawer feature toggles that shape the
- * drawer itself. Every option maps to an existing Elyra drawer flag; toggling
- * one persists the flag and asks the caller to rebuild the drawer via
- * [onChanged]. Categories/suggestions re-read on the next list rebuild and so
- * update immediately; the A-Z index and color-search chrome are read when the
- * drawer is constructed and take effect the next time it is opened.
+ * This compact anchored panel contains only drawer-scoped actions: the persisted
+ * local suggestion toggle and a shortcut back to the real All Apps mode. It does
+ * not route through Labs or expose unrelated launcher settings.
  */
 object ElyraDrawerOptions {
 
-    private val OPTIONS = listOf(
-        ElyraFlag.DrawerSuggestions to R.string.elyra_drawer_option_suggestions,
-    )
-
     @JvmStatic
-    fun show(anchor: View, onChanged: Runnable) {
+    fun show(anchor: View, onChanged: Runnable, onShowAll: Runnable) {
         val context = anchor.context
         val repo = ElyraFlagsRepository.getInstance(context)
-        val popup = PopupMenu(context, anchor)
-        val menu = popup.menu
-
-        // Non-clickable title row so the popup reads as "App drawer options".
-        menu.add(Menu.NONE, 0, 0, R.string.elyra_drawer_options_title).isEnabled = false
-
-        OPTIONS.forEachIndexed { index, (flag, labelRes) ->
-            menu.add(Menu.NONE, index + 1, index + 1, labelRes).apply {
-                isCheckable = true
-                isChecked = repo.isEnabled(flag)
+        val width = dp(anchor, 248)
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(anchor, 10), dp(anchor, 8), dp(anchor, 10), dp(anchor, 8))
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = dp(anchor, 20).toFloat()
+                val base = Themes.getColorBackgroundFloating(context)
+                setColor(Color.argb(244, Color.red(base), Color.green(base), Color.blue(base)))
+                setStroke(
+                    dp(anchor, 1),
+                    Themes.getAttrColor(context, android.R.attr.textColorTertiary),
+                )
             }
         }
 
-        popup.setOnMenuItemClickListener { item ->
-            val option = OPTIONS.getOrNull(item.itemId - 1)
-                ?: return@setOnMenuItemClickListener false
-            val flag = option.first
-            repo.setEnabled(flag, !repo.isEnabled(flag))
-            onChanged.run()
-            true
+        panel.addView(TextView(context).apply {
+            setText(R.string.elyra_drawer_options_title)
+            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+            textSize = 14f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(anchor, 12), dp(anchor, 6), dp(anchor, 12), dp(anchor, 8))
+        })
+
+        lateinit var popup: PopupWindow
+        val suggestionRow = LinearLayout(context).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            isClickable = true
+            isFocusable = true
+            background = context.getDrawable(R.drawable.pill_ripple)
+            setPadding(dp(anchor, 12), 0, dp(anchor, 8), 0)
+            val label = TextView(context).apply {
+                setText(R.string.elyra_drawer_option_suggestions)
+                setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+                textSize = 14f
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            val toggle = Switch(context).apply {
+                isChecked = repo.isEnabled(ElyraFlag.DrawerSuggestions)
+                isClickable = false
+            }
+            addView(label, LinearLayout.LayoutParams(0, dp(anchor, 48), 1f))
+            addView(toggle, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, dp(anchor, 48),
+            ))
+            setOnClickListener {
+                repo.setEnabled(ElyraFlag.DrawerSuggestions, !toggle.isChecked)
+                popup.dismiss()
+                onChanged.run()
+            }
         }
-        popup.show()
+        panel.addView(suggestionRow, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(anchor, 48),
+        ))
+
+        val showAll = TextView(context).apply {
+            setText(R.string.elyra_drawer_show_all_apps)
+            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+            textSize = 14f
+            gravity = Gravity.CENTER_VERTICAL
+            isClickable = true
+            isFocusable = true
+            background = context.getDrawable(R.drawable.pill_ripple)
+            setPadding(dp(anchor, 12), 0, dp(anchor, 12), 0)
+            setOnClickListener {
+                popup.dismiss()
+                onShowAll.run()
+            }
+        }
+        panel.addView(showAll, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dp(anchor, 48),
+        ))
+
+        popup = PopupWindow(
+            panel,
+            width,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true,
+        ).apply {
+            isOutsideTouchable = true
+            elevation = dp(anchor, 10).toFloat()
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+        popup.showAsDropDown(anchor, anchor.width - width, -dp(anchor, 4))
+        panel.alpha = 0f
+        panel.scaleX = 0.96f
+        panel.scaleY = 0.96f
+        panel.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(150)
+            .setInterpolator(FastOutSlowInInterpolator())
+            .start()
     }
+
+    private fun dp(view: View, value: Int): Int =
+        (value * view.resources.displayMetrics.density).toInt()
 }

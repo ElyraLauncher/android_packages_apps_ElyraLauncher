@@ -136,12 +136,12 @@ class LawnchairAlphabeticalAppsList<T>(
             }
         }
 
-        // Elyra drawer suggestions stay local-first and prepend real app entries to
-        // the normal All tab only. Category cards never emit FolderInfo rows and
-        // never mutate workspace data; workspace smart folders are deferred.
+        // Suggestions stay local-first and occupy one dedicated card in All mode.
+        // They never mutate workspace data and do not duplicate ordinary app rows.
         if (elyraSuggestions) {
-            ElyraDrawerSuggestions.suggest(context, validApps).forEach { app ->
-                mAdapterItems.add(AdapterItem.asApp(app))
+            val suggestions = ElyraDrawerSuggestions.suggest(context, validApps)
+            if (suggestions.isNotEmpty()) {
+                mAdapterItems.add(AdapterItem.asElyraSuggestions(suggestions))
                 position++
             }
         }

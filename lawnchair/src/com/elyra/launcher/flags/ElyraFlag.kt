@@ -39,7 +39,7 @@ enum class ElyraFlag(
     BottomSearch(key = "elyra_bottom_search", default = true),
     DrawerWebResults(key = "elyra_drawer_web_results", default = false),
     DrawerCategories(key = "elyra_drawer_categories", default = true),
-    DrawerSuggestions(key = "elyra_drawer_suggestions", default = false),
+    DrawerSuggestions(key = "elyra_drawer_suggestions", default = true),
     AzRail(key = "elyra_az_rail", default = true),
     DrawerColorSearch(key = "elyra_drawer_color_search", default = true),
     WallpaperThemedIcons(key = "elyra_wallpaper_themed_icons", default = false),

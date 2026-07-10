@@ -18,7 +18,8 @@
 
     <integer name="elyra_surface_alpha_panel">230</integer>
     <integer name="elyra_surface_alpha_capsule">190</integer>
-    <integer name="elyra_surface_alpha_card">204</integer>
+    <integer name="elyra_surface_alpha_card">210</integer>
+    <integer name="elyra_surface_alpha_suggestion">196</integer>
     <integer name="elyra_surface_alpha_hairline">48</integer>
-    <integer name="elyra_drawer_sheet_alpha">228</integer>
+    <integer name="elyra_drawer_sheet_alpha">208</integer>
 </resources>
