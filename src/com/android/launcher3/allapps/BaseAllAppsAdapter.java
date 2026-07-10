@@ -528,7 +528,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             card.setVisibility(GONE);
             return;
         }
-        card.setVisibility(VISIBLE);
+        card.setVisibility(View.VISIBLE);
         for (AppInfo app : suggestions) {
             BubbleTextView icon = (BubbleTextView) mLayoutInflater.inflate(
                     R.layout.all_apps_prediction_row_icon, icons, false);
