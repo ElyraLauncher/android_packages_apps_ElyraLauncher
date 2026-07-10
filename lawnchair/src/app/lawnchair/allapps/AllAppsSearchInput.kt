@@ -153,6 +153,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         hint = ViewCompat.requireViewById(this, R.id.hint)
 
         input = ViewCompat.requireViewById(this, R.id.input)
+        // The bottom drawer bar shows a persistent placeholder when empty/unfocused
+        // so the inactive row reads as a real search field, not a blank rectangle.
+        if (bottomAligned) {
+            input.hint = context.getString(R.string.elyra_drawer_search_hint)
+        }
 
         searchIcon = ViewCompat.requireViewById(this, R.id.search_icon)
         searchActions = ViewCompat.requireViewById(this, R.id.search_actions)
@@ -276,7 +281,9 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
                 animatePadding(currentPaddingLeft, currentPaddingRight)
                 focusedResultTitle = ""
-                input.setHint("")
+                // Keep a visible placeholder in the bottom drawer bar when empty, so
+                // the inactive row never looks like a blank rectangle.
+                input.hint = if (bottomAligned) context.getString(R.string.elyra_drawer_search_hint) else ""
                 hint.text = ""
                 updateColorButtonVisibility()
                 applyBottomSearchInsets()
@@ -554,6 +561,13 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         searchIcon.isVisible = !showColorPanel
         searchActions.isVisible = !showColorPanel
         colorButton.isVisible = showColorButton
+        // Color mode owns the right side of the row: keep the assistant/lens QSB
+        // icons hidden so the inactive row is exactly one search bar + one color
+        // button and no stray icon bubbles stack near the bottom-right.
+        if (colorSearchEnabled && ::micIcon.isInitialized && ::lensIcon.isInitialized) {
+            micIcon.isVisible = false
+            lensIcon.isVisible = false
+        }
         val endMargin = if (showColorButton) colorButtonSpace else 0
         searchWrapper.updateLayoutParams<FrameLayout.LayoutParams> {
             marginEnd = endMargin
@@ -608,12 +622,12 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         colorPanelRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(
-                resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium),
-                0,
-                resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium),
-                0,
-            )
+            // Horizontal padding keeps the first/last dot off the rounded edges; a
+            // small vertical padding gives the container breathing room so the dots
+            // never look cramped against the panel top/bottom.
+            val horizontal = resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium)
+            val vertical = resources.getDimensionPixelSize(R.dimen.elyra_spacing_small)
+            setPadding(horizontal, vertical, horizontal, vertical)
         }
         return HorizontalScrollView(context).apply {
             isVisible = false

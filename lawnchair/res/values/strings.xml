@@ -962,6 +962,7 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_drawer_option_color_search" tools:ignore="MissingTranslation">App color search</string>
     <string name="elyra_drawer_option_suggestions" tools:ignore="MissingTranslation">App suggestions</string>
     <string name="elyra_drawer_option_az_index" tools:ignore="MissingTranslation">A-Z index</string>
+    <string name="elyra_drawer_search_hint" tools:ignore="MissingTranslation">Search</string>
     <string name="elyra_flag_az_rail" tools:ignore="MissingTranslation">A-Z rail</string>
     <string name="elyra_flag_az_rail_description" tools:ignore="MissingTranslation">Show a fast scroll rail in the app drawer.</string>
     <string name="elyra_flag_drawer_color_search" tools:ignore="MissingTranslation">App color search</string>
