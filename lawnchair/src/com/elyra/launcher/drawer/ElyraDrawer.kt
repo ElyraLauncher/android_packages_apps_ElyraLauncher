@@ -22,18 +22,15 @@ import com.elyra.launcher.flags.ElyraFlagsRepository
 
 /**
  * Single decision point for the Stage 6 app-drawer organization features:
- * categories, local suggestions, and the A-Z fast rail. Each is gated by its own
- * Stage 3 flag and defaults OFF, so when a flag is off the drawer behaves exactly
- * like upstream. Reads are blocking flag reads, consistent with how the drawer
- * already reads its other preferences; a toggle takes effect the next time the
- * drawer is rebuilt.
+ * categories, local suggestions, and the A-Z fast rail. Categories and indexed
+ * scrolling are stable presentation defaults. Suggestions remain an optional,
+ * drawer-scoped preference.
  */
 object ElyraDrawer {
 
     /** Group the drawer app list into local categories. */
     @JvmStatic
-    fun categoriesEnabled(context: Context): Boolean =
-        ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerCategories)
+    fun categoriesEnabled(context: Context): Boolean = true
 
     /** Surface a local suggestions section at the top of the drawer. */
     @JvmStatic
@@ -42,6 +39,5 @@ object ElyraDrawer {
 
     /** Reveal the A-Z fast-scroll rail on the side of the drawer. */
     @JvmStatic
-    fun azRailEnabled(context: Context): Boolean =
-        ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.AzRail)
+    fun azRailEnabled(context: Context): Boolean = true
 }

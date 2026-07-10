@@ -316,7 +316,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mBottomSheetHandleArea = findViewById(R.id.bottom_sheet_handle_area);
         mSearchRecyclerView = findViewById(R.id.search_results_list_view);
         mFastScroller = findViewById(R.id.fast_scroller);
-        mFastScroller.setPopupView(findViewById(R.id.fast_scroller_popup));
+        mFastScroller.setPopupView(findViewById(R.id.fast_scroller_popup), true);
         mFastScroller.setVisibility(getElyraFastScrollerVisibility());
         mSearchContainer = inflateSearchBar();
         if (!isSearchBarFloating()) {
@@ -335,7 +335,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mAH.get(SEARCH).setup(mSearchRecyclerView,
                 /* Filter out A-Z apps */ itemInfo -> false);
         rebindAdapters(true /* force */);
-        float cornerRadius = Themes.getDialogCornerRadius(getContext());
+        float cornerRadius = isElyraBottomSearch()
+                ? getResources().getDimensionPixelSize(R.dimen.elyra_drawer_sheet_radius)
+                : Themes.getDialogCornerRadius(getContext());
         mBottomSheetCornerRadii = new float[] {
                 cornerRadius,
                 cornerRadius, // Top left radius in px
@@ -346,7 +348,13 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 0,
                 0 // Bottom left
         };
-        mBottomSheetBackgroundColor = ColorTokens.SurfaceDimColor.resolveColor(getContext());
+        mBottomSheetBackgroundColor = isElyraBottomSearch()
+                ? Themes.getColorBackgroundFloating(getContext())
+                : ColorTokens.SurfaceDimColor.resolveColor(getContext());
+        if (isElyraBottomSearch()) {
+            mBottomSheetAlpha = getResources().getInteger(
+                    R.integer.elyra_drawer_sheet_alpha) / 255f;
+        }
         updateBackgroundVisibility(mActivityContext.getDeviceProfile());
         mSearchUiManager.initializeSearch(this);
     }
@@ -1128,7 +1136,8 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     protected void updateBackgroundVisibility(DeviceProfile deviceProfile) {
-        boolean visible = deviceProfile.isTablet || mForceBottomSheetVisible;
+        boolean visible = deviceProfile.isTablet || mForceBottomSheetVisible
+                || isElyraBottomSearch();
         mBottomSheetBackground.setVisibility(visible ? View.VISIBLE : View.GONE);
         // Note: For tablets, the opaque background and header protection are added in
         // drawOnScrim.
@@ -1138,8 +1147,15 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     private void setBottomSheetAlpha(float alpha) {
-        // Bottom sheet alpha is always 1 for tablets.
-        mBottomSheetAlpha = mActivityContext.getDeviceProfile().isTablet ? 1f : alpha;
+        if (mActivityContext.getDeviceProfile().isTablet) {
+            mBottomSheetAlpha = 1f;
+        } else if (isElyraBottomSearch()) {
+            float maxAlpha = getResources().getInteger(
+                    R.integer.elyra_drawer_sheet_alpha) / 255f;
+            mBottomSheetAlpha = alpha * maxAlpha;
+        } else {
+            mBottomSheetAlpha = alpha;
+        }
     }
 
     @VisibleForTesting

@@ -16,6 +16,7 @@
     <color name="elyra_surface_elevated">#FFEAF5F1</color>
     <color name="elyra_text_primary">#FF0C2E29</color>
     <color name="elyra_text_secondary">#FF3B5A53</color>
+    <color name="elyra_drawer_surface_stroke">#240C2E29</color>
 
     <!-- Corner radius tokens -->
     <dimen name="elyra_radius_small">8dp</dimen>
@@ -47,6 +48,15 @@
     <dimen name="elyra_bottom_search_control_gap">12dp</dimen>
     <dimen name="elyra_bottom_search_bottom_spacing">10dp</dimen>
     <dimen name="elyra_bottom_search_content_spacing">8dp</dimen>
+    <dimen name="elyra_drawer_header_height">44dp</dimen>
+    <dimen name="elyra_drawer_segment_width">204dp</dimen>
+    <dimen name="elyra_drawer_segment_height">40dp</dimen>
+    <dimen name="elyra_drawer_segment_indicator_height">34dp</dimen>
+    <dimen name="elyra_drawer_overflow_size">40dp</dimen>
+    <dimen name="elyra_drawer_sheet_radius">32dp</dimen>
+    <dimen name="elyra_fastscroll_popup_size">48dp</dimen>
+    <dimen name="elyra_fastscroll_popup_text_size">22sp</dimen>
+    <dimen name="elyra_fastscroll_popup_margin">12dp</dimen>
 
     <!-- Drawer color-filter panel tokens (Stage 6.7). A compact, evenly spaced
          row of color swatches with a clear highlight ring on the selected dot.
@@ -61,8 +71,9 @@
          the segmented capsule, category cards and the color panel so the drawer
          reads as one Elyra/Material surface language. Prepared for future
          user-facing surface customization; adopt incrementally. -->
-    <integer name="elyra_surface_alpha_panel">218</integer>
-    <integer name="elyra_surface_alpha_capsule">176</integer>
-    <integer name="elyra_surface_alpha_card">190</integer>
-    <integer name="elyra_surface_alpha_hairline">30</integer>
+    <integer name="elyra_surface_alpha_panel">238</integer>
+    <integer name="elyra_surface_alpha_capsule">204</integer>
+    <integer name="elyra_surface_alpha_card">218</integer>
+    <integer name="elyra_surface_alpha_hairline">40</integer>
+    <integer name="elyra_drawer_sheet_alpha">236</integer>
 </resources>

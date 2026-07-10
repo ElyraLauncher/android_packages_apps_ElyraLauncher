@@ -14,4 +14,11 @@
     <color name="elyra_surface_elevated">#FF17453B</color>
     <color name="elyra_text_primary">#FFEAF5F1</color>
     <color name="elyra_text_secondary">#FFA9C7BE</color>
+    <color name="elyra_drawer_surface_stroke">#38EAF5F1</color>
+
+    <integer name="elyra_surface_alpha_panel">230</integer>
+    <integer name="elyra_surface_alpha_capsule">190</integer>
+    <integer name="elyra_surface_alpha_card">204</integer>
+    <integer name="elyra_surface_alpha_hairline">48</integer>
+    <integer name="elyra_drawer_sheet_alpha">228</integer>
 </resources>

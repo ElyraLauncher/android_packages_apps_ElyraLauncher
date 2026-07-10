@@ -26,9 +26,8 @@ import kotlinx.coroutines.flow.Flow
  * Read/write access to Elyra feature flags for non-Compose call sites.
  *
  * Feature code should gate behavior with [isEnabled] (or [observe] for reactive
- * updates). Because every flag defaults OFF, code guarded by these checks is
- * inert until a flag is explicitly enabled, so adding a gate never changes the
- * current launcher behavior. Compose settings screens can bind directly to
+ * updates). Shipped defaults live in [ElyraFlag]; persisted user choices override
+ * those defaults. Compose settings screens can bind directly to
  * [ElyraFlagStore.preferenceFor] via `getAdapter()`.
  */
 class ElyraFlagsRepository(private val store: ElyraFlagStore) {

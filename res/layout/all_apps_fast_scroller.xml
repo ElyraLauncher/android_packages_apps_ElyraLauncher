@@ -20,10 +20,15 @@
     <TextView
         android:id="@+id/fast_scroller_popup"
         style="@style/FastScrollerPopup"
+        android:layout_width="@dimen/elyra_fastscroll_popup_size"
+        android:minWidth="@dimen/elyra_fastscroll_popup_size"
+        android:layout_height="@dimen/elyra_fastscroll_popup_size"
         android:layout_alignParentEnd="true"
         android:layout_alignTop="@+id/all_apps_header"
         android:layout_marginTop="@dimen/all_apps_header_bottom_padding"
-        android:layout_marginEnd="@dimen/fastscroll_popup_margin" />
+        android:layout_marginEnd="@dimen/elyra_fastscroll_popup_margin"
+        android:padding="0dp"
+        android:textSize="@dimen/elyra_fastscroll_popup_text_size" />
 
     <com.android.launcher3.views.RecyclerViewFastScroller
         android:id="@+id/fast_scroller"

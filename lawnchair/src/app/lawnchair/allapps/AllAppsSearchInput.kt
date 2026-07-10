@@ -121,7 +121,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     private var focusedResultTitle = ""
     private var canShowHint = false
 
-    private val bg = DrawableTokens.SearchInputFg.resolve(context)
+    private val bg = if (bottomAligned) {
+        requireNotNull(context.getDrawable(R.drawable.elyra_drawer_search_surface))
+    } else {
+        DrawableTokens.SearchInputFg.resolve(context)
+    }
     private val bgAlphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 300
         interpolator = DecelerateInterpolator()
@@ -567,11 +571,26 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         val imeActive = latestImeVisible && input.hasFocus()
         val showColorPanel = colorSearchEnabled && colorPanelVisible && !imeActive
         val showColorButton = colorSearchEnabled && !showColorPanel && !imeActive
+        val panelVisibilityChanged = colorPanel.isVisible != showColorPanel
         colorPanel.isVisible = showColorPanel
         searchField.isVisible = !showColorPanel
         searchIcon.isVisible = !showColorPanel
         searchActions.isVisible = !showColorPanel
         colorButton.isVisible = showColorButton
+        colorButton.alpha = if (selectedColorBucket == null) 0.86f else 1f
+        if (panelVisibilityChanged) {
+            bottomControls.animate().cancel()
+            bottomControls.alpha = 0.78f
+            bottomControls.scaleX = 0.985f
+            bottomControls.scaleY = 0.985f
+            bottomControls.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(160)
+                .setInterpolator(FastOutSlowInInterpolator())
+                .start()
+        }
         // Color mode owns the right side of the row: keep the assistant/lens QSB
         // icons hidden so the inactive row is exactly one search bar + one color
         // button and no stray icon bubbles stack near the bottom-right.

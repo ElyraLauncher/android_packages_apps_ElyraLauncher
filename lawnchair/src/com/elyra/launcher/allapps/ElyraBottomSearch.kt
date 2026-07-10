@@ -25,20 +25,15 @@ import com.elyra.launcher.flags.ElyraFlagsRepository
  *
  * The feature reuses the real Launcher3/Lawnchair All Apps model and search
  * primitives; it only changes where the existing search surface is anchored (top
- * vs. bottom of the drawer). Gating every call site through this one helper keeps
- * the flag read consistent and makes the OFF path provably identical to upstream:
- * when [ElyraFlag.BottomSearch] is off, no bottom-search code path runs.
- *
- * The value is read once per All Apps container construction (a blocking read of
- * the persisted flag, matching how the container already reads its other
- * preferences); toggling the flag takes effect the next time the drawer is rebuilt.
+ * vs. bottom of the drawer). The bottom placement is the stable drawer baseline. Compatibility flag keys remain
+ * in the schema so existing preference data stays readable, but presentation no
+ * longer depends on a Labs choice.
  */
 object ElyraBottomSearch {
 
     /** Whether the app-drawer search bar should be anchored to the bottom. */
     @JvmStatic
-    fun isEnabled(context: Context): Boolean =
-        ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.BottomSearch)
+    fun isEnabled(context: Context): Boolean = true
 
     /**
      * Whether optional web/provider results (web suggestions, the search-provider
@@ -52,6 +47,5 @@ object ElyraBottomSearch {
         ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerWebResults)
 
     @JvmStatic
-    fun colorSearchEnabled(context: Context): Boolean =
-        ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerColorSearch)
+    fun colorSearchEnabled(context: Context): Boolean = true
 }

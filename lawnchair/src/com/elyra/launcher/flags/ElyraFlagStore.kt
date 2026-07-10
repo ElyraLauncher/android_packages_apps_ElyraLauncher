@@ -49,7 +49,7 @@ class ElyraFlagStore private constructor(context: Context) :
         }
 
     init {
-        ElyraLog.d("flag store initialized (${flags.size} flags, all default OFF unless overridden)")
+        ElyraLog.d("flag store initialized (${flags.size} flags)")
     }
 
     /** The persistent preference backing a given flag. */

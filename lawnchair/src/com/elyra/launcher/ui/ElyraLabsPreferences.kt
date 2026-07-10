@@ -55,7 +55,9 @@ fun ElyraLabsPreferences(
             heading = stringResource(id = R.string.elyra_experimental_features),
             description = stringResource(id = R.string.elyra_restart_may_be_required),
         ) {
-            ElyraFlag.entries.forEach { flag ->
+            ElyraFlag.entries
+                .filterNot { it in drawerBaselineFlags }
+                .forEach { flag ->
                 val descriptionRes = flag.descriptionRes()
                 SwitchPreference(
                     adapter = store.preferenceFor(flag).getAdapter(),
@@ -70,6 +72,13 @@ fun ElyraLabsPreferences(
         }
     }
 }
+
+private val drawerBaselineFlags = setOf(
+    ElyraFlag.BottomSearch,
+    ElyraFlag.DrawerCategories,
+    ElyraFlag.AzRail,
+    ElyraFlag.DrawerColorSearch,
+)
 
 /**
  * Optional one-line description shown under a flag toggle. Only flags whose

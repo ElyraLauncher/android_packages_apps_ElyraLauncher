@@ -37,10 +37,7 @@ import com.elyra.launcher.flags.ElyraFlagsRepository
 object ElyraDrawerOptions {
 
     private val OPTIONS = listOf(
-        ElyraFlag.DrawerCategories to R.string.elyra_drawer_option_categories,
-        ElyraFlag.DrawerColorSearch to R.string.elyra_drawer_option_color_search,
         ElyraFlag.DrawerSuggestions to R.string.elyra_drawer_option_suggestions,
-        ElyraFlag.AzRail to R.string.elyra_drawer_option_az_index,
     )
 
     @JvmStatic

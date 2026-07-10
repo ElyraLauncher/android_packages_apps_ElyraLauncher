@@ -19,10 +19,10 @@ package com.elyra.launcher.flags
 /**
  * A single Elyra feature flag.
  *
- * Every future Elyra feature is gated behind one of these flags. Flags default
- * OFF so that merely adding a flag never changes current launcher behavior; a
- * feature becomes visible only once its implementation stage explicitly turns it
- * on. This is pure Kotlin (no Android dependencies) so it can be unit tested.
+ * Every future Elyra feature is gated behind one of these flags. Stable drawer
+ * features may ship enabled by default, while unfinished or higher-risk features
+ * remain disabled. This is pure Kotlin (no Android dependencies) so defaults can
+ * be unit tested.
  *
  * @property key stable DataStore key; it is the migration contract and must never
  *   change once shipped.
@@ -36,12 +36,12 @@ enum class ElyraFlag(
     val default: Boolean,
     val romOnly: Boolean = false,
 ) {
-    BottomSearch(key = "elyra_bottom_search", default = false),
+    BottomSearch(key = "elyra_bottom_search", default = true),
     DrawerWebResults(key = "elyra_drawer_web_results", default = false),
-    DrawerCategories(key = "elyra_drawer_categories", default = false),
+    DrawerCategories(key = "elyra_drawer_categories", default = true),
     DrawerSuggestions(key = "elyra_drawer_suggestions", default = false),
-    AzRail(key = "elyra_az_rail", default = false),
-    DrawerColorSearch(key = "elyra_drawer_color_search", default = false),
+    AzRail(key = "elyra_az_rail", default = true),
+    DrawerColorSearch(key = "elyra_drawer_color_search", default = true),
     WallpaperThemedIcons(key = "elyra_wallpaper_themed_icons", default = false),
     IconResize(key = "elyra_icon_resize", default = false),
     LargeFolders(key = "elyra_large_folders", default = false),

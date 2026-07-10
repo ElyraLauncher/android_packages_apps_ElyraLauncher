@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Insets;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -61,6 +62,7 @@ public class RecyclerViewFastScroller extends View {
     private static final boolean DEBUG = false;
     private static final int FASTSCROLL_THRESHOLD_MILLIS = 10;
     private static final int SCROLL_DELTA_THRESHOLD_DP = 4;
+    private static final String INDEX_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     // Track is very narrow to target and correctly. This is especially the case if a user is
     // using a hardware case. Even if x is offset by following amount, we consider it to be valid.
@@ -108,6 +110,7 @@ public class RecyclerViewFastScroller extends View {
     private final Point mThumbDrawOffset = new Point();
 
     private final Paint mTrackPaint;
+    private final Paint mIndexPaint;
 
     private float mLastTouchY;
     private boolean mIsDragging;
@@ -131,6 +134,7 @@ public class RecyclerViewFastScroller extends View {
     // Fast scroller popup
     private TextView mPopupView;
     private boolean mPopupVisible;
+    private boolean mCompactPopup;
     private CharSequence mPopupSectionName;
     private Insets mSystemGestureInsets;
 
@@ -157,6 +161,12 @@ public class RecyclerViewFastScroller extends View {
         mTrackPaint.setColor(ColorTokens.TextColorPrimary.resolveColor(getContext()));
         mTrackPaint.setAlpha(MAX_TRACK_ALPHA);
 
+        mIndexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mIndexPaint.setColor(ColorTokens.TextColorPrimary.resolveColor(getContext()));
+        mIndexPaint.setAlpha(112);
+        mIndexPaint.setTextAlign(Paint.Align.CENTER);
+        mIndexPaint.setTextSize(getResources().getDisplayMetrics().scaledDensity * 8f);
+
         mThumbPaint = new Paint();
         mThumbPaint.setAntiAlias(true);
         mThumbPaint.setColor(Themes.getColorAccent(context));
@@ -180,11 +190,32 @@ public class RecyclerViewFastScroller extends View {
         ta.recycle();
     }
 
-    /** Sets the popup view to show while the scroller is being dragged */
+    /** Sets the popup view to show while the scroller is being dragged. */
     public void setPopupView(TextView popupView) {
+        setPopupView(popupView, false);
+    }
+
+    /** Uses a compact rounded popup for the app drawer while preserving other scrollers. */
+    public void setPopupView(TextView popupView, boolean compact) {
         mPopupView = popupView;
-        mPopupView.setBackground(
-                new FastScrollThumbDrawable(mThumbPaint, Utilities.isRtl(getResources())));
+        mCompactPopup = compact;
+        if (compact) {
+            GradientDrawable background = new GradientDrawable();
+            background.setShape(GradientDrawable.RECTANGLE);
+            background.setColor(Themes.getColorBackgroundFloating(getContext()));
+            background.setCornerRadius(
+                    getResources().getDimensionPixelSize(R.dimen.elyra_fastscroll_popup_size) / 2f);
+            background.setStroke(
+                    getResources().getDimensionPixelSize(R.dimen.search_decoration_padding),
+                    Themes.getAttrColor(getContext(), android.R.attr.textColorTertiary));
+            mPopupView.setBackground(background);
+            mPopupView.setTextColor(
+                    Themes.getAttrColor(getContext(), android.R.attr.textColorPrimary));
+            mPopupView.setPadding(0, 0, 0, 0);
+        } else {
+            mPopupView.setBackground(
+                    new FastScrollThumbDrawable(mThumbPaint, Utilities.isRtl(getResources())));
+        }
     }
 
     public void setRecyclerView(FastScrollRecyclerView rv) {
@@ -259,6 +290,15 @@ public class RecyclerViewFastScroller extends View {
                 mDownY = mLastY = y;
                 mDownTimeStampMillis = ev.getDownTime();
                 mRequestedHideKeyboard = false;
+
+                if (isNearScrollBar(x) && mRv.supportsFastScrolling()) {
+                    mTouchOffsetY = isNearThumb(x, y)
+                            ? mDownY - mThumbOffsetY
+                            : mThumbHeight / 2;
+                    calcTouchOffsetAndPrepToFastScroll(mDownY, mDownY);
+                    updateFastScrollSectionNameAndThumbOffset(y);
+                    break;
+                }
 
                 if ((Math.abs(mDy) < mDeltaThreshold &&
                         mRv.getScrollState() != SCROLL_STATE_IDLE)) {
@@ -359,10 +399,15 @@ public class RecyclerViewFastScroller extends View {
         int saveCount = canvas.save();
         canvas.translate(getWidth() / 2, mRv.getScrollBarTop());
         mThumbDrawOffset.set(getWidth() / 2, mRv.getScrollBarTop());
-        // Draw the track
+        // The drawer uses a real A-Z index at rest; other fast scrollers keep the
+        // original subtle track. The same RecyclerView progress mapping drives both.
         float halfW = mWidth / 2;
-        canvas.drawRoundRect(-halfW, 0, halfW, mRv.getScrollbarTrackHeight(),
-                mWidth, mWidth, mTrackPaint);
+        if (mCompactPopup) {
+            drawIndexLetters(canvas, mRv.getScrollbarTrackHeight());
+        } else {
+            canvas.drawRoundRect(-halfW, 0, halfW, mRv.getScrollbarTrackHeight(),
+                    mWidth, mWidth, mTrackPaint);
+        }
 
         canvas.translate(0, mThumbOffsetY);
         mThumbDrawOffset.y += mThumbOffsetY;
@@ -392,6 +437,20 @@ public class RecyclerViewFastScroller extends View {
             mSystemGestureInsets = null;
         }
         return super.onApplyWindowInsets(insets);
+    }
+
+    private void drawIndexLetters(Canvas canvas, int trackHeight) {
+        if (trackHeight <= 0) {
+            return;
+        }
+        float step = trackHeight / (float) INDEX_LETTERS.length();
+        Paint.FontMetrics metrics = mIndexPaint.getFontMetrics();
+        float baselineOffset = -(metrics.ascent + metrics.descent) / 2f;
+        for (int index = 0; index < INDEX_LETTERS.length(); index++) {
+            float centerY = step * (index + 0.5f);
+            canvas.drawText(String.valueOf(INDEX_LETTERS.charAt(index)),
+                    0, centerY + baselineOffset, mIndexPaint);
+        }
     }
 
     private float getScrollThumbRadius() {
@@ -426,7 +485,7 @@ public class RecyclerViewFastScroller extends View {
      * beginning at this point.
      */
     public boolean shouldBlockIntercept(int x, int y) {
-        return isNearThumb(x, y);
+        return isNearScrollBar(x);
     }
 
     /**
@@ -438,10 +497,27 @@ public class RecyclerViewFastScroller extends View {
     }
 
     private void animatePopupVisibility(boolean visible) {
-        if (mPopupVisible != visible) {
-            mPopupVisible = visible;
-            mPopupView.animate().cancel();
-            mPopupView.animate().alpha(visible ? 1f : 0f).setDuration(visible ? 200 : 150).start();
+        if (mPopupVisible == visible) {
+            return;
+        }
+        mPopupVisible = visible;
+        mPopupView.animate().cancel();
+        if (mCompactPopup) {
+            if (visible) {
+                mPopupView.setScaleX(0.86f);
+                mPopupView.setScaleY(0.86f);
+            }
+            mPopupView.animate()
+                    .alpha(visible ? 1f : 0f)
+                    .scaleX(visible ? 1f : 0.9f)
+                    .scaleY(visible ? 1f : 0.9f)
+                    .setDuration(visible ? 140 : 100)
+                    .start();
+        } else {
+            mPopupView.animate()
+                    .alpha(visible ? 1f : 0f)
+                    .setDuration(visible ? 200 : 150)
+                    .start();
         }
     }
 
