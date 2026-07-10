@@ -364,7 +364,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         Context context = parent.getContext();
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(14), dp(10), dp(14), dp(8));
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
         card.setBackground(roundedDrawableWithStroke(
                 translucentColor(Themes.getColorBackgroundFloating(context),
                         surfaceAlpha(R.integer.elyra_surface_alpha_suggestion)),
@@ -379,15 +379,20 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         label.setIncludeFontPadding(false);
         label.setTextColor(Themes.getAttrColor(context, android.R.attr.textColorSecondary));
-        label.setPadding(dp(4), 0, dp(4), dp(6));
+        label.setPadding(dp(4), 0, dp(4), dp(8));
         card.addView(label, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         LinearLayout icons = new LinearLayout(context);
         icons.setOrientation(LinearLayout.HORIZONTAL);
         icons.setGravity(Gravity.CENTER);
+        // Height is content-driven so the icon plus its one-line label are always
+        // fully contained; clipping is disabled so a label descender can never be
+        // shaved by the row bounds.
+        icons.setClipChildren(false);
+        icons.setClipToPadding(false);
         card.addView(icons, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(74)));
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -536,7 +541,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             icon.applyFromApplicationInfo(app);
             icon.setOnClickListener(mOnIconClickListener);
             icon.setOnLongClickListener(mOnIconLongClickListener);
-            icon.setLayoutParams(new LinearLayout.LayoutParams(0, dp(74), 1f));
+            // Weight distributes the cell width across the measured card; the height
+            // wraps the icon and its one-line label so neither is ever clipped.
+            icon.setLayoutParams(new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             icons.addView(icon);
         }
     }
