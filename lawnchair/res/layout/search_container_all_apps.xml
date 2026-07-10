@@ -21,6 +21,8 @@
     android:layout_width="match_parent"
     android:layout_height="@dimen/search_box_container_height"
     android:clickable="true"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:focusable="true">
     <FrameLayout
         android:id="@+id/search_wrapper"

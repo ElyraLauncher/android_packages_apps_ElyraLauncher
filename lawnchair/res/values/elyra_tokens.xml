@@ -39,6 +39,12 @@
     <dimen name="elyra_folder_radius">28dp</dimen>
     <dimen name="elyra_dock_radius">28dp</dimen>
 
+    <!-- Bottom drawer search row: a clean, symmetric side inset for the bottom
+         search bar + color button, decoupled from the grid icon-alignment margin
+         used by the top search bar, so the pill has a predictable width and its
+         rounded ends stay fully visible and centered. -->
+    <dimen name="elyra_bottom_search_side_padding">16dp</dimen>
+
     <!-- Drawer color-filter panel tokens (Stage 6.7). A compact, evenly spaced
          row of color swatches with a clear highlight ring on the selected dot.
          Sizing lives here so the panel stays consistent and future-tunable. -->

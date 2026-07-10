@@ -327,7 +327,15 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     private fun setupPadding() {
         launcher.deviceProfile.let { dp ->
-            val padding = dp.getAllAppsIconStartMargin(context)
+            // The top search bar aligns its content with the icon grid; the bottom
+            // drawer bar is a centered pill, so it uses a clean symmetric side inset
+            // instead. This keeps the bar a predictable width with both rounded ends
+            // fully visible rather than tied to grid-alignment math.
+            val padding = if (bottomAligned) {
+                resources.getDimensionPixelSize(R.dimen.elyra_bottom_search_side_padding)
+            } else {
+                dp.getAllAppsIconStartMargin(context)
+            }
             initialPaddingLeft = padding
             initialPaddingRight = padding
             setPadding(padding, paddingTop, padding, paddingBottom)
