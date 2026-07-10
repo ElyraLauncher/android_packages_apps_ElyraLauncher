@@ -44,6 +44,9 @@
          used by the top search bar, so the pill has a predictable width and its
          rounded ends stay fully visible and centered. -->
     <dimen name="elyra_bottom_search_side_padding">16dp</dimen>
+    <dimen name="elyra_bottom_search_control_gap">12dp</dimen>
+    <dimen name="elyra_bottom_search_bottom_spacing">10dp</dimen>
+    <dimen name="elyra_bottom_search_content_spacing">8dp</dimen>
 
     <!-- Drawer color-filter panel tokens (Stage 6.7). A compact, evenly spaced
          row of color swatches with a clear highlight ring on the selected dot.

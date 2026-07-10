@@ -30,7 +30,6 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
@@ -84,6 +83,8 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     private lateinit var hint: TextView
     private lateinit var input: FallbackSearchInputView
+    private lateinit var bottomControls: LinearLayout
+    private lateinit var searchField: FrameLayout
     private lateinit var actionButton: ImageButton
     private lateinit var searchIcon: ImageButton
     private lateinit var searchWrapper: View
@@ -104,10 +105,8 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     // sides agree; when off, all positioning below is the unchanged upstream path.
     private val bottomAligned = ElyraBottomSearch.isEnabled(context)
     private val bottomSearchInsetMargin =
-        resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium)
+        resources.getDimensionPixelSize(R.dimen.elyra_bottom_search_bottom_spacing)
     private val colorSearchEnabled = bottomAligned && ElyraBottomSearch.colorSearchEnabled(context)
-    private val colorButtonSpace = resources.getDimensionPixelSize(R.dimen.search_box_height) +
-        resources.getDimensionPixelSize(R.dimen.elyra_spacing_small)
 
     private val launcher = context.launcher
     private val searchBarController = AllAppsSearchBarController()
@@ -144,6 +143,8 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     override fun onFinishInflate() {
         super.onFinishInflate()
 
+        bottomControls = ViewCompat.requireViewById(this, R.id.bottom_controls)
+        searchField = ViewCompat.requireViewById(this, R.id.search_field)
         searchWrapper = ViewCompat.requireViewById(this, R.id.search_wrapper)
         searchWrapper.background = bg
         setupPadding()
@@ -192,7 +193,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         }
 
         colorPanel = createColorDotsPanel()
-        addView(colorPanel)
+        bottomControls.addView(colorPanel, 0)
 
         with(colorButton) {
             isVisible = false
@@ -331,14 +332,16 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             // drawer bar is a centered pill, so it uses a clean symmetric side inset
             // instead. This keeps the bar a predictable width with both rounded ends
             // fully visible rather than tied to grid-alignment math.
-            val padding = if (bottomAligned) {
-                resources.getDimensionPixelSize(R.dimen.elyra_bottom_search_side_padding)
-            } else {
-                dp.getAllAppsIconStartMargin(context)
-            }
+            val padding = if (bottomAligned) 0 else dp.getAllAppsIconStartMargin(context)
             initialPaddingLeft = padding
             initialPaddingRight = padding
             setPadding(padding, paddingTop, padding, paddingBottom)
+            val rowPadding = if (bottomAligned) {
+                resources.getDimensionPixelSize(R.dimen.elyra_bottom_search_side_padding)
+            } else {
+                0
+            }
+            bottomControls.setPaddingRelative(rowPadding, 0, rowPadding, 0)
         }
     }
 
@@ -540,10 +543,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             removeRule(RelativeLayout.ALIGN_PARENT_TOP)
             addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
             topMargin = 0
-            // Respect left/right system insets symmetrically so the row stays
-            // centered and unclipped on devices with cutouts or landscape nav.
-            leftMargin = latestInsets.left
-            rightMargin = latestInsets.right
+            // ActivityAllAppsContainerView owns system side insets. This child owns
+            // only the row's visual padding, avoiding duplicate inset application.
+            leftMargin = 0
+            rightMargin = 0
             bottomMargin = if (isInvisible) 0 else bottomInset + bottomSearchInsetMargin
         }
         if (::appsView.isInitialized) {
@@ -565,7 +568,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         val showColorPanel = colorSearchEnabled && colorPanelVisible && !imeActive
         val showColorButton = colorSearchEnabled && !showColorPanel && !imeActive
         colorPanel.isVisible = showColorPanel
-        searchWrapper.isVisible = !showColorPanel
+        searchField.isVisible = !showColorPanel
         searchIcon.isVisible = !showColorPanel
         searchActions.isVisible = !showColorPanel
         colorButton.isVisible = showColorButton
@@ -575,13 +578,6 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         if (colorSearchEnabled && ::micIcon.isInitialized && ::lensIcon.isInitialized) {
             micIcon.isVisible = false
             lensIcon.isVisible = false
-        }
-        val endMargin = if (showColorButton) colorButtonSpace else 0
-        searchWrapper.updateLayoutParams<FrameLayout.LayoutParams> {
-            marginEnd = endMargin
-        }
-        searchActions.updateLayoutParams<FrameLayout.LayoutParams> {
-            marginEnd = endMargin
         }
         updateActionButtonVisibility()
     }
@@ -648,11 +644,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
             ))
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+            layoutParams = LinearLayout.LayoutParams(
+                0,
                 resources.getDimensionPixelSize(R.dimen.search_box_height),
-                Gravity.CENTER,
-            )
+                1f,
+            ).apply { gravity = Gravity.CENTER_VERTICAL }
         }.also { rebuildColorPanel() }
     }
 

@@ -896,6 +896,17 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mAH.forEach(AdapterHolder::applyPadding);
     }
 
+    private int getSearchContainerHeightForPadding() {
+        int height = Math.max(mSearchContainer.getHeight(), mSearchContainer.getMeasuredHeight());
+        if (height <= 0 && mSearchContainer.getLayoutParams() != null) {
+            height = mSearchContainer.getLayoutParams().height;
+        }
+        if (height <= 0) {
+            height = getResources().getDimensionPixelSize(R.dimen.search_box_container_height);
+        }
+        return height;
+    }
+
     /**
      * Whether the <em>floating</em> search bar should appear as a small pill when
      * not focused.
@@ -1750,8 +1761,12 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                     }
                 }
                 if (isSearchBarFloating() || isElyraBottomSearch()) {
-                    bottomOffset += mSearchContainer.getHeight();
+                    bottomOffset += getSearchContainerHeightForPadding();
                     if (isElyraBottomSearch()) {
+                        bottomOffset += getResources().getDimensionPixelSize(
+                                R.dimen.elyra_bottom_search_bottom_spacing);
+                        bottomOffset += getResources().getDimensionPixelSize(
+                                R.dimen.elyra_bottom_search_content_spacing);
                         bottomOffset += mElyraBottomSearchImeInset;
                     }
                 }
