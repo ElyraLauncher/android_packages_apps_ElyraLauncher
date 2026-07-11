@@ -139,7 +139,7 @@ class LawnchairAlphabeticalAppsList<T>(
         // Suggestions stay local-first and occupy one dedicated card in All mode.
         // They never mutate workspace data and do not duplicate ordinary app rows.
         if (elyraSuggestions) {
-            val suggestions = ElyraDrawerSuggestions.suggest(context, validApps)
+            val suggestions = ElyraDrawerSuggestions.suggest(context, validApps, hiddenApps)
             if (suggestions.isNotEmpty()) {
                 mAdapterItems.add(AdapterItem.asElyraSuggestions(suggestions))
                 position++
@@ -224,6 +224,11 @@ class LawnchairAlphabeticalAppsList<T>(
 
     override fun refreshElyraDrawer() {
         updateAdapterItems()
+    }
+
+    override fun onAppsUpdated() {
+        ElyraDrawerSuggestions.onPackagesChanged()
+        super.onAppsUpdated()
     }
 
     override fun onIdpChanged(modelPropertiesChanged: Boolean) {

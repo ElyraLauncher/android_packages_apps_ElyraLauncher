@@ -82,6 +82,7 @@ import com.android.launcher3.util.Preconditions;
 import com.android.launcher3.util.RunnableList;
 import com.android.launcher3.util.SplitConfigurationOptions;
 import com.android.launcher3.util.ViewCache;
+import com.elyra.launcher.drawer.ElyraDrawerSuggestions;
 
 import java.util.List;
 
@@ -445,6 +446,7 @@ public interface ActivityContext {
             if (item != null) {
                 InstanceId instanceId = new InstanceIdSequence().newInstanceId();
                 logAppLaunch(getStatsLogManager(), item, instanceId);
+                ElyraDrawerSuggestions.recordLaunch(context, item);
             }
             return options.onEndCallback;
         } catch (NullPointerException | ActivityNotFoundException | SecurityException e) {

@@ -18,66 +18,153 @@ package com.elyra.launcher.drawer
 
 import android.content.Context
 import com.android.launcher3.model.data.AppInfo
+import com.android.launcher3.model.data.ItemInfo
+import com.android.launcher3.util.ComponentKey
+import java.util.concurrent.TimeUnit
 
 /**
- * Local, deterministic app-drawer suggestions.
- *
- * Suggestions are ranked from on-device signals only — there is no web/provider
- * suggestion, no network call, and no telemetry. The default local signal is
- * package recency (most-recently-installed first), a permission-free signal read
- * from [android.content.pm.PackageManager]; the label is the deterministic
- * tiebreak. A caller may pass an explicit usage score map (e.g. once the launcher
- * tracks launches locally) to override the signal without changing this API.
- *
- * The ranking rule [rank] is pure and generic so it can be unit tested without a
- * device.
+ * Local app-drawer suggestions backed by the platform prediction order plus a
+ * permission-free launch-history fallback. No signal leaves the device.
  */
 object ElyraDrawerSuggestions {
 
-    /** Default number of suggestions surfaced at the top of the drawer. */
     const val DEFAULT_COUNT = 5
 
-    /** A rankable candidate: higher [score] ranks first, [tiebreak] breaks ties. */
+    private const val PREFERENCES = "elyra_drawer_suggestion_history"
+    private const val LAST_PREFIX = "last:"
+    private const val COUNT_PREFIX = "count:"
+    private val HOUR_MILLIS = TimeUnit.HOURS.toMillis(1)
+    private val RECENCY_WINDOW_MILLIS = TimeUnit.DAYS.toMillis(14)
+    private val NEW_INSTALL_WINDOW_MILLIS = TimeUnit.HOURS.toMillis(72)
+
     data class Candidate<T>(val item: T, val score: Long, val tiebreak: String)
 
-    /**
-     * Deterministic ranking: by [Candidate.score] descending, then [Candidate.tiebreak]
-     * ascending. Returns at most [limit] items. Pure and side-effect free.
-     */
+    @Volatile
+    private var platformPredictionKeys: List<String> = emptyList()
+    private val installTimeCache = HashMap<String, Long>()
+
+    /** Deterministic, unique, bounded ranking used by production and tests. */
     fun <T> rank(candidates: List<Candidate<T>>, limit: Int): List<T> {
         if (limit <= 0) return emptyList()
         return candidates
             .sortedWith(compareByDescending<Candidate<T>> { it.score }.thenBy { it.tiebreak })
-            .take(limit)
+            .distinctBy { it.item }
+            .take(limit.coerceAtMost(DEFAULT_COUNT))
             .map { it.item }
     }
 
-    // Cache install time per package; the value is stable for the life of an install.
-    private val installTimeCache = HashMap<String, Long>()
+    /**
+     * Combines platform prediction, recent launch, frequency, and a temporary
+     * 72-hour install boost. Old installs receive no residual install score.
+     */
+    fun score(
+        nowMillis: Long,
+        lastLaunchMillis: Long,
+        launchCount: Long,
+        installMillis: Long,
+        platformRank: Int?,
+    ): Long {
+        val launchAge = (nowMillis - lastLaunchMillis).coerceAtLeast(0)
+        val recency = if (lastLaunchMillis > 0 && launchAge < RECENCY_WINDOW_MILLIS) {
+            ((RECENCY_WINDOW_MILLIS - launchAge) / HOUR_MILLIS) * 50_000L
+        } else {
+            0L
+        }
+        val frequency = launchCount.coerceIn(0, 100) * 100_000L
+        val installAge = (nowMillis - installMillis).coerceAtLeast(0)
+        val newInstall = if (installMillis > 0 && installAge < NEW_INSTALL_WINDOW_MILLIS) {
+            ((NEW_INSTALL_WINDOW_MILLIS - installAge) / HOUR_MILLIS + 1L) * 50_000L
+        } else {
+            0L
+        }
+        val platform = platformRank?.let { (DEFAULT_COUNT - it).coerceAtLeast(1) * 1_000_000L }
+            ?: 0L
+        return recency + frequency + newInstall + platform
+    }
 
-    private fun installTime(context: Context, app: AppInfo): Long {
+    /** Receives the existing Launcher3 on-device All Apps prediction order. */
+    @JvmStatic
+    fun updatePlatformPredictions(items: List<ItemInfo>) {
+        platformPredictionKeys = items.mapNotNull { item ->
+            val component = item.targetComponent ?: return@mapNotNull null
+            ComponentKey(component, item.user).toString()
+        }.distinct()
+    }
+
+    /** Records a successful launcher app launch for the local fallback. */
+    @JvmStatic
+    fun recordLaunch(context: Context, item: ItemInfo) {
+        val component = item.targetComponent ?: return
+        val key = ComponentKey(component, item.user).toString()
+        val preferences = context.applicationContext.getSharedPreferences(
+            PREFERENCES,
+            Context.MODE_PRIVATE,
+        )
+        val countKey = COUNT_PREFIX + key
+        preferences.edit()
+            .putLong(LAST_PREFIX + key, System.currentTimeMillis())
+            .putLong(countKey, preferences.getLong(countKey, 0L) + 1L)
+            .apply()
+    }
+
+    /** Package/model changes invalidate install timestamps, including reinstalls. */
+    @JvmStatic
+    fun onPackagesChanged() {
+        synchronized(installTimeCache) { installTimeCache.clear() }
+    }
+
+    private fun installTime(context: Context, app: AppInfo, key: String): Long {
+        synchronized(installTimeCache) {
+            installTimeCache[key]?.let { return it }
+        }
         val pkg = app.targetPackage ?: return 0L
-        installTimeCache[pkg]?.let { return it }
         val time = try {
             context.packageManager.getPackageInfo(pkg, 0).firstInstallTime
         } catch (_: Exception) {
             0L
         }
-        return time.also { installTimeCache[pkg] = it }
+        synchronized(installTimeCache) { installTimeCache[key] = time }
+        return time
     }
 
     /**
-     * Ranks [apps] into at most [limit] local suggestions using package recency as
-     * the default signal and the lowercased label as the deterministic tiebreak.
+     * Returns up to five real, available, unique apps. The caller supplies the
+     * already profile-filtered All Apps list and hidden component keys.
      */
-    fun suggest(context: Context, apps: List<AppInfo>, limit: Int = DEFAULT_COUNT): List<AppInfo> {
-        val candidates = apps.distinctBy { it.toComponentKey() }.map { app ->
-            Candidate(
-                item = app,
-                score = installTime(context, app),
-                tiebreak = app.title?.toString()?.lowercase().orEmpty(),
-            )
-        }
+    fun suggest(context: Context, apps: List<AppInfo>, limit: Int): List<AppInfo> =
+        suggest(context, apps, emptySet(), limit)
+
+    fun suggest(
+        context: Context,
+        apps: List<AppInfo>,
+        hiddenApps: Set<String> = emptySet(),
+        limit: Int = DEFAULT_COUNT,
+        nowMillis: Long = System.currentTimeMillis(),
+    ): List<AppInfo> {
+        val preferences = context.applicationContext.getSharedPreferences(
+            PREFERENCES,
+            Context.MODE_PRIVATE,
+        )
+        val predictionRanks = platformPredictionKeys.withIndex().associate { it.value to it.index }
+        val candidates = apps.asSequence()
+            .distinctBy { it.toComponentKey() }
+            .filterNot { it.targetPackage == context.packageName }
+            .mapNotNull { app ->
+                val key = app.toComponentKey().toString()
+                if (key in hiddenApps) return@mapNotNull null
+                Candidate(
+                    item = app,
+                    score = score(
+                        nowMillis = nowMillis,
+                        lastLaunchMillis = preferences.getLong(LAST_PREFIX + key, 0L),
+                        launchCount = preferences.getLong(COUNT_PREFIX + key, 0L),
+                        installMillis = installTime(context, app, key),
+                        platformRank = predictionRanks[key],
+                    ),
+                    tiebreak = app.title?.toString()?.lowercase().orEmpty(),
+                )
+            }
+            .toList()
         return rank(candidates, limit)
     }
 }

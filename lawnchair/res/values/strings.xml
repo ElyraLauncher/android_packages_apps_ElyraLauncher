@@ -958,7 +958,6 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_drawer_tab_all" tools:ignore="MissingTranslation">All</string>
     <string name="elyra_drawer_tab_categories" tools:ignore="MissingTranslation">Categories</string>
     <string name="elyra_drawer_options_title" tools:ignore="MissingTranslation">App drawer options</string>
-    <string name="elyra_drawer_suggested_apps" tools:ignore="MissingTranslation">Suggested apps</string>
     <string name="elyra_drawer_reset_view" tools:ignore="MissingTranslation">Reset drawer view</string>
     <string name="elyra_drawer_option_categories" tools:ignore="MissingTranslation">App categories</string>
     <string name="elyra_drawer_option_color_search" tools:ignore="MissingTranslation">App color search</string>

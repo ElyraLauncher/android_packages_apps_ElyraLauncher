@@ -32,7 +32,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -368,31 +367,20 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         card.setOrientation(LinearLayout.VERTICAL);
         card.setClipChildren(false);
         card.setClipToPadding(false);
-        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.setPadding(dp(14), dp(10), dp(14), dp(10));
         card.setBackground(roundedDrawableWithStroke(
                 translucentColor(Themes.getColorBackgroundFloating(context),
                         surfaceAlpha(R.integer.elyra_surface_alpha_suggestion)),
-                dp(22),
+                dp(24),
                 translucentColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary),
                         surfaceAlpha(R.integer.elyra_surface_alpha_hairline)),
                 dp(1)));
 
-        TextView label = new TextView(context);
-        label.setText(R.string.elyra_drawer_suggested_apps);
-        label.setTextSize(13);
-        label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        label.setIncludeFontPadding(false);
-        label.setTextColor(Themes.getAttrColor(context, android.R.attr.textColorSecondary));
-        label.setPadding(dp(4), 0, dp(4), dp(8));
-        card.addView(label, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
         LinearLayout icons = new LinearLayout(context);
         icons.setOrientation(LinearLayout.HORIZONTAL);
         icons.setGravity(Gravity.CENTER);
-        // Height is content-driven so the icon plus its one-line label are always
-        // fully contained; clipping is disabled so a label descender can never be
-        // shaved by the row bounds.
+        // Icon-only cells keep the strip compact. The real app label remains on
+        // each icon as its accessibility description.
         icons.setClipChildren(false);
         icons.setClipToPadding(false);
         card.addView(icons, new LinearLayout.LayoutParams(
@@ -531,7 +519,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     }
 
     private void bindElyraSuggestions(LinearLayout card, List<AppInfo> suggestions) {
-        LinearLayout icons = (LinearLayout) card.getChildAt(1);
+        LinearLayout icons = (LinearLayout) card.getChildAt(0);
         icons.removeAllViews();
         if (suggestions == null) {
             card.setVisibility(GONE);
@@ -549,15 +537,19 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
                     R.layout.all_apps_prediction_row_icon, icons, false);
             icon.reset();
             icon.applyFromApplicationInfo(app);
-            icon.setSingleLine(true);
-            icon.setMaxLines(1);
-            icon.setEllipsize(TextUtils.TruncateAt.END);
+            icon.setText(null);
+            icon.setContentDescription(app.title);
+            icon.setGravity(Gravity.CENTER);
+            icon.setCenterVertically(false);
+            icon.setCompoundDrawablePadding(0);
+            icon.setPadding(0, 0, 0, 0);
+            icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
             icon.setOnClickListener(mOnIconClickListener);
             icon.setOnLongClickListener(mOnIconLongClickListener);
-            // Weight distributes the cell width across the measured card; the height
-            // wraps the icon and its one-line label so neither is ever clipped.
+            int iconCellHeight = Math.max(
+                    dp(48), mActivityContext.getDeviceProfile().allAppsIconSizePx);
             icon.setLayoutParams(new LinearLayout.LayoutParams(
-                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                    0, iconCellHeight, 1f));
             icons.addView(icon);
         }
     }

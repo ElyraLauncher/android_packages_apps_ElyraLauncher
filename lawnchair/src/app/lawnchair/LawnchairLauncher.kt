@@ -114,6 +114,7 @@ class LawnchairLauncher : QuickstepLauncher() {
     private val rememberPositionStateListener = object : StateManager.StateListener<LauncherState> {
         override fun onStateTransitionStart(toState: LauncherState) {
             if (toState is AllAppsState) {
+                mAppsView.refreshElyraDrawerSuggestions()
                 mAppsView.activeRecyclerView.restoreScrollPosition()
             }
         }
@@ -447,6 +448,7 @@ class LawnchairLauncher : QuickstepLauncher() {
     override fun onResume() {
         super.onResume()
         restartIfPending()
+        mAppsView.refreshElyraDrawerSuggestions()
 
         dragLayer.viewTreeObserver.addOnDrawListener(
             object : ViewTreeObserver.OnDrawListener {

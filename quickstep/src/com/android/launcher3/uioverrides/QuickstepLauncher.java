@@ -192,6 +192,8 @@ import com.android.systemui.unfold.dagger.UnfoldMain;
 import com.android.systemui.unfold.progress.RemoteUnfoldTransitionReceiver;
 import com.android.systemui.unfold.updates.RotationChangeProvider;
 
+import com.elyra.launcher.drawer.ElyraDrawerSuggestions;
+
 import app.lawnchair.LawnchairApp;
 import app.lawnchair.compat.LawnchairQuickstepCompat;
 import kotlin.Unit;
@@ -503,10 +505,12 @@ public class QuickstepLauncher extends Launcher implements RecentsViewContainer 
     public void bindExtraContainerItems(FixedContainerItems item) {
         if (item.containerId == Favorites.CONTAINER_PREDICTION) {
             mAllAppsPredictions = item;
+            ElyraDrawerSuggestions.updatePlatformPredictions(item.items);
             PredictionRowView<?> predictionRowView =
                     getAppsView().getFloatingHeaderView().findFixedRowByType(
                             PredictionRowView.class);
             predictionRowView.setPredictedApps(item.items);
+            getAppsView().refreshElyraDrawerSuggestions();
         } else if (item.containerId == Favorites.CONTAINER_HOTSEAT_PREDICTION) {
             mHotseatPredictionController.setPredictedItems(item);
         } else if (item.containerId == Favorites.CONTAINER_WIDGETS_PREDICTION) {

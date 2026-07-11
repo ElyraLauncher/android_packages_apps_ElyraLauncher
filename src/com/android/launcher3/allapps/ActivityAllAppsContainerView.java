@@ -1501,6 +1501,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return getPersonalAppList().isElyraCategoryUiMode();
     }
 
+    public void refreshElyraDrawerSuggestions() {
+        mAH.get(AdapterHolder.MAIN).mAppsList.refreshElyraDrawer();
+    }
+
     public void updateElyraDrawerVisualState() {
         if (mFastScroller != null) {
             mFastScroller.setVisibility(getElyraFastScrollerVisibility());
