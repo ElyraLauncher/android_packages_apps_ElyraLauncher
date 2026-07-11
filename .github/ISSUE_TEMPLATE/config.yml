@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/ElyraLauncher/android_packages_apps_ElyraLauncher/security/advisories/new
+    about: Please report security issues privately, not as a public issue.
+  - name: Building Elyra Launcher
+    url: https://github.com/ElyraLauncher/android_packages_apps_ElyraLauncher/blob/main/BUILDING.md
+    about: How to build the universal APK before filing a build issue.
+  - name: Contributing guidelines
+    url: https://github.com/ElyraLauncher/android_packages_apps_ElyraLauncher/blob/main/CONTRIBUTING.md
+    about: Development rules, licensing, and build-truth expectations.

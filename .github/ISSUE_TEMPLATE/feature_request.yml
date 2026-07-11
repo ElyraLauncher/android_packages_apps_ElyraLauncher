@@ -1,0 +1,73 @@
+name: Feature request
+description: Suggest a new Elyra feature or improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem you want solved, not only a specific solution.
+        Please do not attach or reproduce proprietary launcher assets, code, or
+        strings — describe conceptual behavior instead.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user problem or need does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed user experience
+      description: What should the user see and do?
+    validations:
+      required: true
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Launcher3 subsystem involved
+      options:
+        - Workspace / CellLayout
+        - Hotseat
+        - All Apps / drawer
+        - Folders
+        - Widgets
+        - Search
+        - Recents / Quickstep
+        - Settings
+        - Theming / icons
+        - Other / not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Universal vs ROM-only expectation
+      description: Should this work in the universal APK, or does it require a ROM-integrated build?
+      options:
+        - Universal APK
+        - ROM-only (privileged)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy implications
+      description: Does this involve app lists, usage, network, or other sensitive data?
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: textarea
+    id: reference
+    attributes:
+      label: Conceptual reference (optional)
+      description: A conceptual description of behavior only. Do not paste proprietary assets or code.
+    validations:
+      required: false

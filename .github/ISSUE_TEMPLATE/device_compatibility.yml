@@ -1,0 +1,89 @@
+name: Device compatibility report
+description: Report how Elyra behaves on a specific device.
+title: "[Device]: "
+labels: ["device-compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us understand device-specific behavior. Please be as precise as
+        possible about the hardware and software configuration.
+  - type: input
+    id: manufacturer
+    attributes:
+      label: Manufacturer
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model
+    validations:
+      required: true
+  - type: input
+    id: codename
+    attributes:
+      label: Codename
+    validations:
+      required: false
+  - type: input
+    id: soc
+    attributes:
+      label: SoC / chipset
+    validations:
+      required: false
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+    validations:
+      required: true
+  - type: input
+    id: rom
+    attributes:
+      label: ROM
+      description: Stock or custom ROM and build.
+    validations:
+      required: true
+  - type: input
+    id: display
+    attributes:
+      label: Display resolution and refresh rate
+      description: e.g. "1080x2400, 120Hz".
+    validations:
+      required: false
+  - type: dropdown
+    id: nav-mode
+    attributes:
+      label: Navigation mode
+      options:
+        - Gesture navigation
+        - 3-button navigation
+        - 2-button navigation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: set-home
+    attributes:
+      label: Can Elyra be selected as Home?
+      options:
+        - Yes
+        - No
+        - Only partially
+    validations:
+      required: true
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: Crash / freeze / gesture symptoms
+      description: Describe any crashes, freezes, gesture or Recents issues observed.
+    validations:
+      required: true
+  - type: textarea
+    id: logcat
+    attributes:
+      label: Logcat (optional)
+      render: text
+    validations:
+      required: false

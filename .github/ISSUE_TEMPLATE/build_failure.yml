@@ -1,0 +1,69 @@
+name: Build failure
+description: Report a CI or local build failure.
+title: "[Build]: "
+labels: ["build"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for build/compile/Gradle failures (CI or local).
+        Please paste the **first meaningful error**, not just the final summary line.
+  - type: input
+    id: workflow-url
+    attributes:
+      label: Workflow run URL
+      description: Link to the failing GitHub Actions run, if applicable.
+    validations:
+      required: false
+  - type: input
+    id: branch
+    attributes:
+      label: Branch
+    validations:
+      required: true
+  - type: input
+    id: commit-sha
+    attributes:
+      label: Commit SHA
+    validations:
+      required: true
+  - type: input
+    id: gradle-task
+    attributes:
+      label: Gradle task
+      description: e.g. assembleLawnWithQuickstepGithubDebug.
+    validations:
+      required: true
+  - type: input
+    id: variant
+    attributes:
+      label: Build variant
+      description: e.g. lawnWithQuickstepGithubDebug.
+    validations:
+      required: true
+  - type: textarea
+    id: first-error
+    attributes:
+      label: First meaningful compiler / Gradle error
+      description: The first real error line(s), not the trailing "BUILD FAILED" summary.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: full-log
+    attributes:
+      label: Full relevant log
+      description: The relevant portion of the build log (use --stacktrace).
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: retry
+    attributes:
+      label: Did retrying produce the same result?
+      options:
+        - Yes, reproducible
+        - No, it passed on retry (flaky)
+        - Did not retry
+    validations:
+      required: true

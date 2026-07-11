@@ -1,0 +1,72 @@
+# Path-based PR labels for actions/labeler v5.
+# The labels themselves must exist in the repository for the labeler workflow to
+# apply them; see docs/maintainers/GITHUB_SETTINGS.md for the required label list.
+
+"area:github":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+
+"area:build":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "build.gradle"
+          - "settings.gradle"
+          - "gradle.properties"
+          - "gradle/**"
+          - "**/build.gradle"
+          - "**/*.bp"
+
+"area:launcher3":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/**"
+          - "res/**"
+
+"area:quickstep":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "quickstep/**"
+
+"area:elyra":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "lawnchair/src/com/elyra/**"
+
+"area:settings":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "lawnchair/src/app/lawnchair/ui/preferences/**"
+
+"area:drawer":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "src/com/android/launcher3/allapps/**"
+          - "lawnchair/src/com/elyra/launcher/drawer/**"
+          - "lawnchair/src/com/elyra/launcher/allapps/**"
+
+"area:docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+
+"area:tests":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "tests/**"
+          - "**/src/test/**"
+          - "**/src/androidTest/**"
+
+"area:rom":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/Android.bp"
+          - "src_no_quickstep/**"
+
+"security":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/SECURITY.md"
+          - ".github/workflows/codeql.yml"
+          - ".github/workflows/dependency-review.yml"

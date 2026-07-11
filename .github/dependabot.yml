@@ -1,0 +1,64 @@
+# Dependabot configuration for Elyra Launcher.
+#
+# Policy:
+#  - Weekly cadence.
+#  - Updates are grouped to reduce PR noise.
+#  - No automatic merging (there is no auto-merge configuration here or elsewhere).
+#  - Build-critical toolchains (Android Gradle Plugin, Kotlin) are held back from
+#    automatic MAJOR bumps; those upgrades are done deliberately in a dedicated PR,
+#    not on this hardening/maintenance channel.
+version: 2
+updates:
+  # Gradle / Maven dependencies.
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "area:build"
+      - "dependencies"
+    groups:
+      androidx:
+        patterns:
+          - "androidx.*"
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "org.jetbrains.kotlinx*"
+      build-tooling:
+        patterns:
+          - "com.android.tools.build*"
+          - "com.android.application"
+          - "com.android.library"
+      test-dependencies:
+        patterns:
+          - "*junit*"
+          - "*truth*"
+          - "*mockito*"
+          - "*espresso*"
+          - "androidx.test*"
+    ignore:
+      # Hold back automatic MAJOR upgrades of build-critical toolchains.
+      - dependency-name: "com.android.tools.build:gradle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.android.application"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.android.library"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.jetbrains.kotlin*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions used by workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "area:github"
+      - "dependencies"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

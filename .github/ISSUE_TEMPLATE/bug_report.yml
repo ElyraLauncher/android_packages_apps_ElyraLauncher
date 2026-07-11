@@ -1,0 +1,149 @@
+name: Bug report
+description: Report a reproducible bug in Elyra Launcher.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide as much detail as possible.
+        **Do not report security vulnerabilities here** — see the Security policy.
+  - type: input
+    id: device-name
+    attributes:
+      label: Device name
+      description: Marketing name, e.g. "Pixel 6".
+    validations:
+      required: true
+  - type: input
+    id: device-codename
+    attributes:
+      label: Device codename
+      description: e.g. "oriole".
+    validations:
+      required: false
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      description: e.g. "Android 14 (API 34)".
+    validations:
+      required: true
+  - type: input
+    id: rom
+    attributes:
+      label: ROM name and build
+      description: Stock or custom ROM name and build number. Write "stock" if unmodified.
+    validations:
+      required: true
+  - type: input
+    id: elyra-version
+    attributes:
+      label: Elyra version
+      description: From the app's About screen.
+    validations:
+      required: true
+  - type: input
+    id: commit-sha
+    attributes:
+      label: Commit SHA
+      description: If you built from source, the commit you built.
+    validations:
+      required: false
+  - type: dropdown
+    id: build-type
+    attributes:
+      label: Build type
+      description: Which build are you running?
+      options:
+        - Universal APK (com.elyra.launcher)
+        - ROM-integrated build
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: install-source
+    attributes:
+      label: Installation source
+      description: e.g. self-built APK, CI artifact, ROM zip.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Numbered, minimal steps that reliably reproduce the bug.
+      placeholder: |
+        1. Open the app drawer
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      options:
+        - Always
+        - Often
+        - Sometimes
+        - Once
+    validations:
+      required: true
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Regression status
+      description: Did this work in an earlier Elyra build?
+      options:
+        - New issue / not sure
+        - Regression (worked before)
+        - Never worked
+    validations:
+      required: true
+  - type: textarea
+    id: logcat
+    attributes:
+      label: Logcat
+      description: Relevant logcat output. Remove anything personal.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot / video
+      description: Attach a screenshot or screen recording if it helps.
+    validations:
+      required: false
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Does the problem exist on the upstream base?
+      description: If known, whether unmodified AOSP Launcher3 / Quickstep also shows it.
+      options:
+        - Unknown
+        - Yes, upstream also affected
+        - No, Elyra-specific
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This is not a security vulnerability (those go through the Security policy).
+          required: true
+        - label: I searched existing issues and this is not a duplicate.
+          required: true

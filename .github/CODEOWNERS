@@ -1,0 +1,46 @@
+# CODEOWNERS for the Elyra Launcher repository.
+#
+# This file assigns default review ownership for pull requests. It is distinct
+# from the upstream AOSP Launcher3 /OWNERS file, which lists Gerrit reviewers
+# (Google email addresses) for the upstream project and is NOT a source of
+# GitHub review identities.
+#
+# Only verified GitHub identities may appear here. At present the single
+# verified maintainer identity is @elyraos-dev. Additional maintainers or a
+# GitHub team (e.g. an @ElyraLauncher/* team) may be added once they exist and
+# are confirmed on GitHub.
+
+# Default owner for everything not matched below.
+*                               @elyraos-dev
+
+# Repository governance and automation.
+/.github/                       @elyraos-dev
+
+# Build and Gradle configuration.
+/build.gradle                   @elyraos-dev
+/settings.gradle                @elyraos-dev
+/gradle.properties              @elyraos-dev
+/gradle/                        @elyraos-dev
+
+# ROM / platform build integration.
+Android.bp                      @elyraos-dev
+
+# Android manifests.
+**/AndroidManifest.xml          @elyraos-dev
+
+# Launcher3 core (upstream-derived; changes here affect rebase surface).
+/src/                           @elyraos-dev
+/res/                           @elyraos-dev
+
+# Quickstep / Recents (privileged, ROM-sensitive).
+/quickstep/                     @elyraos-dev
+
+# Imported Lawnchair layer.
+/lawnchair/                     @elyraos-dev
+
+# Elyra-specific additions.
+/lawnchair/src/com/elyra/       @elyraos-dev
+
+# Documentation.
+*.md                            @elyraos-dev
+/docs/                          @elyraos-dev
