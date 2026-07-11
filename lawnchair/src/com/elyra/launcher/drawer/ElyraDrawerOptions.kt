@@ -24,27 +24,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.PopupWindow
-import android.widget.Switch
 import android.widget.TextView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.android.launcher3.R
 import com.android.launcher3.util.Themes
-import com.elyra.launcher.flags.ElyraFlag
-import com.elyra.launcher.flags.ElyraFlagsRepository
 
 /**
  * Drawer-scoped overflow menu for the app-drawer header three-dot button.
  *
- * This compact anchored panel contains only drawer-scoped actions: the persisted
- * local suggestion toggle and a shortcut back to the real All Apps mode. It does
- * not route through Labs or expose unrelated launcher settings.
+ * This compact anchored panel contains only a real drawer-scoped reset action. It
+ * does not duplicate default feature controls, route through Labs, or expose
+ * unrelated launcher settings.
  */
 object ElyraDrawerOptions {
 
     @JvmStatic
-    fun show(anchor: View, onChanged: Runnable, onShowAll: Runnable) {
+    fun show(anchor: View, onReset: Runnable) {
         val context = anchor.context
-        val repo = ElyraFlagsRepository.getInstance(context)
         val width = dp(anchor, 248)
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -53,7 +49,8 @@ object ElyraDrawerOptions {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(anchor, 20).toFloat()
                 val base = Themes.getColorBackgroundFloating(context)
-                setColor(Color.argb(244, Color.red(base), Color.green(base), Color.blue(base)))
+                val alpha = context.resources.getInteger(R.integer.elyra_surface_alpha_panel)
+                setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
                 setStroke(
                     dp(anchor, 1),
                     Themes.getAttrColor(context, android.R.attr.textColorTertiary),
@@ -71,38 +68,9 @@ object ElyraDrawerOptions {
         })
 
         lateinit var popup: PopupWindow
-        val suggestionRow = LinearLayout(context).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            isClickable = true
-            isFocusable = true
-            background = context.getDrawable(R.drawable.pill_ripple)
-            setPadding(dp(anchor, 12), 0, dp(anchor, 8), 0)
-            val label = TextView(context).apply {
-                setText(R.string.elyra_drawer_option_suggestions)
-                setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
-                textSize = 14f
-                gravity = Gravity.CENTER_VERTICAL
-            }
-            val toggle = Switch(context).apply {
-                isChecked = repo.isEnabled(ElyraFlag.DrawerSuggestions)
-                isClickable = false
-            }
-            addView(label, LinearLayout.LayoutParams(0, dp(anchor, 48), 1f))
-            addView(toggle, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, dp(anchor, 48),
-            ))
-            setOnClickListener {
-                repo.setEnabled(ElyraFlag.DrawerSuggestions, !toggle.isChecked)
-                popup.dismiss()
-                onChanged.run()
-            }
-        }
-        panel.addView(suggestionRow, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, dp(anchor, 48),
-        ))
 
         val showAll = TextView(context).apply {
-            setText(R.string.elyra_drawer_show_all_apps)
+            setText(R.string.elyra_drawer_reset_view)
             setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
             textSize = 14f
             gravity = Gravity.CENTER_VERTICAL
@@ -112,7 +80,7 @@ object ElyraDrawerOptions {
             setPadding(dp(anchor, 12), 0, dp(anchor, 12), 0)
             setOnClickListener {
                 popup.dismiss()
-                onShowAll.run()
+                onReset.run()
             }
         }
         panel.addView(showAll, LinearLayout.LayoutParams(

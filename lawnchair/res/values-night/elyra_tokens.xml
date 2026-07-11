@@ -15,11 +15,12 @@
     <color name="elyra_text_primary">#FFEAF5F1</color>
     <color name="elyra_text_secondary">#FFA9C7BE</color>
     <color name="elyra_drawer_surface_stroke">#38EAF5F1</color>
+    <color name="elyra_drawer_control_surface">#B8282C30</color>
 
-    <integer name="elyra_surface_alpha_panel">230</integer>
-    <integer name="elyra_surface_alpha_capsule">190</integer>
-    <integer name="elyra_surface_alpha_card">210</integer>
-    <integer name="elyra_surface_alpha_suggestion">196</integer>
+    <integer name="elyra_surface_alpha_panel">202</integer>
+    <integer name="elyra_surface_alpha_capsule">180</integer>
+    <integer name="elyra_surface_alpha_card">184</integer>
+    <integer name="elyra_surface_alpha_suggestion">186</integer>
     <integer name="elyra_surface_alpha_hairline">48</integer>
-    <integer name="elyra_drawer_sheet_alpha">208</integer>
+    <integer name="elyra_drawer_sheet_alpha">172</integer>
 </resources>

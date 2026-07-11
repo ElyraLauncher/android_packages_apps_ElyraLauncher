@@ -71,7 +71,7 @@ object ElyraDrawerSuggestions {
      * the default signal and the lowercased label as the deterministic tiebreak.
      */
     fun suggest(context: Context, apps: List<AppInfo>, limit: Int = DEFAULT_COUNT): List<AppInfo> {
-        val candidates = apps.map { app ->
+        val candidates = apps.distinctBy { it.toComponentKey() }.map { app ->
             Candidate(
                 item = app,
                 score = installTime(context, app),

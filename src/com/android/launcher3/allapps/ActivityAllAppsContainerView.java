@@ -96,6 +96,7 @@ import com.android.launcher3.views.RecyclerViewFastScroller;
 import com.android.launcher3.views.ScrimView;
 import com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip;
 import com.elyra.launcher.allapps.ElyraBottomSearch;
+import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 import com.elyra.launcher.drawer.ElyraDrawer;
 import com.patrykmichalik.opto.core.PreferenceExtensionsKt;
 
@@ -216,6 +217,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private boolean mForceBottomSheetVisible;
     private int mTabsProtectionAlpha;
     private int mElyraBottomSearchImeInset;
+    private int mElyraBottomControlsHeight;
 
     private final PreferenceManager2 pref2;
     private final PreferenceManager pref;
@@ -895,6 +897,15 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mElyraBottomSearch;
     }
 
+    public void setElyraBottomControlsHeight(int controlsHeight) {
+        int boundedHeight = Math.max(0, controlsHeight);
+        if (mElyraBottomControlsHeight == boundedHeight) {
+            return;
+        }
+        mElyraBottomControlsHeight = boundedHeight;
+        mAH.forEach(AdapterHolder::applyPadding);
+    }
+
     public void setElyraBottomSearchImeInset(int imeInset) {
         int boundedInset = Math.max(0, imeInset);
         if (mElyraBottomSearchImeInset == boundedInset) {
@@ -902,6 +913,20 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         }
         mElyraBottomSearchImeInset = boundedInset;
         mAH.forEach(AdapterHolder::applyPadding);
+    }
+
+    private int getBottomControlsHeightForPadding() {
+        if (mElyraBottomControlsHeight > 0) {
+            return mElyraBottomControlsHeight;
+        }
+        View controls = mSearchContainer.findViewById(R.id.bottom_controls);
+        if (controls != null) {
+            int measuredHeight = Math.max(controls.getHeight(), controls.getMeasuredHeight());
+            if (measuredHeight > 0) {
+                return measuredHeight;
+            }
+        }
+        return getResources().getDimensionPixelSize(R.dimen.search_box_height);
     }
 
     private int getSearchContainerHeightForPadding() {
@@ -1147,12 +1172,12 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     private void setBottomSheetAlpha(float alpha) {
-        if (mActivityContext.getDeviceProfile().isTablet) {
-            mBottomSheetAlpha = 1f;
-        } else if (isElyraBottomSearch()) {
+        if (isElyraBottomSearch()) {
             float maxAlpha = getResources().getInteger(
                     R.integer.elyra_drawer_sheet_alpha) / 255f;
             mBottomSheetAlpha = alpha * maxAlpha;
+        } else if (mActivityContext.getDeviceProfile().isTablet) {
+            mBottomSheetAlpha = 1f;
         } else {
             mBottomSheetAlpha = alpha;
         }
@@ -1776,15 +1801,17 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                         bottomOffset = mPrivateSpaceBottomExtraSpace;
                     }
                 }
-                if (isSearchBarFloating() || isElyraBottomSearch()) {
+                if (isElyraBottomSearch()) {
+                    bottomOffset = ElyraDrawerLayoutPolicy.bottomContentPadding(
+                            bottomOffset,
+                            getBottomControlsHeightForPadding(),
+                            getResources().getDimensionPixelSize(
+                                    R.dimen.elyra_bottom_search_bottom_spacing),
+                            getResources().getDimensionPixelSize(
+                                    R.dimen.elyra_bottom_search_content_spacing),
+                            mElyraBottomSearchImeInset);
+                } else if (isSearchBarFloating()) {
                     bottomOffset += getSearchContainerHeightForPadding();
-                    if (isElyraBottomSearch()) {
-                        bottomOffset += getResources().getDimensionPixelSize(
-                                R.dimen.elyra_bottom_search_bottom_spacing);
-                        bottomOffset += getResources().getDimensionPixelSize(
-                                R.dimen.elyra_bottom_search_content_spacing);
-                        bottomOffset += mElyraBottomSearchImeInset;
-                    }
                 }
                 mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,
                         mPadding.bottom + bottomOffset);

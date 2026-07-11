@@ -49,6 +49,7 @@ import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.graphics.FastScrollThumbDrawable;
 import com.android.launcher3.util.Themes;
+import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +64,6 @@ public class RecyclerViewFastScroller extends View {
     private static final boolean DEBUG = false;
     private static final int FASTSCROLL_THRESHOLD_MILLIS = 10;
     private static final int SCROLL_DELTA_THRESHOLD_DP = 4;
-    private static final String INDEX_LETTERS = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     // Track is very narrow to target and correctly. This is especially the case if a user is
     // using a hardware case. Even if x is offset by following amount, we consider it to be valid.
@@ -166,7 +166,8 @@ public class RecyclerViewFastScroller extends View {
         mIndexPaint.setColor(ColorTokens.TextColorPrimary.resolveColor(getContext()));
         mIndexPaint.setAlpha(112);
         mIndexPaint.setTextAlign(Paint.Align.CENTER);
-        mIndexPaint.setTextSize(getResources().getDisplayMetrics().scaledDensity * 8f);
+        mIndexPaint.setTextSize(getResources().getDimension(
+                R.dimen.elyra_fastscroll_index_text_size));
 
         mThumbPaint = new Paint();
         mThumbPaint.setAntiAlias(true);
@@ -371,12 +372,10 @@ public class RecyclerViewFastScroller extends View {
         float progress = bottom == 0 ? 0f : boundedY / bottom;
         CharSequence sectionName;
         if (mCompactPopup && mRv instanceof AllAppsRecyclerView) {
-            float directProgress = Utilities.boundToRange(
-                    y / (float) Math.max(1, mRv.getScrollbarTrackHeight()), 0f, 0.9999f);
-            int index = Utilities.boundToRange(
-                    (int) (directProgress * INDEX_LETTERS.length()),
-                    0, INDEX_LETTERS.length() - 1);
-            String target = String.valueOf(INDEX_LETTERS.charAt(index));
+            int railY = y - mRv.getScrollBarTop();
+            int index = ElyraDrawerLayoutPolicy.railIndex(
+                    railY, mRv.getScrollbarTrackHeight());
+            String target = String.valueOf(ElyraDrawerLayoutPolicy.INDEX_LABELS.charAt(index));
             ((AllAppsRecyclerView) mRv).scrollToSectionName(target);
             sectionName = target;
         } else {
@@ -390,6 +389,11 @@ public class RecyclerViewFastScroller extends View {
         animatePopupVisibility(!TextUtils.isEmpty(sectionName));
         mLastTouchY = boundedY;
         setThumbOffsetY((int) mLastTouchY);
+        if (mCompactPopup) {
+            int touchY = Utilities.boundToRange(
+                    y - mRv.getScrollBarTop(), 0, mRv.getScrollbarTrackHeight());
+            updatePopupY(touchY);
+        }
     }
 
     /** End any active fast scrolling touch handling, if applicable. */
@@ -407,7 +411,7 @@ public class RecyclerViewFastScroller extends View {
 
     @Override
     public void onDraw(Canvas canvas) {
-        if (mThumbOffsetY < 0 || mRv == null) {
+        if (mRv == null || (mThumbOffsetY < 0 && !mCompactPopup)) {
             return;
         }
         int saveCount = canvas.save();
@@ -423,7 +427,8 @@ public class RecyclerViewFastScroller extends View {
                     mWidth, mWidth, mTrackPaint);
         }
 
-        canvas.translate(0, mThumbOffsetY);
+        if (mThumbOffsetY >= 0) {
+            canvas.translate(0, mThumbOffsetY);
         mThumbDrawOffset.y += mThumbOffsetY;
         halfW += mThumbPadding;
         float r = getScrollThumbRadius();
@@ -439,6 +444,7 @@ public class RecyclerViewFastScroller extends View {
                     SYSTEM_GESTURE_EXCLUSION_RECT.get(0).right - mSystemGestureInsets.right;
             }
             setSystemGestureExclusionRects(SYSTEM_GESTURE_EXCLUSION_RECT);
+        }
         }
         canvas.restoreToCount(saveCount);
     }
@@ -457,12 +463,12 @@ public class RecyclerViewFastScroller extends View {
         if (trackHeight <= 0) {
             return;
         }
-        float step = trackHeight / (float) INDEX_LETTERS.length();
+        float step = trackHeight / (float) ElyraDrawerLayoutPolicy.INDEX_LABELS.length();
         Paint.FontMetrics metrics = mIndexPaint.getFontMetrics();
         float baselineOffset = -(metrics.ascent + metrics.descent) / 2f;
-        for (int index = 0; index < INDEX_LETTERS.length(); index++) {
+        for (int index = 0; index < ElyraDrawerLayoutPolicy.INDEX_LABELS.length(); index++) {
             float centerY = step * (index + 0.5f);
-            canvas.drawText(String.valueOf(INDEX_LETTERS.charAt(index)),
+            canvas.drawText(String.valueOf(ElyraDrawerLayoutPolicy.INDEX_LABELS.charAt(index)),
                     0, centerY + baselineOffset, mIndexPaint);
         }
     }
@@ -506,6 +512,9 @@ public class RecyclerViewFastScroller extends View {
      * Returns whether the specified x position is near the scroll bar.
      */
     public boolean isNearScrollBar(int x) {
+        if (mCompactPopup) {
+            return x >= 0 && x <= getWidth();
+        }
         return x >= (getWidth() - mMaxWidth) / 2 - mScrollbarLeftOffsetTouchDelegate
                 && x <= (getWidth() + mMaxWidth) / 2;
     }
@@ -537,16 +546,18 @@ public class RecyclerViewFastScroller extends View {
 
     private void updatePopupY(int lastTouchY) {
         int height = mPopupView.getHeight();
-        // Aligns the rounded corner of the pop up with the top of the thumb.
-        float top = mRv.getScrollBarTop() + lastTouchY + (getScrollThumbRadius() / 2f)
-                - (height / 2f);
-        top = Utilities.boundToRange(top, 0,
-                getTop() + mRv.getScrollBarTop() + mRv.getScrollbarTrackHeight() - height);
-        mPopupView.setTranslationY(top);
+        View parent = (View) getParent();
+        float centerInParent = getTop() + mRv.getScrollBarTop() + lastTouchY
+                + (getScrollThumbRadius() / 2f);
+        float popupTop = centerInParent - (height / 2f);
+        float minTop = parent.getPaddingTop();
+        float maxTop = parent.getHeight() - parent.getPaddingBottom() - height;
+        popupTop = Utilities.boundToRange(popupTop, minTop, Math.max(minTop, maxTop));
+        mPopupView.setTranslationY(popupTop - mPopupView.getTop());
     }
 
     public boolean isHitInParent(float x, float y, Point outOffset) {
-        if (mThumbOffsetY < 0) {
+        if (mThumbOffsetY < 0 && !mCompactPopup) {
             return false;
         }
         getHitRect(sTempRect);

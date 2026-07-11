@@ -3,6 +3,7 @@ package app.lawnchair.allapps
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.InsetDrawable
@@ -23,9 +24,10 @@ import android.view.View.OnFocusChangeListener
 import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
-import android.widget.HorizontalScrollView
+import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.ViewCompat
@@ -90,8 +92,9 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     private lateinit var searchWrapper: View
     private lateinit var searchActions: LinearLayout
     private lateinit var colorButton: ImageButton
-    private lateinit var colorPanel: HorizontalScrollView
-    private lateinit var colorPanelRow: LinearLayout
+    private lateinit var colorPanel: LinearLayout
+    private lateinit var colorPanelRow: GridLayout
+    private lateinit var colorPopup: PopupWindow
 
     private lateinit var micIcon: AssistantIconView
     private lateinit var lensIcon: ImageButton
@@ -187,7 +190,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             isVisible = false
             setOnClickListener {
                 selectedColorBucket = null
-                colorPanelVisible = false
+                hideColorPanel(clearFilter = false)
                 input.reset()
                 refreshColorSearchResults()
                 updateHint()
@@ -197,11 +200,31 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         }
 
         colorPanel = createColorDotsPanel()
-        bottomControls.addView(colorPanel, 0)
+        colorPopup = PopupWindow(
+            colorPanel,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true,
+        ).apply {
+            isOutsideTouchable = true
+            elevation = resources.getDimension(R.dimen.elyra_color_popup_elevation)
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setOnDismissListener {
+                colorPanelVisible = false
+                colorPanel.alpha = 1f
+                colorPanel.scaleX = 1f
+                colorPanel.scaleY = 1f
+                colorPanel.translationY = 0f
+                updateColorButtonVisibility()
+                updateDrawerVisualState()
+            }
+        }
 
         with(colorButton) {
             isVisible = false
-            setOnClickListener { showColorPanel() }
+            setOnClickListener {
+                if (colorPanelVisible) hideColorPanel(clearFilter = false) else showColorPanel()
+            }
         }
         updateColorButtonVisibility()
         ViewCompat.setOnApplyWindowInsetsListener(this) { _, windowInsets ->
@@ -269,7 +292,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 animateHintVisibility(true)
                 animatePadding(currentPaddingLeft / 2, currentPaddingRight / 2)
 
-                hideColorPanel(clearFilter = false)
+                hideColorPanel(clearFilter = false, animate = false)
                 updateColorButtonVisibility()
                 applyBottomSearchInsets()
 
@@ -425,6 +448,9 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     override fun onDetachedFromWindow() {
+        if (::colorPopup.isInitialized && colorPopup.isShowing) {
+            colorPopup.dismiss()
+        }
         super.onDetachedFromWindow()
         appsView.appsStore?.removeUpdateListener(this)
         input.viewTreeObserver.removeOnGlobalLayoutListener(this)
@@ -535,8 +561,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
         val imeActive = latestImeVisible && input.hasFocus()
         if (imeActive && colorPanelVisible) {
-            colorPanelVisible = false
-            updateDrawerVisualState()
+            hideColorPanel(clearFilter = false, animate = false)
         }
         val bottomInset = if (imeActive) {
             max(latestInsets.bottom, latestImeBottom)
@@ -569,31 +594,12 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     private fun updateColorButtonVisibility() {
         if (!::colorButton.isInitialized || !::colorPanel.isInitialized) return
         val imeActive = latestImeVisible && input.hasFocus()
-        val showColorPanel = colorSearchEnabled && colorPanelVisible && !imeActive
-        val showColorButton = colorSearchEnabled && !showColorPanel && !imeActive
-        val panelVisibilityChanged = colorPanel.isVisible != showColorPanel
-        colorPanel.isVisible = showColorPanel
-        searchField.isVisible = !showColorPanel
-        searchIcon.isVisible = !showColorPanel
-        searchActions.isVisible = !showColorPanel
-        colorButton.isVisible = showColorButton
+        searchField.isVisible = true
+        searchIcon.isVisible = true
+        searchActions.isVisible = true
+        colorButton.isVisible = colorSearchEnabled && !imeActive
+        colorButton.isSelected = colorPanelVisible
         colorButton.alpha = if (selectedColorBucket == null) 0.86f else 1f
-        if (panelVisibilityChanged) {
-            bottomControls.animate().cancel()
-            bottomControls.alpha = 0.78f
-            bottomControls.scaleX = 0.985f
-            bottomControls.scaleY = 0.985f
-            bottomControls.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(160)
-                .setInterpolator(FastOutSlowInInterpolator())
-                .start()
-        }
-        // Color mode owns the right side of the row: keep the assistant/lens QSB
-        // icons hidden so the inactive row is exactly one search bar + one color
-        // button and no stray icon bubbles stack near the bottom-right.
         if (colorSearchEnabled && ::micIcon.isInitialized && ::lensIcon.isInitialized) {
             micIcon.isVisible = false
             lensIcon.isVisible = false
@@ -611,16 +617,46 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     private fun showColorPanel() {
-        if (!colorSearchEnabled || latestImeVisible && input.hasFocus()) return
+        if (!colorSearchEnabled || latestImeVisible && input.hasFocus() || colorPopup.isShowing) return
         input.clearFocus()
-        colorPanelVisible = true
         rebuildColorPanel()
+        val sideMargin = resources.getDimensionPixelSize(R.dimen.elyra_bottom_search_side_padding)
+        val availableWidth = (if (width > 0) width else resources.displayMetrics.widthPixels) -
+            sideMargin * 2
+        val popupWidth = minOf(
+            resources.getDimensionPixelSize(R.dimen.elyra_color_popup_width),
+            availableWidth,
+        )
+        colorPanel.measure(
+            View.MeasureSpec.makeMeasureSpec(popupWidth, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        )
+        colorPopup.width = popupWidth
+        colorPopup.height = colorPanel.measuredHeight
+        val gap = resources.getDimensionPixelSize(R.dimen.elyra_color_popup_anchor_gap)
+        colorPanelVisible = true
+        colorPopup.showAsDropDown(
+            colorButton,
+            colorButton.width - popupWidth,
+            -(colorButton.height + colorPanel.measuredHeight + gap),
+        )
+        colorPanel.alpha = 0f
+        colorPanel.scaleX = 0.94f
+        colorPanel.scaleY = 0.94f
+        colorPanel.translationY = gap.toFloat()
+        colorPanel.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .translationY(0f)
+            .setDuration(180)
+            .setInterpolator(FastOutSlowInInterpolator())
+            .start()
         updateColorButtonVisibility()
         updateDrawerVisualState()
-        colorPanel.requestFocus()
     }
 
-    private fun hideColorPanel(clearFilter: Boolean) {
+    private fun hideColorPanel(clearFilter: Boolean, animate: Boolean = true) {
         if (clearFilter) {
             selectedColorBucket = null
             if (input.text.isNullOrEmpty()) {
@@ -633,6 +669,24 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         rebuildColorPanel()
         updateColorButtonVisibility()
         updateDrawerVisualState()
+        if (!::colorPopup.isInitialized || !colorPopup.isShowing) return
+        if (!animate) {
+            colorPopup.dismiss()
+            return
+        }
+        val gap = resources.getDimensionPixelSize(R.dimen.elyra_color_popup_anchor_gap)
+        colorPanel.animate().cancel()
+        colorPanel.animate()
+            .alpha(0f)
+            .scaleX(0.94f)
+            .scaleY(0.94f)
+            .translationY(gap.toFloat())
+            .setDuration(160)
+            .setInterpolator(FastOutSlowInInterpolator())
+            .withEndAction {
+                if (colorPopup.isShowing) colorPopup.dismiss()
+            }
+            .start()
     }
 
     private fun updateDrawerVisualState() {
@@ -641,33 +695,30 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         }
     }
 
-    private fun createColorDotsPanel(): HorizontalScrollView {
-        colorPanelRow = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            // Horizontal padding keeps the first/last dot off the rounded edges; a
-            // small vertical padding gives the container breathing room so the dots
-            // never look cramped against the panel top/bottom.
-            val horizontal = resources.getDimensionPixelSize(R.dimen.elyra_spacing_medium)
-            val vertical = resources.getDimensionPixelSize(R.dimen.elyra_spacing_small)
-            setPadding(horizontal, vertical, horizontal, vertical)
+    private fun createColorDotsPanel(): LinearLayout {
+        colorPanelRow = GridLayout(context).apply {
+            columnCount = 7
+            rowCount = 2
+            orientation = GridLayout.HORIZONTAL
+            alignmentMode = GridLayout.ALIGN_BOUNDS
+            setClipChildren(false)
+            setClipToPadding(false)
         }
-        return HorizontalScrollView(context).apply {
-            isVisible = false
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
             isFocusable = true
             isFocusableInTouchMode = true
-            isHorizontalScrollBarEnabled = false
-            overScrollMode = View.OVER_SCROLL_NEVER
+            setClipChildren(false)
+            setClipToPadding(false)
+            val horizontal = resources.getDimensionPixelSize(R.dimen.elyra_color_popup_padding)
+            val vertical = resources.getDimensionPixelSize(R.dimen.elyra_color_popup_padding)
+            setPadding(horizontal, vertical, horizontal, vertical)
             background = roundedPanelBackground()
-            addView(colorPanelRow, ViewGroup.LayoutParams(
+            addView(colorPanelRow, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            ))
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                resources.getDimensionPixelSize(R.dimen.search_box_height),
-                1f,
-            ).apply { gravity = Gravity.CENTER_VERTICAL }
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply { gravity = Gravity.CENTER })
         }.also { rebuildColorPanel() }
     }
 
@@ -694,10 +745,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             contentDescription = label
             background = colorDotBackground(bucket, selected)
             val margin = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_spacing)
-            layoutParams = LinearLayout.LayoutParams(size, size).apply {
-                marginStart = margin
-                marginEnd = margin
-                gravity = Gravity.CENTER_VERTICAL
+            layoutParams = GridLayout.LayoutParams().apply {
+                width = size
+                height = size
+                setMargins(margin, margin, margin, margin)
             }
             setOnClickListener {
                 if (bucket == null) {
@@ -705,8 +756,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 } else {
                     selectedColorBucket = bucket
                     refreshColorSearchResults()
-                    rebuildColorPanel()
-                    updateColorButtonVisibility()
+                    hideColorPanel(clearFilter = false)
                 }
             }
         }
@@ -765,6 +815,9 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         // not be applied when the bar is anchored to the bottom of the drawer. The
         // RelativeLayout.LayoutParams check keeps the taskbar/floating case upstream.
         val bottomAnchored = bottomAligned && layoutParams is RelativeLayout.LayoutParams
+        if (bottomAnchored && ::appsView.isInitialized && ::bottomControls.isInitialized) {
+            appsView.setElyraBottomControlsHeight(bottomControls.measuredHeight)
+        }
         if (!bottomAnchored) {
             offsetTopAndBottom(allAppsSearchVerticalOffset)
         }

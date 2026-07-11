@@ -17,6 +17,7 @@
     <color name="elyra_text_primary">#FF0C2E29</color>
     <color name="elyra_text_secondary">#FF3B5A53</color>
     <color name="elyra_drawer_surface_stroke">#240C2E29</color>
+    <color name="elyra_drawer_control_surface">#C8FFFFFF</color>
 
     <!-- Corner radius tokens -->
     <dimen name="elyra_radius_small">8dp</dimen>
@@ -53,16 +54,23 @@
          nav_inset + bottom_spacing + container_height; this is the additional
          clearance on top of that. Kept in the 12-16dp target range. -->
     <dimen name="elyra_bottom_search_content_spacing">14dp</dimen>
-    <dimen name="elyra_drawer_header_height">42dp</dimen>
-    <dimen name="elyra_drawer_segment_width">196dp</dimen>
-    <dimen name="elyra_drawer_segment_height">38dp</dimen>
-    <dimen name="elyra_drawer_segment_indicator_height">32dp</dimen>
-    <dimen name="elyra_drawer_overflow_size">38dp</dimen>
-    <dimen name="elyra_drawer_sheet_radius">40dp</dimen>
+    <dimen name="elyra_drawer_header_height">46dp</dimen>
+    <dimen name="elyra_drawer_segment_width">200dp</dimen>
+    <dimen name="elyra_drawer_segment_height">44dp</dimen>
+    <dimen name="elyra_drawer_segment_indicator_height">38dp</dimen>
+    <dimen name="elyra_drawer_overflow_size">44dp</dimen>
+    <dimen name="elyra_drawer_sheet_radius">32dp</dimen>
     <dimen name="elyra_fastscroll_popup_size">44dp</dimen>
     <dimen name="elyra_fastscroll_popup_text_size">20sp</dimen>
-    <dimen name="elyra_fastscroll_rail_height">352dp</dimen>
-    <dimen name="elyra_fastscroll_popup_margin">12dp</dimen>
+    <dimen name="elyra_fastscroll_rail_height">432dp</dimen>
+    <dimen name="elyra_fastscroll_touch_width">32dp</dimen>
+    <dimen name="elyra_fastscroll_index_text_size">9sp</dimen>
+    <dimen name="elyra_fastscroll_end_margin">8dp</dimen>
+    <dimen name="elyra_fastscroll_popup_margin">52dp</dimen>
+    <dimen name="elyra_color_popup_width">264dp</dimen>
+    <dimen name="elyra_color_popup_padding">12dp</dimen>
+    <dimen name="elyra_color_popup_anchor_gap">10dp</dimen>
+    <dimen name="elyra_color_popup_elevation">10dp</dimen>
 
     <!-- Drawer color-filter panel tokens (Stage 6.7). A compact, evenly spaced
          row of color swatches with a clear highlight ring on the selected dot.
@@ -77,10 +85,10 @@
          the segmented capsule, category cards and the color panel so the drawer
          reads as one Elyra/Material surface language. Prepared for future
          user-facing surface customization; adopt incrementally. -->
-    <integer name="elyra_surface_alpha_panel">238</integer>
-    <integer name="elyra_surface_alpha_capsule">204</integer>
-    <integer name="elyra_surface_alpha_card">224</integer>
-    <integer name="elyra_surface_alpha_suggestion">214</integer>
+    <integer name="elyra_surface_alpha_panel">214</integer>
+    <integer name="elyra_surface_alpha_capsule">190</integer>
+    <integer name="elyra_surface_alpha_card">196</integer>
+    <integer name="elyra_surface_alpha_suggestion">200</integer>
     <integer name="elyra_surface_alpha_hairline">40</integer>
-    <integer name="elyra_drawer_sheet_alpha">218</integer>
+    <integer name="elyra_drawer_sheet_alpha">184</integer>
 </resources>

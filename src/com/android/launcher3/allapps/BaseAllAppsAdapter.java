@@ -32,6 +32,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -62,6 +63,7 @@ import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 import com.elyra.launcher.drawer.ElyraCategoryCardModel;
+import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 import com.elyra.launcher.drawer.ElyraDrawerOptions;
 
 import java.util.List;
@@ -302,10 +304,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         capsule.setPadding(dp(3), dp(3), dp(3), dp(3));
         capsule.setBackground(roundedDrawable(translucentColor(
                 Themes.getColorBackgroundFloating(context),
-                surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(20)));
+                surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(22)));
 
         View selectedPill = new View(context);
-        selectedPill.setBackground(roundedDrawable(Themes.getColorAccent(context), dp(17)));
+        selectedPill.setBackground(roundedDrawable(Themes.getColorAccent(context), dp(19)));
         FrameLayout.LayoutParams pillLp = new FrameLayout.LayoutParams(
                 0, dimen(R.dimen.elyra_drawer_segment_indicator_height));
         pillLp.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
@@ -338,7 +340,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(16), dp(8), dp(12), dp(3));
+        lp.setMargins(dp(16), dp(8), dp(12), dp(8));
         header.setLayoutParams(lp);
         return header;
     }
@@ -364,6 +366,8 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         Context context = parent.getContext();
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
+        card.setClipChildren(false);
+        card.setClipToPadding(false);
         card.setPadding(dp(14), dp(12), dp(14), dp(12));
         card.setBackground(roundedDrawableWithStroke(
                 translucentColor(Themes.getColorBackgroundFloating(context),
@@ -396,7 +400,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(16), dp(2), dp(16), dp(5));
+        lp.setMargins(dp(16), dp(4), dp(16), dp(6));
         card.setLayoutParams(lp);
         return card;
     }
@@ -406,15 +410,15 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setMinimumHeight(dp(148));
-        card.setPadding(dp(14), dp(16), dp(14), dp(14));
+        card.setMinimumHeight(dp(132));
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
         card.setClickable(true);
         card.setFocusable(true);
-        card.setElevation(dp(2));
+        card.setElevation(dp(1));
         card.setBackground(roundedRippleDrawable(
                 translucentColor(Themes.getColorBackgroundFloating(context),
                         surfaceAlpha(R.integer.elyra_surface_alpha_card)),
-                dp(24),
+                dp(20),
                 translucentColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary),
                         surfaceAlpha(R.integer.elyra_surface_alpha_hairline)),
                 dp(1)));
@@ -425,7 +429,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         label.setTextSize(14);
         label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         label.setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary));
-        label.setGravity(Gravity.CENTER);
+        label.setGravity(Gravity.START);
         card.addView(label, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -435,12 +439,12 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         previewLp.gravity = Gravity.CENTER_HORIZONTAL;
-        previewLp.topMargin = dp(10);
+        previewLp.topMargin = dp(8);
         card.addView(preview, previewLp);
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(7), dp(5), dp(7), dp(6));
+        lp.setMargins(dp(7), dp(4), dp(7), dp(4));
         card.setLayoutParams(lp);
         return card;
     }
@@ -483,7 +487,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             scrollElyraActiveRecyclerViewToTop();
         });
         overflow.setOnClickListener(view ->
-                ElyraDrawerOptions.show(view, mApps::refreshElyraDrawer, () -> {
+                ElyraDrawerOptions.show(view, () -> {
                     mApps.showElyraAllApps();
                     scrollElyraActiveRecyclerViewToTop();
                 }));
@@ -534,11 +538,20 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             return;
         }
         card.setVisibility(View.VISIBLE);
+        int maxSuggestions = ElyraDrawerLayoutPolicy.suggestionCount(
+                mActivityContext.getDeviceProfile().numShownAllAppsColumns);
+        int suggestionIndex = 0;
         for (AppInfo app : suggestions) {
+            if (suggestionIndex++ >= maxSuggestions) {
+                break;
+            }
             BubbleTextView icon = (BubbleTextView) mLayoutInflater.inflate(
                     R.layout.all_apps_prediction_row_icon, icons, false);
             icon.reset();
             icon.applyFromApplicationInfo(app);
+            icon.setSingleLine(true);
+            icon.setMaxLines(1);
+            icon.setEllipsize(TextUtils.TruncateAt.END);
             icon.setOnClickListener(mOnIconClickListener);
             icon.setOnLongClickListener(mOnIconLongClickListener);
             // Weight distributes the cell width across the measured card; the height
@@ -566,20 +579,39 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         });
 
         preview.removeAllViews();
-        int previewCount = 0;
+        int previewIndex = 0;
         for (AppInfo app : categoryCard.getPreview()) {
-            if (previewCount++ >= 4) {
+            if (previewIndex >= 4) {
                 break;
             }
-            ImageView icon = new ImageView(card.getContext());
-            icon.setImageDrawable(app.newIcon(card.getContext(), false));
-            icon.setContentDescription(app.title);
-            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            View previewItem;
+            if (previewIndex == 3 && categoryCard.getApps().size() > 4) {
+                TextView more = new TextView(card.getContext());
+                more.setText(card.getContext().getString(
+                        R.string.elyra_category_more_apps,
+                        categoryCard.getApps().size() - 3));
+                more.setTextSize(12);
+                more.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+                more.setGravity(Gravity.CENTER);
+                more.setTextColor(Themes.getAttrColor(
+                        card.getContext(), android.R.attr.textColorPrimary));
+                more.setBackground(roundedDrawable(translucentColor(
+                        Themes.getColorBackgroundFloating(card.getContext()),
+                        surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(12)));
+                previewItem = more;
+            } else {
+                ImageView icon = new ImageView(card.getContext());
+                icon.setImageDrawable(app.newIcon(card.getContext(), false));
+                icon.setContentDescription(app.title);
+                icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                previewItem = icon;
+            }
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = dp(42);
-            lp.height = dp(42);
-            lp.setMargins(dp(6), dp(4), dp(6), dp(4));
-            preview.addView(icon, lp);
+            lp.width = dp(36);
+            lp.height = dp(36);
+            lp.setMargins(dp(4), dp(3), dp(4), dp(3));
+            preview.addView(previewItem, lp);
+            previewIndex++;
         }
         updateElyraDrawerVisualState();
     }

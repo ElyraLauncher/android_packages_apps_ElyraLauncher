@@ -86,7 +86,7 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_drawer_tab_categories">Kategori</string>
     <string name="elyra_drawer_options_title">Opsi laci aplikasi</string>
     <string name="elyra_drawer_suggested_apps">Aplikasi yang disarankan</string>
-    <string name="elyra_drawer_show_all_apps">Tampilkan semua aplikasi</string>
+    <string name="elyra_drawer_reset_view">Atur ulang tampilan laci</string>
     <string name="elyra_drawer_option_categories">Kategori aplikasi</string>
     <string name="elyra_drawer_option_color_search">Pencarian warna aplikasi</string>
     <string name="elyra_drawer_option_suggestions">Saran aplikasi</string>
@@ -128,6 +128,7 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_category_health">Kesehatan</string>
     <string name="elyra_category_system">Sistem</string>
     <string name="elyra_category_other">Lainnya</string>
+    <string name="elyra_category_more_apps">+%1$d</string>
     <string name="elyra_flag_wallpaper_themed_icons">Ikon bertema wallpaper</string>
     <string name="elyra_flag_icon_resize">Ubah ukuran ikon</string>
     <string name="elyra_flag_large_folders">Folder besar</string>
