@@ -47,7 +47,12 @@
     <dimen name="elyra_bottom_search_side_padding">16dp</dimen>
     <dimen name="elyra_bottom_search_control_gap">12dp</dimen>
     <dimen name="elyra_bottom_search_bottom_spacing">10dp</dimen>
-    <dimen name="elyra_bottom_search_content_spacing">8dp</dimen>
+    <!-- Breathing space reserved in the app-content bottom padding ABOVE the
+         bottom controls row, so the final app row and its labels always scroll
+         clear of the controls. The container already sits at
+         nav_inset + bottom_spacing + container_height; this is the additional
+         clearance on top of that. Kept in the 12-16dp target range. -->
+    <dimen name="elyra_bottom_search_content_spacing">14dp</dimen>
     <dimen name="elyra_drawer_header_height">42dp</dimen>
     <dimen name="elyra_drawer_segment_width">196dp</dimen>
     <dimen name="elyra_drawer_segment_height">38dp</dimen>
