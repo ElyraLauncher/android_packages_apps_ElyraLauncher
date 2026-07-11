@@ -21,12 +21,11 @@ class ElyraDrawerDefaultsTest {
     fun structuralDrawerPolicyUsesMeasuredInputs() {
         assertEquals(4, ElyraDrawerLayoutPolicy.suggestionCount(4))
         assertEquals(5, ElyraDrawerLayoutPolicy.suggestionCount(5))
-        assertEquals(100, ElyraDrawerLayoutPolicy.bottomContentPadding(
+        assertEquals(98, ElyraDrawerLayoutPolicy.bottomContentPadding(
             base = 20,
             controlsHeight = 52,
-            bottomSpacing = 10,
-            breathingSpace = 14,
-            imeInset = 4,
+            controlsBottomInset = 10,
+            spacing = 16,
         ))
         assertEquals('#', ElyraDrawerLayoutPolicy.INDEX_LABELS.first())
         assertEquals(0, ElyraDrawerLayoutPolicy.railIndex(0f, 432))

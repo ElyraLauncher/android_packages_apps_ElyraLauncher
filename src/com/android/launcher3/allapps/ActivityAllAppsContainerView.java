@@ -216,8 +216,8 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private float mBottomSheetAlpha = 1f;
     private boolean mForceBottomSheetVisible;
     private int mTabsProtectionAlpha;
-    private int mElyraBottomSearchImeInset;
     private int mElyraBottomControlsHeight;
+    private int mElyraBottomControlsBottomInset;
 
     private final PreferenceManager2 pref2;
     private final PreferenceManager pref;
@@ -897,21 +897,18 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mElyraBottomSearch;
     }
 
-    public void setElyraBottomControlsHeight(int controlsHeight) {
+    public void setElyraBottomControlsLayout(int controlsHeight, int controlsBottomInset) {
         int boundedHeight = Math.max(0, controlsHeight);
-        if (mElyraBottomControlsHeight == boundedHeight) {
+        int boundedInset = Math.max(0, controlsBottomInset);
+        if (mElyraBottomControlsHeight == boundedHeight
+                && mElyraBottomControlsBottomInset == boundedInset) {
             return;
         }
         mElyraBottomControlsHeight = boundedHeight;
-        mAH.forEach(AdapterHolder::applyPadding);
+        mElyraBottomControlsBottomInset = boundedInset;
     }
 
-    public void setElyraBottomSearchImeInset(int imeInset) {
-        int boundedInset = Math.max(0, imeInset);
-        if (mElyraBottomSearchImeInset == boundedInset) {
-            return;
-        }
-        mElyraBottomSearchImeInset = boundedInset;
+    public void refreshElyraBottomContentInsets() {
         mAH.forEach(AdapterHolder::applyPadding);
     }
 
@@ -1791,7 +1788,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             if (mRecyclerView != null) {
                 int bottomOffset = 0;
                 if (isWork() && mWorkManager.getWorkModeSwitch() != null) {
-                    bottomOffset = mInsets.bottom + mWorkManager.getWorkModeSwitch().getHeight();
+                    bottomOffset = mWorkManager.getWorkModeSwitch().getHeight();
+                    if (!isElyraBottomSearch()) {
+                        bottomOffset += mInsets.bottom;
+                    }
                 } else if (isMain() && mPrivateProfileManager != null) {
                     Optional<AdapterItem> privateSpaceHeaderItem = mAppsList.getAdapterItems()
                             .stream()
@@ -1801,20 +1801,25 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                         bottomOffset = mPrivateSpaceBottomExtraSpace;
                     }
                 }
+                int effectiveBottomPadding;
                 if (isElyraBottomSearch()) {
-                    bottomOffset = ElyraDrawerLayoutPolicy.bottomContentPadding(
+                    int controlsBottomInset = Math.max(
+                            mPadding.bottom, mElyraBottomControlsBottomInset);
+                    effectiveBottomPadding = ElyraDrawerLayoutPolicy.bottomContentPadding(
                             bottomOffset,
                             getBottomControlsHeightForPadding(),
+                            controlsBottomInset,
                             getResources().getDimensionPixelSize(
-                                    R.dimen.elyra_bottom_search_bottom_spacing),
-                            getResources().getDimensionPixelSize(
-                                    R.dimen.elyra_bottom_search_content_spacing),
-                            mElyraBottomSearchImeInset);
-                } else if (isSearchBarFloating()) {
-                    bottomOffset += getSearchContainerHeightForPadding();
+                                    R.dimen.elyra_bottom_search_content_spacing));
+                } else {
+                    if (isSearchBarFloating()) {
+                        bottomOffset += getSearchContainerHeightForPadding();
+                    }
+                    effectiveBottomPadding = mPadding.bottom + bottomOffset;
                 }
+                mRecyclerView.setClipToPadding(false);
                 mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,
-                        mPadding.bottom + bottomOffset);
+                        effectiveBottomPadding);
             }
         }
 

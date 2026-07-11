@@ -578,13 +578,21 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             rightMargin = 0
             bottomMargin = if (isInvisible) 0 else bottomInset + bottomSearchInsetMargin
         }
-        if (::appsView.isInitialized) {
-            val imePadding = if (imeActive) max(0, latestImeBottom - latestInsets.bottom) else 0
-            appsView.setElyraBottomSearchImeInset(imePadding)
-        }
+        updateBottomContentInset()
         updateColorButtonVisibility()
         requestLayout()
         return true
+    }
+
+    private fun updateBottomContentInset() {
+        if (!::appsView.isInitialized || !::bottomControls.isInitialized) return
+        val bottomInset = (layoutParams as? RelativeLayout.LayoutParams)
+            ?.bottomMargin
+            ?.coerceAtLeast(0)
+            ?: latestInsets.bottom.coerceAtLeast(0)
+        val controlsHeight = if (isInvisible) 0 else bottomControls.measuredHeight
+        appsView.setElyraBottomControlsLayout(controlsHeight, bottomInset)
+        appsView.refreshElyraBottomContentInsets()
     }
 
     private fun updateActionButtonVisibility() {
@@ -652,6 +660,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             .setDuration(180)
             .setInterpolator(FastOutSlowInInterpolator())
             .start()
+        updateBottomContentInset()
         updateColorButtonVisibility()
         updateDrawerVisualState()
     }
@@ -667,6 +676,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         }
         colorPanelVisible = false
         rebuildColorPanel()
+        updateBottomContentInset()
         updateColorButtonVisibility()
         updateDrawerVisualState()
         if (!::colorPopup.isInitialized || !colorPopup.isShowing) return
@@ -816,7 +826,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         // RelativeLayout.LayoutParams check keeps the taskbar/floating case upstream.
         val bottomAnchored = bottomAligned && layoutParams is RelativeLayout.LayoutParams
         if (bottomAnchored && ::appsView.isInitialized && ::bottomControls.isInitialized) {
-            appsView.setElyraBottomControlsHeight(bottomControls.measuredHeight)
+            updateBottomContentInset()
         }
         if (!bottomAnchored) {
             offsetTopAndBottom(allAppsSearchVerticalOffset)

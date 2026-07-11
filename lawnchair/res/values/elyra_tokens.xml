@@ -53,7 +53,7 @@
          clear of the controls. The container already sits at
          nav_inset + bottom_spacing + container_height; this is the additional
          clearance on top of that. Kept in the 12-16dp target range. -->
-    <dimen name="elyra_bottom_search_content_spacing">14dp</dimen>
+    <dimen name="elyra_bottom_search_content_spacing">16dp</dimen>
     <dimen name="elyra_drawer_header_height">46dp</dimen>
     <dimen name="elyra_drawer_segment_width">200dp</dimen>
     <dimen name="elyra_drawer_segment_height">44dp</dimen>

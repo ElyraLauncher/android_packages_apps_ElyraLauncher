@@ -17,21 +17,19 @@ object ElyraDrawerLayoutPolicy {
     fun suggestionCount(columns: Int): Int = if (columns >= 5) 5 else 4
 
     /**
-     * Clearance below scrollable content: system/private base, measured controls,
-     * control-to-edge spacing, visual breathing space, and any IME displacement.
+     * Clearance below scrollable content: profile-specific base, measured controls,
+     * the controls' actual bottom inset (navigation or IME plus its anchor gap), and spacing.
      */
     @JvmStatic
     fun bottomContentPadding(
         base: Int,
         controlsHeight: Int,
-        bottomSpacing: Int,
-        breathingSpace: Int,
-        imeInset: Int,
+        controlsBottomInset: Int,
+        spacing: Int,
     ): Int = base.coerceAtLeast(0) +
         controlsHeight.coerceAtLeast(0) +
-        bottomSpacing.coerceAtLeast(0) +
-        breathingSpace.coerceAtLeast(0) +
-        imeInset.coerceAtLeast(0)
+        controlsBottomInset.coerceAtLeast(0) +
+        spacing.coerceAtLeast(0)
 
     /** Resolves a rail-local Y coordinate directly to # or an A-Z slot. */
     @JvmStatic
