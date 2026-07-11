@@ -1,0 +1,39 @@
+name: DCO
+
+# Enforces the Developer Certificate of Origin: every commit introduced by a
+# pull request must carry a valid "Signed-off-by:" trailer (git commit -s).
+# Implemented with a small repository-owned script (scripts/ci/check-dco.sh)
+# rather than an unmaintained third-party action, so the logic is auditable.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dco:
+    name: Check sign-off
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch --no-tags --prune origin \
+            "+refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+
+      - name: Verify Signed-off-by on introduced commits
+        run: |
+          scripts/ci/check-dco.sh \
+            "origin/${{ github.base_ref }}" \
+            "${{ github.event.pull_request.head.sha }}"
