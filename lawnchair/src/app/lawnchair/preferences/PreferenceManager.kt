@@ -55,7 +55,14 @@ class PreferenceManager private constructor(private val context: Context) :
     val workspaceIncreaseMaxGridSize = BoolPref("pref_workspace_increase_max_grid_size", false)
     val folderRows = IdpIntPref("pref_folderRows", { numFolderRows[INDEX_DEFAULT] }, reloadGrid)
 
-    val drawerOpacity = FloatPref("pref_drawerOpacity", 1F, recreate)
+    // Default to a translucent drawer scrim (0.25) so the existing wallpaper
+    // blur/depth is perceptible behind the rounded drawer sheet. This value is
+    // <= 0.3f, which activates the codebase's already-wired wallpaper-aware paths:
+    // LawnchairScrimView#isScrimDark (status-bar icon contrast) and
+    // overrideAllAppsTextColor (label contrast over wallpaper). Users who set an
+    // explicit value keep it; the slider can still be raised to a fully opaque
+    // drawer for accessibility.
+    val drawerOpacity = FloatPref("pref_drawerOpacity", 0.25F, recreate)
     val coloredBackgroundLightness = FloatPref("pref_coloredBackgroundLightness", 0.9F, recreate)
     val feedProvider = StringPref("pref_feedProvider", "")
     val ignoreFeedWhitelist = BoolPref("pref_ignoreFeedWhitelist", false)
