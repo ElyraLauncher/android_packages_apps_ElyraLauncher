@@ -1001,6 +1001,10 @@ Searching with %1$s helps support Elyra Launcher.</string>
     <string name="elyra_category_system" tools:ignore="MissingTranslation">System</string>
     <string name="elyra_category_other" tools:ignore="MissingTranslation">Other</string>
     <string name="elyra_category_more_apps" tools:ignore="MissingTranslation">+%1$d</string>
+    <plurals name="elyra_category_app_count" tools:ignore="MissingTranslation">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
     <string name="elyra_flag_wallpaper_themed_icons" tools:ignore="MissingTranslation">Wallpaper themed icons</string>
     <string name="elyra_flag_icon_resize" tools:ignore="MissingTranslation">Icon resize</string>
     <string name="elyra_flag_large_folders" tools:ignore="MissingTranslation">Large folders</string>

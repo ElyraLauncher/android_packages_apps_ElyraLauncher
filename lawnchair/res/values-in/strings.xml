@@ -128,6 +128,10 @@ Mencari dengan %1$s membantu mendukung Elyra Launcher.</string>
     <string name="elyra_category_system">Sistem</string>
     <string name="elyra_category_other">Lainnya</string>
     <string name="elyra_category_more_apps">+%1$d</string>
+    <plurals name="elyra_category_app_count">
+        <item quantity="one">%1$d aplikasi</item>
+        <item quantity="other">%1$d aplikasi</item>
+    </plurals>
     <string name="elyra_flag_wallpaper_themed_icons">Ikon bertema wallpaper</string>
     <string name="elyra_flag_icon_resize">Ubah ukuran ikon</string>
     <string name="elyra_flag_large_folders">Folder besar</string>

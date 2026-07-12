@@ -32,6 +32,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -397,22 +398,23 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         Context context = parent.getContext();
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setMinimumHeight(dp(132));
-        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.setGravity(Gravity.TOP);
+        card.setMinimumHeight(dp(152));
+        card.setPadding(dp(14), dp(10), dp(14), dp(10));
         card.setClickable(true);
         card.setFocusable(true);
         card.setElevation(dp(1));
         card.setBackground(roundedRippleDrawable(
                 translucentColor(Themes.getColorBackgroundFloating(context),
                         surfaceAlpha(R.integer.elyra_surface_alpha_card)),
-                dp(20),
+                dimen(R.dimen.elyra_radius_large),
                 translucentColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary),
                         surfaceAlpha(R.integer.elyra_surface_alpha_hairline)),
                 dp(1)));
 
         TextView label = new TextView(context);
         label.setSingleLine(true);
+        label.setEllipsize(TextUtils.TruncateAt.END);
         label.setIncludeFontPadding(false);
         label.setTextSize(14);
         label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -421,17 +423,27 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         card.addView(label, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        TextView count = new TextView(context);
+        count.setSingleLine(true);
+        count.setIncludeFontPadding(false);
+        count.setTextSize(11);
+        count.setTextColor(Themes.getAttrColor(context, android.R.attr.textColorSecondary));
+        count.setGravity(Gravity.START);
+        LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        countLp.topMargin = dp(2);
+        card.addView(count, countLp);
+
         GridLayout preview = new GridLayout(context);
         preview.setColumnCount(2);
         preview.setRowCount(2);
-        LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(dp(76), dp(76));
         previewLp.gravity = Gravity.CENTER_HORIZONTAL;
         previewLp.topMargin = dp(8);
         card.addView(preview, previewLp);
 
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(152));
         lp.setMargins(dp(7), dp(4), dp(7), dp(4));
         card.setLayoutParams(lp);
         return card;
@@ -562,48 +574,52 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         }
         card.setVisibility(View.VISIBLE);
         TextView label = (TextView) card.getChildAt(0);
-        GridLayout preview = (GridLayout) card.getChildAt(1);
+        TextView count = (TextView) card.getChildAt(1);
+        GridLayout preview = (GridLayout) card.getChildAt(2);
+        int appCount = categoryCard.getApps().size();
+        CharSequence countLabel = card.getResources().getQuantityString(
+                R.plurals.elyra_category_app_count, appCount, appCount);
         label.setText(categoryCard.getLabel());
-        card.setContentDescription(categoryCard.getLabel());
+        count.setText(countLabel);
+        card.setContentDescription(categoryCard.getLabel() + ", " + countLabel);
         card.setOnClickListener(view -> {
             mApps.selectElyraCategory(categoryCard.getCategory());
             scrollElyraActiveRecyclerViewToTop();
         });
 
         preview.removeAllViews();
-        int previewIndex = 0;
-        for (AppInfo app : categoryCard.getPreview()) {
-            if (previewIndex >= 4) {
-                break;
-            }
+        for (int previewIndex = 0; previewIndex < 4; previewIndex++) {
             View previewItem;
-            if (previewIndex == 3 && categoryCard.getApps().size() > 4) {
+            if (previewIndex == 3 && appCount > 4) {
                 TextView more = new TextView(card.getContext());
                 more.setText(card.getContext().getString(
-                        R.string.elyra_category_more_apps,
-                        categoryCard.getApps().size() - 3));
-                more.setTextSize(12);
+                        R.string.elyra_category_more_apps, appCount - 3));
+                more.setTextSize(11);
                 more.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
                 more.setGravity(Gravity.CENTER);
                 more.setTextColor(Themes.getAttrColor(
                         card.getContext(), android.R.attr.textColorPrimary));
                 more.setBackground(roundedDrawable(translucentColor(
                         Themes.getColorBackgroundFloating(card.getContext()),
-                        surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(12)));
+                        surfaceAlpha(R.integer.elyra_surface_alpha_capsule)), dp(10)));
                 previewItem = more;
-            } else {
+            } else if (previewIndex < categoryCard.getPreview().size()) {
+                AppInfo app = categoryCard.getPreview().get(previewIndex);
                 ImageView icon = new ImageView(card.getContext());
                 icon.setImageDrawable(app.newIcon(card.getContext(), false));
                 icon.setContentDescription(app.title);
                 icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 previewItem = icon;
+            } else {
+                previewItem = new View(card.getContext());
+                previewItem.setVisibility(View.INVISIBLE);
+                previewItem.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             }
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = dp(36);
-            lp.height = dp(36);
-            lp.setMargins(dp(4), dp(3), dp(4), dp(3));
+            lp.width = dp(32);
+            lp.height = dp(32);
+            lp.setMargins(dp(3), dp(3), dp(3), dp(3));
             preview.addView(previewItem, lp);
-            previewIndex++;
         }
         updateElyraDrawerVisualState();
     }
