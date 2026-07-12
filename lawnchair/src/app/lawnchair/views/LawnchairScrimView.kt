@@ -8,6 +8,7 @@ import com.android.launcher3.R
 import com.android.launcher3.util.SystemUiController
 import com.android.launcher3.util.Themes
 import com.android.launcher3.views.ScrimView
+import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy
 
 class LawnchairScrimView(context: Context, attrs: AttributeSet?) : ScrimView(context, attrs) {
 
@@ -34,7 +35,7 @@ class LawnchairScrimView(context: Context, attrs: AttributeSet?) : ScrimView(con
         }
     }
 
-    override fun isScrimDark() = if (drawerOpacity <= 0.3f) {
+    override fun isScrimDark() = if (ElyraDrawerLayoutPolicy.isWallpaperAware(drawerOpacity)) {
         !Themes.getAttrBoolean(context, R.attr.isWorkspaceDarkText)
     } else {
         super.isScrimDark()

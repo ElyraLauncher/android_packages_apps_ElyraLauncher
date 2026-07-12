@@ -52,6 +52,7 @@ import com.android.launcher3.R
 import com.android.launcher3.Utilities
 import com.android.launcher3.util.Executors.MAIN_EXECUTOR
 import com.android.launcher3.util.Themes
+import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy
 import com.android.systemui.shared.system.QuickStepContract
 import com.patrykmichalik.opto.core.firstBlocking
 import java.io.ByteArrayOutputStream
@@ -143,7 +144,7 @@ fun supportsRoundedCornersOnWindows(context: Context): Boolean {
 fun overrideAllAppsTextColor(textView: TextView) {
     val context = textView.context
     val opacity = PreferenceManager.getInstance(context).drawerOpacity.get()
-    if (opacity <= 0.3f) {
+    if (ElyraDrawerLayoutPolicy.isWallpaperAware(opacity)) {
         textView.setTextColor(Themes.getAttrColor(context, R.attr.allAppsAlternateTextColor))
     }
 }

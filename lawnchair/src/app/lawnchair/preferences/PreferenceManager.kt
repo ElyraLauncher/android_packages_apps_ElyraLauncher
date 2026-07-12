@@ -27,6 +27,7 @@ import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.InvariantDeviceProfile.INDEX_DEFAULT
 import com.android.launcher3.model.DeviceGridState
 import com.android.launcher3.util.ComponentKey
+import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy
 import com.android.launcher3.util.MainThreadInitializedObject
 import com.android.launcher3.util.SafeCloseable
 
@@ -55,14 +56,17 @@ class PreferenceManager private constructor(private val context: Context) :
     val workspaceIncreaseMaxGridSize = BoolPref("pref_workspace_increase_max_grid_size", false)
     val folderRows = IdpIntPref("pref_folderRows", { numFolderRows[INDEX_DEFAULT] }, reloadGrid)
 
-    // Default to a translucent drawer scrim (0.25) so the existing wallpaper
-    // blur/depth is perceptible behind the rounded drawer sheet. This value is
-    // <= 0.3f, which activates the codebase's already-wired wallpaper-aware paths:
-    // LawnchairScrimView#isScrimDark (status-bar icon contrast) and
-    // overrideAllAppsTextColor (label contrast over wallpaper). Users who set an
-    // explicit value keep it; the slider can still be raised to a fully opaque
-    // drawer for accessibility.
-    val drawerOpacity = FloatPref("pref_drawerOpacity", 0.25F, recreate)
+    // Translucent drawer default so the existing wallpaper blur/depth stays
+    // perceptible behind the rounded sheet; the value lives in
+    // ElyraDrawerLayoutPolicy alongside the wallpaper-aware threshold it must
+    // stay below. New installs get this default directly; existing users are
+    // migrated once (see the migratePrefs block below). Users who chose their own
+    // value keep it, and the slider can still be raised to a fully opaque drawer.
+    val drawerOpacity = FloatPref(
+        "pref_drawerOpacity",
+        ElyraDrawerLayoutPolicy.DEFAULT_DRAWER_OPACITY,
+        recreate,
+    )
     val coloredBackgroundLightness = FloatPref("pref_coloredBackgroundLightness", 0.9F, recreate)
     val feedProvider = StringPref("pref_feedProvider", "")
     val ignoreFeedWhitelist = BoolPref("pref_ignoreFeedWhitelist", false)
@@ -157,11 +161,26 @@ class PreferenceManager private constructor(private val context: Context) :
                     hotseatColumns.set(gridState.hotseatCount)
                 }
             }
+            if (oldVersion < 3) {
+                // Translucent-drawer migration: move users who never left the old
+                // opaque drawer-opacity default onto the new translucent default so
+                // wallpaper becomes perceptible. A deliberately chosen value (any
+                // value other than the legacy default) is preserved, and a never-set
+                // preference already resolves to the new default so it is left alone.
+                val storedOpacity = if (sp.contains(drawerOpacity.key)) {
+                    sp.getFloat(drawerOpacity.key, ElyraDrawerLayoutPolicy.LEGACY_DRAWER_OPACITY)
+                } else {
+                    null
+                }
+                if (ElyraDrawerLayoutPolicy.shouldMigrateLegacyDrawerOpacity(storedOpacity)) {
+                    drawerOpacity.set(ElyraDrawerLayoutPolicy.DEFAULT_DRAWER_OPACITY)
+                }
+            }
         }
     }
 
     companion object {
-        private const val CURRENT_VERSION = 2
+        private const val CURRENT_VERSION = 3
 
         @JvmField
         val INSTANCE = MainThreadInitializedObject(::PreferenceManager)

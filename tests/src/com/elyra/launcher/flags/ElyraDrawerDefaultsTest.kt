@@ -74,4 +74,37 @@ class ElyraDrawerDefaultsTest {
     fun networkResultsRemainOptIn() {
         assertFalse(ElyraFeatureFlags.defaultFor(ElyraFlag.DrawerWebResults))
     }
+
+    @Test
+    fun translucentDrawerDefaultStaysWallpaperAware() {
+        // The shipped default must remain at or below the threshold, or the
+        // wallpaper-aware status-bar and label contrast paths silently disengage.
+        assertTrue(
+            ElyraDrawerLayoutPolicy.DEFAULT_DRAWER_OPACITY
+                <= ElyraDrawerLayoutPolicy.WALLPAPER_AWARE_OPACITY_THRESHOLD,
+        )
+        assertTrue(ElyraDrawerLayoutPolicy.isWallpaperAware(ElyraDrawerLayoutPolicy.DEFAULT_DRAWER_OPACITY))
+        assertTrue(ElyraDrawerLayoutPolicy.isWallpaperAware(ElyraDrawerLayoutPolicy.WALLPAPER_AWARE_OPACITY_THRESHOLD))
+        assertFalse(ElyraDrawerLayoutPolicy.isWallpaperAware(0.31f))
+        assertFalse(ElyraDrawerLayoutPolicy.isWallpaperAware(ElyraDrawerLayoutPolicy.LEGACY_DRAWER_OPACITY))
+    }
+
+    @Test
+    fun drawerOpacityMigrationPreservesDeliberateChoices() {
+        // Never-written preference: already resolves to the new default, so no migrate.
+        assertFalse(ElyraDrawerLayoutPolicy.shouldMigrateLegacyDrawerOpacity(null))
+        // Still on the old opaque default: migrate to the translucent default.
+        assertTrue(
+            ElyraDrawerLayoutPolicy.shouldMigrateLegacyDrawerOpacity(
+                ElyraDrawerLayoutPolicy.LEGACY_DRAWER_OPACITY,
+            ),
+        )
+        // Deliberately chosen values are preserved (including the new default).
+        assertFalse(ElyraDrawerLayoutPolicy.shouldMigrateLegacyDrawerOpacity(0.5f))
+        assertFalse(
+            ElyraDrawerLayoutPolicy.shouldMigrateLegacyDrawerOpacity(
+                ElyraDrawerLayoutPolicy.DEFAULT_DRAWER_OPACITY,
+            ),
+        )
+    }
 }
