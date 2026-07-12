@@ -1481,6 +1481,14 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mAH.get(MAIN).mAppsList;
     }
 
+    public boolean canHandleElyraDrawerSearchBack() {
+        return mSearchUiManager != null && mSearchUiManager.canHandleElyraDrawerSearchBack();
+    }
+
+    public boolean handleElyraDrawerSearchBack() {
+        return mSearchUiManager != null && mSearchUiManager.handleElyraDrawerSearchBack();
+    }
+
     public boolean canHandleElyraColorPanelBack() {
         return mSearchUiManager != null && mSearchUiManager.canHandleElyraColorPanelBack();
     }

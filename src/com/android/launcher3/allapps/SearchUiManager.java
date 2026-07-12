@@ -83,6 +83,16 @@ public interface SearchUiManager {
         return false;
     }
 
+    /** Returns whether the bottom drawer owns an active local-search session. */
+    default boolean canHandleElyraDrawerSearchBack() {
+        return false;
+    }
+
+    /** Clears and exits the active bottom-drawer local-search session. */
+    default boolean handleElyraDrawerSearchBack() {
+        return false;
+    }
+
     /** Returns whether the search surface has a drawer-local color panel open. */
     default boolean canHandleElyraColorPanelBack() {
         return false;

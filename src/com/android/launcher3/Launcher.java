@@ -682,6 +682,9 @@ public class Launcher extends StatefulActivity<LauncherState>
         if (appsView != null && appsView.canHandleElyraColorPanelBack()) {
             return () -> appsView.handleElyraColorPanelBack();
         }
+        if (appsView != null && appsView.canHandleElyraDrawerSearchBack()) {
+            return () -> appsView.handleElyraDrawerSearchBack();
+        }
         if (appsView != null && appsView.canHandleElyraCategoryBack()) {
             return () -> appsView.handleElyraCategoryBack();
         }

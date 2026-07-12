@@ -36,15 +36,22 @@ object ElyraBottomSearch {
     fun isEnabled(context: Context): Boolean = true
 
     /**
-     * Whether optional web/provider results (web suggestions, the search-provider
-     * row, the Play Store "more apps" row) may appear below local app results in the
-     * drawer. Defaults OFF: the drawer is local-installed-apps first and runs no
-     * network/provider search unless the user explicitly opts in. The provider
-     * implementations are preserved for a future home/global search surface.
+     * Compatibility preference retained for future global-search surfaces. Normal
+     * bottom drawer search intentionally ignores this and remains local-only.
      */
     @JvmStatic
     fun webResultsEnabled(context: Context): Boolean =
         ElyraFlagsRepository.getInstance(context).isEnabled(ElyraFlag.DrawerWebResults)
+
+    @JvmStatic
+    fun localOnlyDrawerSearchEnabled(): Boolean = true
+
+    @JvmStatic
+    fun shouldAcceptDrawerResult(
+        resultQuery: String,
+        currentQuery: String,
+        hasColorFilter: Boolean,
+    ): Boolean = resultQuery == currentQuery && (currentQuery.isNotEmpty() || hasColorFilter)
 
     @JvmStatic
     fun colorSearchEnabled(context: Context): Boolean = true

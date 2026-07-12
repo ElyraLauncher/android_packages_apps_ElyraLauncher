@@ -1,5 +1,6 @@
 package com.elyra.launcher.flags
 
+import com.elyra.launcher.allapps.ElyraBottomSearch
 import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy
 import com.elyra.launcher.drawer.ElyraDrawerSuggestions
 import org.junit.Assert.assertEquals
@@ -16,6 +17,11 @@ class ElyraDrawerDefaultsTest {
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.DrawerSuggestions))
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.AzRail))
         assertTrue(ElyraFeatureFlags.defaultFor(ElyraFlag.DrawerColorSearch))
+        assertTrue(ElyraBottomSearch.localOnlyDrawerSearchEnabled())
+        assertTrue(ElyraBottomSearch.shouldAcceptDrawerResult("mail", "mail", false))
+        assertTrue(ElyraBottomSearch.shouldAcceptDrawerResult("", "", true))
+        assertFalse(ElyraBottomSearch.shouldAcceptDrawerResult("old", "new", false))
+        assertFalse(ElyraBottomSearch.shouldAcceptDrawerResult("", "", false))
     }
 
     @Test

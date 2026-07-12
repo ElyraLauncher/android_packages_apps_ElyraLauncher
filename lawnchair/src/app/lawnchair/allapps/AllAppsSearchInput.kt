@@ -191,9 +191,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             setOnClickListener {
                 selectedColorBucket = null
                 hideColorPanel(clearFilter = false)
-                input.reset()
-                refreshColorSearchResults()
-                updateHint()
+                clearLocalQuery(keepFocus = true)
                 rebuildColorPanel()
                 updateColorButtonVisibility()
             }
@@ -241,7 +239,13 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 isVisible = true
 
                 val iconRes = if (themed) searchProvider.themedIcon else searchProvider.icon
-                val resId = if (shouldShowIcons) iconRes else R.drawable.ic_qsb_search
+                val resId = if (bottomAligned) {
+                    R.drawable.ic_qsb_search
+                } else if (shouldShowIcons) {
+                    iconRes
+                } else {
+                    R.drawable.ic_qsb_search
+                }
                 val isThemed = themed || resId == R.drawable.ic_qsb_search
                 val method = if (shouldShowIcons) searchProvider.themingMethod else ThemingMethod.TINT
 
@@ -252,9 +256,14 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 )
 
                 setOnClickListener {
-                    val launcher = context.launcher
-                    launcher.lifecycleScope.launch {
-                        searchProvider.launch(launcher)
+                    if (bottomAligned) {
+                        input.requestFocus()
+                        input.showKeyboard()
+                    } else {
+                        val launcher = context.launcher
+                        launcher.lifecycleScope.launch {
+                            searchProvider.launch(launcher)
+                        }
                     }
                 }
             }
@@ -278,19 +287,25 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         val currentPaddingRight = initialPaddingRight
         input.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                if (prefs2.searchAlgorithm.firstBlocking() != LawnchairSearchAlgorithm.APP_SEARCH) {
-                    input.setHint(R.string.all_apps_device_search_hint)
+                if (bottomAligned) {
+                    input.setHint(R.string.elyra_drawer_search_hint)
+                    setBackgroundVisibility(true, 1f)
+                    clearSupplementalHint()
+                    animatePadding(currentPaddingLeft, currentPaddingRight)
                 } else {
-                    input.setHint(R.string.all_apps_search_bar_hint)
+                    if (prefs2.searchAlgorithm.firstBlocking() != LawnchairSearchAlgorithm.APP_SEARCH) {
+                        input.setHint(R.string.all_apps_device_search_hint)
+                    } else {
+                        input.setHint(R.string.all_apps_search_bar_hint)
+                    }
+                    setBackgroundVisibility(false, 0f)
+                    animateHintVisibility(true)
+                    animatePadding(currentPaddingLeft / 2, currentPaddingRight / 2)
                 }
 
                 if (input.text.toString().isEmpty()) {
                     searchAlgorithm?.doZeroStateSearch(this)
                 }
-
-                setBackgroundVisibility(false, 0f)
-                animateHintVisibility(true)
-                animatePadding(currentPaddingLeft / 2, currentPaddingRight / 2)
 
                 hideColorPanel(clearFilter = false, animate = false)
                 updateColorButtonVisibility()
@@ -323,7 +338,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 hint.isInvisible = true
             },
             afterTextChanged = {
-                updateHint()
+                if (bottomAligned) clearSupplementalHint() else updateHint()
                 if (input.text.isNullOrEmpty()) {
                     searchAlgorithm?.doZeroStateSearch(this)
                     post {
@@ -409,6 +424,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     override fun setFocusedResultTitle(title: CharSequence?, sub: CharSequence?, showArrow: Boolean) {
+        if (bottomAligned) {
+            clearSupplementalHint()
+            return
+        }
         focusedResultTitle = title?.toString().orEmpty()
         updateHint()
     }
@@ -417,7 +436,18 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         onAppsUpdated()
     }
 
+    private fun clearSupplementalHint() {
+        focusedResultTitle = ""
+        hint.animate().cancel()
+        hint.text = ""
+        hint.isVisible = false
+    }
+
     private fun updateHint() {
+        if (bottomAligned) {
+            clearSupplementalHint()
+            return
+        }
         val inputString = input.text.toString()
         val inputLowerCase = inputString.lowercase(Locale.getDefault())
         val focusedLowerCase = focusedResultTitle.lowercase(Locale.getDefault())
@@ -466,11 +496,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     override fun initializeSearch(appsView: ActivityAllAppsContainerView<*>) {
         apps = appsView.searchResultList as LawnchairAlphabeticalAppsList<*>
         this.appsView = appsView
-        // Elyra bottom search is a local app drawer search: unless the user opts into
-        // drawer web results, force local installed-app search so no web/provider/store
-        // rows appear and no network/provider search runs. When bottom search is off,
-        // the base search-algorithm preference is honored unchanged.
-        val localAppsOnly = bottomAligned && !ElyraBottomSearch.webResultsEnabled(context)
+        // The bottom drawer always owns a local installed-app session. Provider and
+        // web algorithms remain available to other search surfaces, but are never
+        // selected by normal drawer search.
+        val localAppsOnly = bottomAligned && ElyraBottomSearch.localOnlyDrawerSearchEnabled()
         val baseAlgorithm = LawnchairSearchAlgorithm.create(context, localAppsOnly)
         val algorithm = if (colorSearchEnabled) {
             ElyraAppColorSearchAlgorithm(context, baseAlgorithm) { selectedColorBucket }
@@ -489,7 +518,37 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     override fun resetSearch() {
         hideColorPanel(clearFilter = false)
+        searchAlgorithm?.cancel(true)
+        clearSupplementalHint()
+        input.hideKeyboard()
         searchBarController.reset()
+        selectedColorBucket = null
+        rebuildColorPanel()
+        updateColorButtonVisibility()
+        updateDrawerVisualState()
+    }
+
+    private fun clearLocalQuery(keepFocus: Boolean) {
+        searchAlgorithm?.cancel(true)
+        input.reset()
+        clearSearchResult()
+        clearSupplementalHint()
+        input.hint = context.getString(R.string.elyra_drawer_search_hint)
+        if (!keepFocus) {
+            input.hideKeyboard()
+            input.clearFocus()
+        }
+        updateActionButtonVisibility()
+        updateDrawerVisualState()
+    }
+
+    override fun canHandleElyraDrawerSearchBack(): Boolean =
+        bottomAligned && (input.hasFocus() || !input.text.isNullOrEmpty() || appsView.isSearching)
+
+    override fun handleElyraDrawerSearchBack(): Boolean {
+        if (!canHandleElyraDrawerSearchBack()) return false
+        resetSearch()
+        return true
     }
 
     override fun canHandleElyraColorPanelBack(): Boolean = colorPanelVisible
@@ -518,6 +577,13 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     override fun onSearchResult(query: String, items: ArrayList<AdapterItem>?) {
+        val currentQuery = input.text?.toString().orEmpty()
+        if (query != currentQuery) return
+        if (!ElyraBottomSearch.shouldAcceptDrawerResult(
+                query, currentQuery, selectedColorBucket != null)) {
+            clearSearchResult()
+            return
+        }
         if (items != null) {
             apps.setSearchResults(items)
             notifyResultChanged()
@@ -526,6 +592,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     override fun clearSearchResult() {
+        if (bottomAligned) clearSupplementalHint()
         if (apps.setSearchResults(null)) {
             notifyResultChanged()
         }
