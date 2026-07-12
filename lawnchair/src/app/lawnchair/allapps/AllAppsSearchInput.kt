@@ -2,6 +2,7 @@ package app.lawnchair.allapps
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -164,6 +165,17 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         hint = ViewCompat.requireViewById(this, R.id.hint)
 
         input = ViewCompat.requireViewById(this, R.id.input)
+        if (bottomAligned && !Utilities.isDarkTheme(context)) {
+            val primary = ContextCompat.getColor(context, R.color.elyra_drawer_text_primary)
+            val hintColor = ContextCompat.getColor(context, R.color.elyra_drawer_search_hint)
+            hint.setTextColor(hintColor)
+            input.setTextColor(primary)
+            input.setHintTextColor(hintColor)
+            if (Utilities.ATLEAST_Q) {
+                input.textCursorDrawable = ContextCompat.getDrawable(
+                    context, R.drawable.elyra_drawer_search_cursor)
+            }
+        }
         // The bottom drawer bar shows a persistent placeholder when empty/unfocused
         // so the inactive row reads as a real search field, not a blank rectangle.
         if (bottomAligned) {
@@ -191,6 +203,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         actionButton = ViewCompat.requireViewById(this, R.id.action_btn)
         with(actionButton) {
             isVisible = false
+            if (bottomAligned && !Utilities.isDarkTheme(context)) {
+                imageTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.elyra_drawer_icon_foreground))
+            }
             setOnClickListener {
                 hideColorPanel(clearFilter = false)
                 if (input.text.isNullOrEmpty()) {
@@ -271,6 +287,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                     themed = isThemed,
                     method = method,
                 )
+                if (bottomAligned && !Utilities.isDarkTheme(context)) {
+                    imageTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(context, R.color.elyra_drawer_icon_foreground))
+                }
 
                 setOnClickListener {
                     if (bottomAligned) {
@@ -860,7 +880,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             gravity = Gravity.CENTER
             textSize = 13f
             setSingleLine(true)
-            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorSecondary))
+            setTextColor(if (Utilities.isDarkTheme(context)) {
+                Themes.getAttrColor(context, android.R.attr.textColorSecondary)
+            } else {
+                ContextCompat.getColor(context, R.color.elyra_drawer_text_secondary)
+            })
             background = colorDotBackground(bucket, selected)
             isClickable = false
             layoutParams = FrameLayout.LayoutParams(chipSize, chipSize, Gravity.CENTER)
@@ -923,7 +947,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         val ring = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(Color.TRANSPARENT)
-            setStroke(ringWidth, Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+            setStroke(ringWidth, if (Utilities.isDarkTheme(context)) {
+                Themes.getAttrColor(context, android.R.attr.textColorPrimary)
+            } else {
+                ContextCompat.getColor(context, R.color.elyra_drawer_text_primary)
+            })
         }
         val inset = ringWidth + gap
         val insetFill = InsetDrawable(fill, inset, inset, inset, inset)
@@ -933,7 +961,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     private fun roundedPanelBackground(): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = resources.getDimensionPixelSize(R.dimen.elyra_radius_large).toFloat()
-        setColor(ContextCompat.getColor(context, R.color.elyra_drawer_control_surface))
+        setColor(if (Utilities.isDarkTheme(context)) {
+            ContextCompat.getColor(context, R.color.elyra_drawer_control_surface)
+        } else {
+            ContextCompat.getColor(context, R.color.elyra_drawer_popup_surface)
+        })
         setStroke(
             resources.getDimensionPixelSize(R.dimen.elyra_color_dot_hairline),
             ContextCompat.getColor(context, R.color.elyra_drawer_surface_stroke),

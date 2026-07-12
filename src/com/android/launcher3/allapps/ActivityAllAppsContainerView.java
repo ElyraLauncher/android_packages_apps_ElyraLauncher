@@ -351,7 +351,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 0 // Bottom left
         };
         mBottomSheetBackgroundColor = isElyraBottomSearch()
-                ? Themes.getColorBackgroundFloating(getContext())
+                ? (Utilities.isDarkTheme(getContext())
+                        ? Themes.getColorBackgroundFloating(getContext())
+                        : getContext().getColor(R.color.elyra_drawer_root_surface))
                 : ColorTokens.SurfaceDimColor.resolveColor(getContext());
         if (isElyraBottomSearch()) {
             mBottomSheetAlpha = getResources().getInteger(

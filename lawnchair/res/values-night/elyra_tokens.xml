@@ -17,6 +17,10 @@
     <color name="elyra_drawer_surface_stroke">#38EAF5F1</color>
     <color name="elyra_drawer_control_surface">#B8282C30</color>
 
+    <!-- Dark aliases keep the existing control colors byte-for-byte unchanged. -->
+    <color name="elyra_drawer_search_surface">#B8282C30</color>
+    <color name="elyra_drawer_button_surface">#B8282C30</color>
+
     <integer name="elyra_surface_alpha_panel">202</integer>
     <integer name="elyra_surface_alpha_capsule">180</integer>
     <integer name="elyra_surface_alpha_card">184</integer>

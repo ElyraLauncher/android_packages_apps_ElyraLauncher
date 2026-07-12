@@ -16,13 +16,37 @@
     <color name="elyra_surface_elevated">#FFEAF5F1</color>
     <color name="elyra_text_primary">#FF0C2E29</color>
     <color name="elyra_text_secondary">#FF3B5A53</color>
-    <!-- Light-mode outline: strengthened so card/search/suggestion edges stay
-         visible over bright wallpaper (dark override lives in values-night). -->
-    <color name="elyra_drawer_surface_stroke">#470C2E29</color>
-    <!-- Light-mode bottom-search surface: stronger translucent white so app icons
-         and labels behind the field no longer show through, while the sheet stays
-         translucent. Dark override lives in values-night. -->
-    <color name="elyra_drawer_control_surface">#E6FFFFFF</color>
+
+    <!-- Light drawer foregrounds. These are intentionally independent from the
+         workspace/dynamic text attributes: the drawer owns a light tonal sheet,
+         so its foreground must remain dark even over a bright wallpaper. -->
+    <color name="elyra_drawer_text_primary">#FF142621</color>
+    <color name="elyra_drawer_text_secondary">#C43F544E</color>
+    <color name="elyra_drawer_app_label">#F20B211B</color>
+    <color name="elyra_drawer_text_selected">#FFFFFFFF</color>
+    <color name="elyra_drawer_text_unselected">#E0142F28</color>
+    <color name="elyra_drawer_search_hint">#B8465B55</color>
+    <color name="elyra_drawer_search_cursor">#FF126B5B</color>
+    <color name="elyra_drawer_icon_foreground">#E0142F28</color>
+
+    <!-- Light drawer surface hierarchy. The root color is opaque because the
+         verified sheet renderer applies its existing alpha during drawing. Child
+         tokens carry their own translucency and are deliberately stronger than
+         the root so cards and controls remain legible without becoming flat white. -->
+    <color name="elyra_drawer_root_surface">#FFE3ECE8</color>
+    <color name="elyra_drawer_capsule_surface">#DCF2F7F4</color>
+    <color name="elyra_drawer_selected_pill_surface">@color/elyra_accent</color>
+    <color name="elyra_drawer_suggestion_surface">#E8F6FAF8</color>
+    <color name="elyra_drawer_card_surface">#E6F3F8F5</color>
+    <color name="elyra_drawer_search_surface">#EEFAFCFB</color>
+    <color name="elyra_drawer_button_surface">#E8F4F8F6</color>
+    <color name="elyra_drawer_popup_surface">#F0F7FAF8</color>
+    <color name="elyra_drawer_index_popup_surface">#F2F5F9F7</color>
+    <color name="elyra_drawer_surface_stroke">#66182E28</color>
+
+    <!-- Compatibility alias retained for callers outside the refined drawer
+         surfaces. New drawer controls use the component-specific tokens above. -->
+    <color name="elyra_drawer_control_surface">@color/elyra_drawer_search_surface</color>
 
     <!-- Corner radius tokens -->
     <dimen name="elyra_radius_small">8dp</dimen>

@@ -27,6 +27,7 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.android.launcher3.R
+import com.android.launcher3.Utilities
 import com.android.launcher3.util.Themes
 
 /**
@@ -48,19 +49,28 @@ object ElyraDrawerOptions {
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dp(anchor, 20).toFloat()
-                val base = Themes.getColorBackgroundFloating(context)
-                val alpha = context.resources.getInteger(R.integer.elyra_surface_alpha_panel)
-                setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
-                setStroke(
-                    dp(anchor, 1),
-                    Themes.getAttrColor(context, android.R.attr.textColorTertiary),
-                )
+                if (Utilities.isDarkTheme(context)) {
+                    val base = Themes.getColorBackgroundFloating(context)
+                    val alpha = context.resources.getInteger(R.integer.elyra_surface_alpha_panel)
+                    setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
+                    setStroke(
+                        dp(anchor, 1),
+                        Themes.getAttrColor(context, android.R.attr.textColorTertiary),
+                    )
+                } else {
+                    setColor(context.getColor(R.color.elyra_drawer_popup_surface))
+                    setStroke(dp(anchor, 1), context.getColor(R.color.elyra_drawer_surface_stroke))
+                }
             }
         }
 
         panel.addView(TextView(context).apply {
             setText(R.string.elyra_drawer_options_title)
-            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+            setTextColor(if (Utilities.isDarkTheme(context)) {
+                Themes.getAttrColor(context, android.R.attr.textColorPrimary)
+            } else {
+                context.getColor(R.color.elyra_drawer_text_primary)
+            })
             textSize = 14f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER_VERTICAL
@@ -71,7 +81,11 @@ object ElyraDrawerOptions {
 
         val showAll = TextView(context).apply {
             setText(R.string.elyra_drawer_reset_view)
-            setTextColor(Themes.getAttrColor(context, android.R.attr.textColorPrimary))
+            setTextColor(if (Utilities.isDarkTheme(context)) {
+                Themes.getAttrColor(context, android.R.attr.textColorPrimary)
+            } else {
+                context.getColor(R.color.elyra_drawer_text_primary)
+            })
             textSize = 14f
             gravity = Gravity.CENTER_VERTICAL
             isClickable = true

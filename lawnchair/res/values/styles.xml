@@ -14,7 +14,7 @@
 
         <item name="allAppsScrimColor">?android:attr/colorBackground</item>
         <item name="allappsHeaderProtectionColor">@color/system_neutral1_100</item>
-        <item name="allAppsAlternateTextColor">@color/light_drawer_text_color</item>
+        <item name="allAppsAlternateTextColor">@color/elyra_drawer_app_label</item>
         <item name="focusHighlight">@color/system_neutral1_0</item>
         <item name="groupHighlight">@color/surface_light</item>
         <item name="qsbFillColor">#ffffffff</item>
@@ -38,7 +38,7 @@
 
         <item name="allAppsScrimColor">?android:attr/colorBackground</item>
         <item name="allappsHeaderProtectionColor">@color/system_neutral1_100</item>
-        <item name="allAppsAlternateTextColor">@color/light_drawer_text_color</item>
+        <item name="allAppsAlternateTextColor">@color/elyra_drawer_app_label</item>
         <item name="focusHighlight">@color/system_neutral1_0</item>
         <item name="groupHighlight">@color/surface_light</item>
         <item name="qsbFillColor">#ffffffff</item>
@@ -62,7 +62,7 @@
 
         <item name="allAppsScrimColor">?android:attr/colorBackground</item>
         <item name="allappsHeaderProtectionColor">@color/system_neutral1_100</item>
-        <item name="allAppsAlternateTextColor">@color/light_drawer_text_color</item>
+        <item name="allAppsAlternateTextColor">@color/elyra_drawer_app_label</item>
         <item name="focusHighlight">@color/system_neutral1_0</item>
         <item name="groupHighlight">@color/surface_light</item>
         <item name="qsbFillColor">#ffffffff</item>
