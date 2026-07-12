@@ -1339,6 +1339,18 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 topPadding += getResources().getDimensionPixelSize(
                         R.dimen.all_apps_additional_top_padding_floating_search);
             }
+            if (isElyraBottomSearch() && !grid.isTablet) {
+                // On phones allAppsPadding.top is 0, so the rounded drawer sheet
+                // would start at the screen top (behind the status bar / notch).
+                // Lower it below the device's safe top inset (insets.top already
+                // resolves status bar vs. display cutout) plus a single tokenized
+                // visual gap so the rounded top corners clear system UI. Applied
+                // once here; the gap is never added twice.
+                topPadding = ElyraDrawerLayoutPolicy.drawerSheetTopPadding(
+                        insets.top,
+                        getResources().getDimensionPixelSize(
+                                R.dimen.elyra_drawer_safe_top_gap));
+            }
             setPadding(grid.allAppsLeftRightMargin, topPadding, grid.allAppsLeftRightMargin, 0);
         }
         InsettableFrameLayout.dispatchInsets(this, insets);

@@ -63,6 +63,24 @@ object ElyraDrawerLayoutPolicy {
     }
 
     /**
+     * The safe top inset for the drawer sheet: the larger of the status-bar and
+     * display-cutout top insets, so a device with a tall/centered cutout is
+     * respected while a device with no cutout still clears the status bar.
+     */
+    @JvmStatic
+    fun safeTopInset(statusBarTop: Int, cutoutTop: Int): Int =
+        maxOf(statusBarTop.coerceAtLeast(0), cutoutTop.coerceAtLeast(0))
+
+    /**
+     * Top padding that lowers the rounded drawer sheet below system UI: the safe
+     * top inset plus a single visual gap. The gap is added exactly once here so it
+     * cannot be double-applied by callers.
+     */
+    @JvmStatic
+    fun drawerSheetTopPadding(safeTopInset: Int, visualGap: Int): Int =
+        safeTopInset.coerceAtLeast(0) + visualGap.coerceAtLeast(0)
+
+    /**
      * Whether [opacity] is translucent enough to enable the wallpaper-aware
      * contrast handling (status-bar icons and drawer label color).
      */

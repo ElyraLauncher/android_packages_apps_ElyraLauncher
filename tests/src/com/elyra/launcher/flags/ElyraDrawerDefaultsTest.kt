@@ -90,6 +90,20 @@ class ElyraDrawerDefaultsTest {
     }
 
     @Test
+    fun drawerSafeTopUsesLargerInsetAndAddsGapOnce() {
+        // Safe top = max(status bar, cutout): a tall/centered cutout wins.
+        assertEquals(120, ElyraDrawerLayoutPolicy.safeTopInset(80, 120))
+        assertEquals(80, ElyraDrawerLayoutPolicy.safeTopInset(80, 60))
+        // A device with no cutout still respects the status-bar inset.
+        assertEquals(80, ElyraDrawerLayoutPolicy.safeTopInset(80, 0))
+        // The visual gap is added exactly once on top of the safe inset.
+        assertEquals(130, ElyraDrawerLayoutPolicy.drawerSheetTopPadding(120, 10))
+        assertEquals(90, ElyraDrawerLayoutPolicy.drawerSheetTopPadding(80, 10))
+        // Negative/degenerate inputs are clamped, never negative.
+        assertEquals(10, ElyraDrawerLayoutPolicy.drawerSheetTopPadding(-5, 10))
+    }
+
+    @Test
     fun drawerOpacityMigrationPreservesDeliberateChoices() {
         // Never-written preference: already resolves to the new default, so no migrate.
         assertFalse(ElyraDrawerLayoutPolicy.shouldMigrateLegacyDrawerOpacity(null))

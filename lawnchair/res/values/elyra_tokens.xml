@@ -60,6 +60,11 @@
     <dimen name="elyra_drawer_segment_indicator_height">38dp</dimen>
     <dimen name="elyra_drawer_overflow_size">44dp</dimen>
     <dimen name="elyra_drawer_sheet_radius">32dp</dimen>
+    <!-- Visual gap added once below the device's safe top inset (status bar /
+         display cutout) so the rounded drawer-sheet top corners clear system UI.
+         Device-adaptive: it is added on top of the real per-device top inset, not
+         a fixed notch offset. -->
+    <dimen name="elyra_drawer_safe_top_gap">10dp</dimen>
     <dimen name="elyra_fastscroll_popup_size">44dp</dimen>
     <dimen name="elyra_fastscroll_popup_text_size">20sp</dimen>
     <dimen name="elyra_fastscroll_rail_height">432dp</dimen>
