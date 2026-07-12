@@ -16,8 +16,13 @@
     <color name="elyra_surface_elevated">#FFEAF5F1</color>
     <color name="elyra_text_primary">#FF0C2E29</color>
     <color name="elyra_text_secondary">#FF3B5A53</color>
-    <color name="elyra_drawer_surface_stroke">#240C2E29</color>
-    <color name="elyra_drawer_control_surface">#C8FFFFFF</color>
+    <!-- Light-mode outline: strengthened so card/search/suggestion edges stay
+         visible over bright wallpaper (dark override lives in values-night). -->
+    <color name="elyra_drawer_surface_stroke">#470C2E29</color>
+    <!-- Light-mode bottom-search surface: stronger translucent white so app icons
+         and labels behind the field no longer show through, while the sheet stays
+         translucent. Dark override lives in values-night. -->
+    <color name="elyra_drawer_control_surface">#E6FFFFFF</color>
 
     <!-- Corner radius tokens -->
     <dimen name="elyra_radius_small">8dp</dimen>
@@ -89,10 +94,14 @@
          the segmented capsule, category cards and the color panel so the drawer
          reads as one Elyra/Material surface language. Prepared for future
          user-facing surface customization; adopt incrementally. -->
-    <integer name="elyra_surface_alpha_panel">214</integer>
-    <integer name="elyra_surface_alpha_capsule">190</integer>
-    <integer name="elyra_surface_alpha_card">196</integer>
-    <integer name="elyra_surface_alpha_suggestion">200</integer>
-    <integer name="elyra_surface_alpha_hairline">40</integer>
-    <integer name="elyra_drawer_sheet_alpha">184</integer>
+    <!-- Light-mode surface alphas strengthened for readable tonal separation over
+         bright wallpaper. Elevated surfaces (suggestion/card/capsule/panel) stay
+         above the drawer-root sheet so they read as raised, and all remain < 255 so
+         wallpaper stays perceptible. Dark counterparts in values-night are unchanged. -->
+    <integer name="elyra_surface_alpha_panel">230</integer>
+    <integer name="elyra_surface_alpha_capsule">212</integer>
+    <integer name="elyra_surface_alpha_card">220</integer>
+    <integer name="elyra_surface_alpha_suggestion">222</integer>
+    <integer name="elyra_surface_alpha_hairline">66</integer>
+    <integer name="elyra_drawer_sheet_alpha">206</integer>
 </resources>
