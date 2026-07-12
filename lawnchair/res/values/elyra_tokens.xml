@@ -67,7 +67,6 @@
     <dimen name="elyra_fastscroll_index_text_size">9sp</dimen>
     <dimen name="elyra_fastscroll_end_margin">8dp</dimen>
     <dimen name="elyra_fastscroll_popup_margin">52dp</dimen>
-    <dimen name="elyra_color_popup_width">264dp</dimen>
     <dimen name="elyra_color_popup_padding">12dp</dimen>
     <dimen name="elyra_color_popup_anchor_gap">10dp</dimen>
     <dimen name="elyra_color_popup_elevation">10dp</dimen>
@@ -75,8 +74,8 @@
     <!-- Drawer color-filter panel tokens (Stage 6.7). A compact, evenly spaced
          row of color swatches with a clear highlight ring on the selected dot.
          Sizing lives here so the panel stays consistent and future-tunable. -->
-    <dimen name="elyra_color_dot_size">22dp</dimen>
-    <dimen name="elyra_color_dot_spacing">5dp</dimen>
+    <dimen name="elyra_color_chip_cell_size">48dp</dimen>
+    <dimen name="elyra_color_dot_size">30dp</dimen>
     <dimen name="elyra_color_dot_ring">2dp</dimen>
     <dimen name="elyra_color_dot_ring_gap">2dp</dimen>
     <dimen name="elyra_color_dot_hairline">1dp</dimen>

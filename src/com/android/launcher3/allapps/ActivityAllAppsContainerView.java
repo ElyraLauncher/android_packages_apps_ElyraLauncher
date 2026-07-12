@@ -1514,6 +1514,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     public void updateElyraDrawerVisualState() {
+        if (mSearchUiManager != null) {
+            mSearchUiManager.onElyraDrawerModeChanged(isElyraCategoryUiMode());
+        }
         if (mFastScroller != null) {
             mFastScroller.setVisibility(getElyraFastScrollerVisibility());
         }

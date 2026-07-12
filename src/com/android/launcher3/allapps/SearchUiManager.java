@@ -102,4 +102,7 @@ public interface SearchUiManager {
     default boolean handleElyraColorPanelBack() {
         return false;
     }
+
+    /** Dismisses transient drawer-local UI when entering or leaving category mode. */
+    default void onElyraDrawerModeChanged(boolean categoryMode) {}
 }

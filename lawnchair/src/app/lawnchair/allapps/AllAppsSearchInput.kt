@@ -18,6 +18,7 @@ import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.View.OnFocusChangeListener
@@ -30,6 +31,7 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isInvisible
@@ -69,6 +71,7 @@ import app.lawnchair.search.algorithms.ElyraAppColorSearchAlgorithm
 import com.elyra.launcher.allapps.ElyraAppColorBucket
 import com.elyra.launcher.allapps.ElyraAppIconColorExtractor
 import com.elyra.launcher.allapps.ElyraBottomSearch
+import com.elyra.launcher.allapps.ElyraColorPickerLayout
 import com.patrykmichalik.opto.core.firstBlocking
 import java.util.Locale
 import kotlin.math.max
@@ -189,9 +192,14 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         with(actionButton) {
             isVisible = false
             setOnClickListener {
-                selectedColorBucket = null
                 hideColorPanel(clearFilter = false)
-                clearLocalQuery(keepFocus = true)
+                if (input.text.isNullOrEmpty()) {
+                    selectedColorBucket = null
+                    clearLocalQuery(keepFocus = true)
+                } else {
+                    clearLocalQuery(keepFocus = true)
+                    if (selectedColorBucket != null) refreshColorSearchResults()
+                }
                 rebuildColorPanel()
                 updateColorButtonVisibility()
             }
@@ -205,8 +213,17 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             true,
         ).apply {
             isOutsideTouchable = true
+            isClippingEnabled = true
             elevation = resources.getDimension(R.dimen.elyra_color_popup_elevation)
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setTouchInterceptor { _, event ->
+                if (event.action == MotionEvent.ACTION_OUTSIDE) {
+                    hideColorPanel(clearFilter = false)
+                    true
+                } else {
+                    false
+                }
+            }
             setOnDismissListener {
                 colorPanelVisible = false
                 colorPanel.alpha = 1f
@@ -479,7 +496,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     override fun onDetachedFromWindow() {
         if (::colorPopup.isInitialized && colorPopup.isShowing) {
-            colorPopup.dismiss()
+            hideColorPanel(clearFilter = false, animate = false)
         }
         super.onDetachedFromWindow()
         appsView.appsStore?.removeUpdateListener(this)
@@ -557,6 +574,12 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         if (!colorPanelVisible) return false
         hideColorPanel(clearFilter = false)
         return true
+    }
+
+    override fun onElyraDrawerModeChanged(categoryMode: Boolean) {
+        if (categoryMode && colorPanelVisible) {
+            hideColorPanel(clearFilter = false)
+        }
     }
 
     override fun preDispatchKeyEvent(event: KeyEvent) {
@@ -674,7 +697,8 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         searchActions.isVisible = true
         colorButton.isVisible = colorSearchEnabled && !imeActive
         colorButton.isSelected = colorPanelVisible
-        colorButton.alpha = if (selectedColorBucket == null) 0.86f else 1f
+        colorButton.isActivated = selectedColorBucket != null
+        colorButton.alpha = 1f
         if (colorSearchEnabled && ::micIcon.isInitialized && ::lensIcon.isInitialized) {
             micIcon.isVisible = false
             lensIcon.isVisible = false
@@ -698,10 +722,20 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         val sideMargin = resources.getDimensionPixelSize(R.dimen.elyra_bottom_search_side_padding)
         val availableWidth = (if (width > 0) width else resources.displayMetrics.widthPixels) -
             sideMargin * 2
-        val popupWidth = minOf(
-            resources.getDimensionPixelSize(R.dimen.elyra_color_popup_width),
+        val panelPadding = resources.getDimensionPixelSize(R.dimen.elyra_color_popup_padding)
+        val cellSize = resources.getDimensionPixelSize(R.dimen.elyra_color_chip_cell_size)
+        val columns = ElyraColorPickerLayout.columnCount(
             availableWidth,
+            panelPadding,
+            cellSize,
+            ElyraAppColorBucket.entries.size + 1,
         )
+        colorPanelRow.columnCount = columns
+        colorPanelRow.rowCount = ElyraColorPickerLayout.rowCount(
+            ElyraAppColorBucket.entries.size + 1,
+            columns,
+        )
+        val popupWidth = ElyraColorPickerLayout.popupWidth(columns, panelPadding, cellSize)
         colorPanel.measure(
             View.MeasureSpec.makeMeasureSpec(popupWidth, View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
@@ -710,21 +744,23 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         colorPopup.height = colorPanel.measuredHeight
         val gap = resources.getDimensionPixelSize(R.dimen.elyra_color_popup_anchor_gap)
         colorPanelVisible = true
+        colorPanel.pivotX = popupWidth.toFloat()
+        colorPanel.pivotY = colorPanel.measuredHeight.toFloat()
         colorPopup.showAsDropDown(
             colorButton,
             colorButton.width - popupWidth,
             -(colorButton.height + colorPanel.measuredHeight + gap),
         )
         colorPanel.alpha = 0f
-        colorPanel.scaleX = 0.94f
-        colorPanel.scaleY = 0.94f
-        colorPanel.translationY = gap.toFloat()
+        colorPanel.scaleX = 0.92f
+        colorPanel.scaleY = 0.92f
+        colorPanel.translationY = gap / 2f
         colorPanel.animate()
             .alpha(1f)
             .scaleX(1f)
             .scaleY(1f)
             .translationY(0f)
-            .setDuration(180)
+            .setDuration(colorAnimationDuration(190L))
             .setInterpolator(FastOutSlowInInterpolator())
             .start()
         updateBottomContentInset()
@@ -755,10 +791,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         colorPanel.animate().cancel()
         colorPanel.animate()
             .alpha(0f)
-            .scaleX(0.94f)
-            .scaleY(0.94f)
-            .translationY(gap.toFloat())
-            .setDuration(160)
+            .scaleX(0.92f)
+            .scaleY(0.92f)
+            .translationY(gap / 2f)
+            .setDuration(colorAnimationDuration(170L))
             .setInterpolator(FastOutSlowInInterpolator())
             .withEndAction {
                 if (colorPopup.isShowing) colorPopup.dismiss()
@@ -772,10 +808,13 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         }
     }
 
+    private fun colorAnimationDuration(duration: Long): Long =
+        if (ValueAnimator.areAnimatorsEnabled()) duration else 0L
+
     private fun createColorDotsPanel(): LinearLayout {
         colorPanelRow = GridLayout(context).apply {
-            columnCount = 7
-            rowCount = 2
+            columnCount = 4
+            rowCount = 4
             orientation = GridLayout.HORIZONTAL
             alignmentMode = GridLayout.ALIGN_BOUNDS
             setClipChildren(false)
@@ -802,16 +841,19 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     private fun rebuildColorPanel() {
         if (!::colorPanelRow.isInitialized) return
         colorPanelRow.removeAllViews()
-        colorPanelRow.addView(createColorDot(null, context.getString(R.string.elyra_color_filter_clear)))
-        ElyraAppColorBucket.entries.forEach { bucket ->
+        val orderedBuckets = listOf(ElyraAppColorBucket.Multicolor) +
+            ElyraAppColorBucket.entries.filterNot { it == ElyraAppColorBucket.Multicolor }
+        orderedBuckets.forEach { bucket ->
             colorPanelRow.addView(createColorDot(bucket, context.getString(bucket.labelRes)))
         }
+        colorPanelRow.addView(createColorDot(null, context.getString(R.string.elyra_color_filter_clear)))
     }
 
-    private fun createColorDot(bucket: ElyraAppColorBucket?, label: String): TextView {
+    private fun createColorDot(bucket: ElyraAppColorBucket?, label: String): FrameLayout {
         val selected = selectedColorBucket == bucket
-        val size = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_size)
-        return TextView(context).apply {
+        val cellSize = resources.getDimensionPixelSize(R.dimen.elyra_color_chip_cell_size)
+        val chipSize = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_size)
+        val chip = TextView(context).apply {
             // "×" (multiplication sign) reads universally as clear/reset; the
             // colored swatches carry no glyph so the color is the whole affordance.
             text = if (bucket == null) "×" else ""
@@ -819,13 +861,19 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             textSize = 13f
             setSingleLine(true)
             setTextColor(Themes.getAttrColor(context, android.R.attr.textColorSecondary))
-            contentDescription = label
             background = colorDotBackground(bucket, selected)
-            val margin = resources.getDimensionPixelSize(R.dimen.elyra_color_dot_spacing)
+            isClickable = false
+            layoutParams = FrameLayout.LayoutParams(chipSize, chipSize, Gravity.CENTER)
+        }
+        return FrameLayout(context).apply {
+            isClickable = true
+            isFocusable = true
+            contentDescription = label
+            foreground = ContextCompat.getDrawable(context, R.drawable.elyra_color_chip_ripple)
+            addView(chip)
             layoutParams = GridLayout.LayoutParams().apply {
-                width = size
-                height = size
-                setMargins(margin, margin, margin, margin)
+                width = cellSize
+                height = cellSize
             }
             setOnClickListener {
                 if (bucket == null) {
@@ -833,7 +881,8 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                 } else {
                     selectedColorBucket = bucket
                     refreshColorSearchResults()
-                    hideColorPanel(clearFilter = false)
+                    rebuildColorPanel()
+                    updateColorButtonVisibility()
                 }
             }
         }
@@ -853,10 +902,17 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             }
         }
 
-        val fill = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(bucket.swatchColor)
-            setStroke(hairline, Color.argb(40, Color.red(outline), Color.green(outline), Color.blue(outline)))
+        val fill: Drawable = if (bucket == ElyraAppColorBucket.Multicolor) {
+            requireNotNull(ContextCompat.getDrawable(context, R.drawable.elyra_ic_color_wheel)).mutate()
+        } else {
+            GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(bucket.swatchColor)
+                setStroke(
+                    hairline,
+                    Color.argb(40, Color.red(outline), Color.green(outline), Color.blue(outline)),
+                )
+            }
         }
         if (!selected) return fill
 
@@ -876,13 +932,11 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
 
     private fun roundedPanelBackground(): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        cornerRadius = resources.getDimensionPixelSize(R.dimen.search_group_radius).toFloat()
-        val base = Themes.getColorBackgroundFloating(context)
-        val alpha = resources.getInteger(R.integer.elyra_surface_alpha_panel)
-        setColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
+        cornerRadius = resources.getDimensionPixelSize(R.dimen.elyra_radius_large).toFloat()
+        setColor(ContextCompat.getColor(context, R.color.elyra_drawer_control_surface))
         setStroke(
-            resources.getDimensionPixelSize(R.dimen.search_decoration_padding),
-            Themes.getAttrColor(context, android.R.attr.textColorTertiary),
+            resources.getDimensionPixelSize(R.dimen.elyra_color_dot_hairline),
+            ContextCompat.getColor(context, R.color.elyra_drawer_surface_stroke),
         )
     }
 
