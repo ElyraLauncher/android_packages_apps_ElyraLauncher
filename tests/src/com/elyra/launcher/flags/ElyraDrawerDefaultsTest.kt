@@ -90,6 +90,13 @@ class ElyraDrawerDefaultsTest {
     }
 
     @Test
+    fun drawerRootOpacityRemainsAUserOwnedSingleLayer() {
+        assertEquals(0.25f, ElyraDrawerLayoutPolicy.DEFAULT_DRAWER_OPACITY)
+        assertFalse(ElyraDrawerLayoutPolicy.isWallpaperAware(0.31f))
+        assertFalse(ElyraDrawerLayoutPolicy.isWallpaperAware(1f))
+    }
+
+    @Test
     fun drawerSafeTopUsesLargerInsetAndAddsGapOnce() {
         // Safe top = max(status bar, cutout): a tall/centered cutout wins.
         assertEquals(120, ElyraDrawerLayoutPolicy.safeTopInset(80, 120))

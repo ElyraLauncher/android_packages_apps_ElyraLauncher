@@ -214,6 +214,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private int mHeaderColor;
     private int mBottomSheetBackgroundColor;
     private float mBottomSheetAlpha = 1f;
+    private float mElyraBottomSheetMaxAlpha = 1f;
     private boolean mForceBottomSheetVisible;
     private int mTabsProtectionAlpha;
     private int mElyraBottomControlsHeight;
@@ -351,13 +352,12 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 0 // Bottom left
         };
         mBottomSheetBackgroundColor = isElyraBottomSearch()
-                ? (Utilities.isDarkTheme(getContext())
-                        ? Themes.getColorBackgroundFloating(getContext())
-                        : getContext().getColor(R.color.elyra_drawer_root_surface))
+                ? resolveElyraDrawerRootColor()
                 : ColorTokens.SurfaceDimColor.resolveColor(getContext());
         if (isElyraBottomSearch()) {
-            mBottomSheetAlpha = getResources().getInteger(
-                    R.integer.elyra_drawer_sheet_alpha) / 255f;
+            mElyraBottomSheetMaxAlpha = Utilities.boundToRange(
+                    pref.getDrawerOpacity().get(), 0f, 1f);
+            mBottomSheetAlpha = mElyraBottomSheetMaxAlpha;
         }
         updateBackgroundVisibility(mActivityContext.getDeviceProfile());
         mSearchUiManager.initializeSearch(this);
@@ -881,6 +881,26 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     /**
+     * Resolves the one tonal paint used by the rounded modern drawer sheet. A
+     * configured drawer color still wins; otherwise the existing dark surface or
+     * the centralized Elyra light root token is used. Alpha is owned separately
+     * by {@link #mElyraBottomSheetMaxAlpha}, so this color cannot accidentally
+     * stack another translucent layer into the root.
+     */
+    private int resolveElyraDrawerRootColor() {
+        int color = Utilities.isDarkTheme(getContext())
+                ? Themes.getColorBackgroundFloating(getContext())
+                : getContext().getColor(R.color.elyra_drawer_root_surface);
+        var colorOptions = PreferenceExtensionsKt.firstBlocking(
+                pref2.getAppDrawerBackgroundColor());
+        int configuredColor = colorOptions.getColorPreferenceEntry().getLightColor()
+                .invoke(mContext);
+        return configuredColor != 0
+                ? ColorUtils.setAlphaComponent(configuredColor, 255)
+                : ColorUtils.setAlphaComponent(color, 255);
+    }
+
+    /**
      * @return true if the search bar is floating above this container (at the
      *         bottom of the screen)
      */
@@ -1172,9 +1192,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
 
     private void setBottomSheetAlpha(float alpha) {
         if (isElyraBottomSearch()) {
-            float maxAlpha = getResources().getInteger(
-                    R.integer.elyra_drawer_sheet_alpha) / 255f;
-            mBottomSheetAlpha = alpha * maxAlpha;
+            mBottomSheetAlpha = alpha * mElyraBottomSheetMaxAlpha;
         } else if (mActivityContext.getDeviceProfile().isTablet) {
             mBottomSheetAlpha = 1f;
         } else {
@@ -1645,6 +1663,14 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             mTmpPath.reset();
             mTmpPath.addRoundRect(mTmpRectF, mBottomSheetCornerRadii, Direction.CW);
             canvas.drawPath(mTmpPath, mHeaderPaint);
+        }
+
+        // The modern rounded sheet owns one uniform root scrim. Its compact
+        // header and child cards provide their own elevation, so drawing the
+        // legacy header-protection scrim here would stack a second alpha layer
+        // and create a horizontal tonal seam near the sheet's top edge.
+        if (isElyraBottomSearch()) {
+            return;
         }
 
         if (DEBUG_HEADER_PROTECTION) {

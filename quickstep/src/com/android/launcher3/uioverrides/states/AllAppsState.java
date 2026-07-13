@@ -20,6 +20,7 @@ import static com.android.launcher3.Flags.enableScalingRevealHomeAnimation;
 import static com.android.launcher3.logging.StatsLogManager.LAUNCHER_STATE_ALLAPPS;
 
 import android.content.Context;
+import android.graphics.Color;
 
 import com.android.internal.jank.Cuj;
 import com.android.launcher3.DeviceProfile;
@@ -31,6 +32,7 @@ import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 import com.android.quickstep.util.BaseDepthController;
 import com.android.systemui.shared.system.InteractionJankMonitorWrapper;
+import com.elyra.launcher.allapps.ElyraBottomSearch;
 
 import java.util.concurrent.TimeUnit;
 
@@ -217,8 +219,11 @@ public class AllAppsState extends LauncherState {
 
     @Override
     public int getWorkspaceScrimColor(Launcher launcher) {
-        return launcher.getDeviceProfile().isTablet 
-            ? launcher.getResources().getColor(android.R.color.transparent) 
-            : LawnchairUtilsKt.getAllAppsScrimColor(launcher);
+        // The rounded modern sheet draws its own single tonal scrim. Keeping the
+        // full-screen state scrim transparent prevents a second alpha layer while
+        // leaving the existing depth controller free to blur the wallpaper below.
+        return launcher.getDeviceProfile().isTablet || ElyraBottomSearch.isEnabled(launcher)
+                ? Color.TRANSPARENT
+                : LawnchairUtilsKt.getAllAppsScrimColor(launcher);
     }
 }
