@@ -15,6 +15,7 @@ import android.util.AttributeSet;
 import android.view.ViewDebug;
 import android.view.WindowInsets;
 
+import com.android.launcher3.allapps.ActivityAllAppsContainerView;
 import com.android.launcher3.graphics.SysUiScrim;
 import com.android.launcher3.statemanager.StatefulActivity;
 import com.hoko.blur.HokoBlur;
@@ -174,7 +175,14 @@ public class LauncherRootView extends InsettableFrameLayout {
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        mSysUiScrim.draw(canvas);
+        float topScrimClipBottom = Float.POSITIVE_INFINITY;
+        if (mActivity instanceof Launcher) {
+            ActivityAllAppsContainerView<?> appsView = ((Launcher) mActivity).getAppsView();
+            if (appsView != null) {
+                topScrimClipBottom = appsView.getElyraDrawerSheetTopForSystemScrim();
+            }
+        }
+        mSysUiScrim.draw(canvas, topScrimClipBottom);
         super.dispatchDraw(canvas);
     }
 

@@ -138,6 +138,19 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
      * Draw the top and bottom scrims
      */
     public void draw(Canvas canvas) {
+        draw(canvas, Float.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Draws the system-UI scrims while keeping the top shadow above an optional
+     * content-surface boundary. The bottom navigation scrim is intentionally not
+     * clipped.
+     *
+     * @param topScrimClipBottom bottom edge available to the top shadow, in this
+     *                           canvas' coordinates; positive infinity preserves
+     *                           the standard full top-shadow path
+     */
+    public void draw(Canvas canvas, float topScrimClipBottom) {
         if (canvas == null)
             return;
         if (!mHideSysUiScrim) {
@@ -158,7 +171,16 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
             }
 
             if (mDrawTopScrim && mTopMaskBitmap != null) {
+                int restoreCount = canvas.save();
+                if (topScrimClipBottom != Float.POSITIVE_INFINITY) {
+                    canvas.clipRect(
+                            mTopMaskRect.left,
+                            mTopMaskRect.top,
+                            mTopMaskRect.right,
+                            Math.max(mTopMaskRect.top, topScrimClipBottom));
+                }
                 canvas.drawBitmap(mTopMaskBitmap, null, mTopMaskRect, mTopMaskPaint);
+                canvas.restoreToCount(restoreCount);
             }
             if (mDrawBottomScrim && mBottomMaskBitmap != null) {
                 canvas.drawBitmap(mBottomMaskBitmap, null, mBottomMaskRect, mBottomMaskPaint);

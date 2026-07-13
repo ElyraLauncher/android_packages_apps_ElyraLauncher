@@ -919,6 +919,29 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return mElyraBottomSearch;
     }
 
+    /**
+     * Returns the current rounded-sheet top in the parent/root coordinate space
+     * so the launcher status shadow can stop before entering this translucent
+     * surface. A non-finite value leaves the normal workspace shadow untouched
+     * whenever the sheet is not actually being drawn.
+     */
+    public float getElyraDrawerSheetTopForSystemScrim() {
+        if (!isElyraBottomSearch()
+                || getVisibility() != VISIBLE
+                || mBottomSheetBackground == null
+                || mBottomSheetBackground.getVisibility() != VISIBLE
+                || mBottomSheetAlpha <= 0f) {
+            return Float.POSITIVE_INFINITY;
+        }
+        float scale = getScaleY();
+        float verticalScaleOffset = (1 - scale)
+                * (mBottomSheetBackground.getHeight() - getHeight() / 2f);
+        return getTop()
+                + getTranslationY()
+                + mBottomSheetBackground.getTop()
+                + verticalScaleOffset;
+    }
+
     public void setElyraBottomControlsLayout(int controlsHeight, int controlsBottomInset) {
         int boundedHeight = Math.max(0, controlsHeight);
         int boundedInset = Math.max(0, controlsBottomInset);
