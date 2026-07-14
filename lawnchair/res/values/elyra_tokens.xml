@@ -39,8 +39,8 @@
          2 is the stronger selected/popup layer. Their translucent neutral-mint
          tones allow the wallpaper-aware root to influence every component
          without letting wallpaper detail overpower content. -->
-    <color name="elyra_drawer_surface_level_1">#DCF3F8F5</color>
-    <color name="elyra_drawer_surface_level_2">#ECF7FAF8</color>
+    <color name="elyra_drawer_surface_level_1">#9EF3F8F5</color>
+    <color name="elyra_drawer_surface_level_2">#BDF7FAF8</color>
     <color name="elyra_drawer_outline_level_1">#4736504A</color>
     <color name="elyra_drawer_outline_level_2">#5936504A</color>
 
@@ -128,5 +128,11 @@
     <dimen name="elyra_color_dot_ring_gap">2dp</dimen>
     <dimen name="elyra_color_dot_hairline">1dp</dimen>
 
+    <!-- Effective Level 0 floors are composed at render time without writing the
+         user's opacity preference. System blur needs only a moderate tonal layer;
+         the fallback is stronger so unsupported devices never show a nearly
+         transparent, sharp wallpaper inside the drawer. Both remain translucent. -->
+    <integer name="elyra_drawer_root_blur_alpha_floor">148</integer>
+    <integer name="elyra_drawer_root_fallback_alpha_floor">198</integer>
     <integer name="elyra_drawer_sheet_alpha">206</integer>
 </resources>

@@ -60,8 +60,8 @@ class ElyraDrawerLightTokensTest {
         assertTrue(alpha(color(lightTokens, "elyra_drawer_surface_stroke")) >= 0x40)
         assertTrue(alpha(color(lightTokens, "elyra_drawer_outline_level_1")) in 0x30..0x70)
         assertTrue(alpha(color(lightTokens, "elyra_drawer_outline_level_2")) in 0x30..0x70)
-        assertTrue(alpha(color(lightTokens, "elyra_drawer_surface_level_1")) in 0xC0..0xE8)
-        assertTrue(alpha(color(lightTokens, "elyra_drawer_surface_level_2")) in 0xD0..0xF4)
+        assertTrue(alpha(color(lightTokens, "elyra_drawer_surface_level_1")) in 0x80..0xB0)
+        assertTrue(alpha(color(lightTokens, "elyra_drawer_surface_level_2")) in 0xB0..0xD0)
         assertOutlineAliases(lightTokens)
     }
 
@@ -74,13 +74,34 @@ class ElyraDrawerLightTokensTest {
         assertNotEquals(level1, level2)
         level1Aliases.forEach { assertEquals(it, level1, color(darkTokens, it)) }
         level2Aliases.forEach { assertEquals(it, level2, color(darkTokens, it)) }
-        assertTrue(alpha(level1) in 0xA0..0xE0)
-        assertTrue(alpha(level2) in 0xD0..0xF4)
+        assertTrue(alpha(level1) in 0x80..0xB0)
+        assertTrue(alpha(level2) in 0xB0..0xD0)
         assertTrue(alpha(color(darkTokens, "elyra_drawer_outline_level_1")) in 0x30..0x70)
         assertTrue(alpha(color(darkTokens, "elyra_drawer_outline_level_2")) in 0x30..0x70)
         assertTrue(relativeLuminance(color(darkTokens, "elyra_drawer_text_primary")) > 0.75)
         assertTrue(relativeLuminance(color(darkTokens, "elyra_drawer_text_secondary")) > 0.4)
+        assertTrue(relativeLuminance(color(darkTokens, "elyra_drawer_app_label")) > 0.75)
         assertOutlineAliases(darkTokens)
+    }
+
+    @Test
+    fun rootTonalFloorsRemainTranslucentAndFallbackIsStronger() {
+        listOf(lightTokens, darkTokens).forEach { tokens ->
+            val blurFloor = integer(tokens, "elyra_drawer_root_blur_alpha_floor")
+            val fallbackFloor = integer(tokens, "elyra_drawer_root_fallback_alpha_floor")
+            assertTrue(blurFloor in 1..254)
+            assertTrue(fallbackFloor in 1..254)
+            assertTrue(fallbackFloor > blurFloor)
+        }
+    }
+
+    @Test
+    fun appLabelForegroundHasReadableThemeCounterparts() {
+        val lightLabel = color(lightTokens, "elyra_drawer_app_label")
+        val darkLabel = color(darkTokens, "elyra_drawer_app_label")
+        assertNotEquals(lightLabel, darkLabel)
+        assertTrue(relativeLuminance(lightLabel) < 0.06)
+        assertTrue(relativeLuminance(darkLabel) > 0.75)
     }
 
     @Test

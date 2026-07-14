@@ -138,5 +138,21 @@ class ElyraDrawerSurfaceContinuityTest {
         assertTrue(scrimPolicy.contains("Color.TRANSPARENT"))
     }
 
+    @Test
+    fun frostedPolicyReusesSystemDepthBlurAndKeepsOneRootPaint() {
+        val allApps = source(
+            "src/com/android/launcher3/allapps/ActivityAllAppsContainerView.java",
+        )
+        val frostedPolicy = allApps.substringAfter(
+            "private boolean isElyraSystemBlurAvailable()",
+        ).substringBefore("protected boolean isSearchBarFloating()")
+
+        assertTrue(frostedPolicy.contains("BlurUtils.supportsBlursOnWindows()"))
+        assertTrue(frostedPolicy.contains("CrossWindowBlurListeners.getInstance()"))
+        assertTrue(frostedPolicy.contains("mElyraBottomSheetMaxAlpha = effectiveAlpha"))
+        assertFalse(frostedPolicy.contains("setBackgroundBlurRadius"))
+        assertFalse(frostedPolicy.contains("setBackground"))
+    }
+
     private fun source(path: String): String = File(projectRoot, path).readText()
 }

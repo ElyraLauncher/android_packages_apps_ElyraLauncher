@@ -89,6 +89,25 @@ object ElyraDrawerLayoutPolicy {
         opacity <= WALLPAPER_AWARE_OPACITY_THRESHOLD
 
     /**
+     * Composes the visible Level 0 opacity without mutating the stored user
+     * preference. Existing system blur uses the lighter floor; unsupported,
+     * disabled, or low-performance paths use the stronger translucent fallback.
+     */
+    @JvmStatic
+    fun frostedRootAlpha(
+        userOpacity: Float,
+        blurAvailable: Boolean,
+        blurAlphaFloor: Float,
+        fallbackAlphaFloor: Float,
+    ): Float {
+        val floor = if (blurAvailable) blurAlphaFloor else fallbackAlphaFloor
+        return maxOf(
+            userOpacity.coerceIn(0f, 1f),
+            floor.coerceIn(0f, 1f),
+        )
+    }
+
+    /**
      * One-time migration decision for the translucent drawer default. A user who
      * is still on the previous opaque default migrates to the new default; any
      * deliberately chosen value is preserved. [storedOpacity] is null when the

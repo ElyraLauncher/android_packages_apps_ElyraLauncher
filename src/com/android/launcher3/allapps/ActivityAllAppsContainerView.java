@@ -51,6 +51,7 @@ import android.util.AttributeSet;
 import android.util.FloatProperty;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.CrossWindowBlurListeners;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -95,6 +96,7 @@ import com.android.launcher3.views.BaseDragLayer;
 import com.android.launcher3.views.RecyclerViewFastScroller;
 import com.android.launcher3.views.ScrimView;
 import com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip;
+import com.android.systemui.shared.system.BlurUtils;
 import com.elyra.launcher.allapps.ElyraBottomSearch;
 import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 import com.elyra.launcher.drawer.ElyraDrawer;
@@ -104,6 +106,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -215,6 +218,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private int mBottomSheetBackgroundColor;
     private float mBottomSheetAlpha = 1f;
     private float mElyraBottomSheetMaxAlpha = 1f;
+    private final boolean mElyraDepthBlurEnabled;
+    private boolean mElyraBlurListenerRegistered;
+    private final Consumer<Boolean> mElyraCrossWindowBlurListener =
+            this::onElyraCrossWindowBlurChanged;
     private boolean mForceBottomSheetVisible;
     private int mTabsProtectionAlpha;
     private int mElyraBottomControlsHeight;
@@ -240,6 +247,8 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mAllAppsStore = new AllAppsStore<>(mActivityContext);
         pref2 = PreferenceManager2.getInstance(mActivityContext);
         pref = PreferenceManager.getInstance(mActivityContext);
+        mElyraDepthBlurEnabled = PreferenceExtensionsKt.firstBlocking(
+                pref2.getWallpaperDepthEffect());
         mElyraBottomSearch = ElyraBottomSearch.isEnabled(context);
         mScrimColor = ColorTokens.AllAppsScrimColor.resolveColor(context);
         mHeaderThreshold = getResources().getDimensionPixelSize(
@@ -355,9 +364,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 ? resolveElyraDrawerRootColor()
                 : ColorTokens.SurfaceDimColor.resolveColor(getContext());
         if (isElyraBottomSearch()) {
-            mElyraBottomSheetMaxAlpha = Utilities.boundToRange(
-                    pref.getDrawerOpacity().get(), 0f, 1f);
-            mBottomSheetAlpha = mElyraBottomSheetMaxAlpha;
+            updateElyraDrawerFrostedAlpha(isElyraSystemBlurAvailable());
         }
         updateBackgroundVisibility(mActivityContext.getDeviceProfile());
         mSearchUiManager.initializeSearch(this);
@@ -376,11 +383,13 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             mSearchUiDelegate.onInitializeSearchBar();
         }
         mActivityContext.addOnDeviceProfileChangeListener(this);
+        registerElyraBlurAvailabilityListener();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        unregisterElyraBlurAvailabilityListener();
         mActivityContext.removeOnDeviceProfileChangeListener(this);
     }
 
@@ -899,6 +908,81 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         return configuredColor != 0
                 ? ColorUtils.setAlphaComponent(configuredColor, 255)
                 : ColorUtils.setAlphaComponent(color, 255);
+    }
+
+    /**
+     * Uses the same capability gates as the existing launcher depth controller.
+     * This method never creates a blur renderer; it only selects the tonal floor
+     * that accompanies the controller's cached system blur.
+     */
+    private boolean isElyraSystemBlurAvailable() {
+        if (!mElyraDepthBlurEnabled || !BlurUtils.supportsBlursOnWindows()) {
+            return false;
+        }
+        try {
+            return CrossWindowBlurListeners.getInstance().isCrossWindowBlurEnabled();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private void onElyraCrossWindowBlurChanged(boolean enabled) {
+        boolean blurAvailable =
+                mElyraDepthBlurEnabled && BlurUtils.supportsBlursOnWindows() && enabled;
+        updateElyraDrawerFrostedAlpha(blurAvailable);
+    }
+
+    private void registerElyraBlurAvailabilityListener() {
+        if (!isElyraBottomSearch()
+                || !mElyraDepthBlurEnabled
+                || !BlurUtils.supportsBlursOnWindows()
+                || mElyraBlurListenerRegistered) {
+            return;
+        }
+        try {
+            CrossWindowBlurListeners.getInstance().addListener(
+                    MAIN_EXECUTOR, mElyraCrossWindowBlurListener);
+            mElyraBlurListenerRegistered = true;
+        } catch (Throwable ignored) {
+            updateElyraDrawerFrostedAlpha(/* blurAvailable= */ false);
+        }
+    }
+
+    private void unregisterElyraBlurAvailabilityListener() {
+        if (!mElyraBlurListenerRegistered) {
+            return;
+        }
+        try {
+            CrossWindowBlurListeners.getInstance().removeListener(
+                    mElyraCrossWindowBlurListener);
+        } catch (Throwable ignored) {
+            // The root is detaching; there is no visual state left to refresh.
+        }
+        mElyraBlurListenerRegistered = false;
+    }
+
+    /**
+     * Updates the single root paint's maximum alpha while preserving its current
+     * transition fraction. The stored drawer-opacity preference is read only.
+     */
+    private void updateElyraDrawerFrostedAlpha(boolean blurAvailable) {
+        float transitionFraction = mElyraBottomSheetMaxAlpha > 0f
+                ? Utilities.boundToRange(
+                        mBottomSheetAlpha / mElyraBottomSheetMaxAlpha, 0f, 1f)
+                : 0f;
+        float userOpacity = Utilities.boundToRange(pref.getDrawerOpacity().get(), 0f, 1f);
+        float blurFloor = getResources().getInteger(
+                R.integer.elyra_drawer_root_blur_alpha_floor) / 255f;
+        float fallbackFloor = getResources().getInteger(
+                R.integer.elyra_drawer_root_fallback_alpha_floor) / 255f;
+        float effectiveAlpha = ElyraDrawerLayoutPolicy.frostedRootAlpha(
+                userOpacity, blurAvailable, blurFloor, fallbackFloor);
+        if (Float.compare(effectiveAlpha, mElyraBottomSheetMaxAlpha) == 0) {
+            return;
+        }
+        mElyraBottomSheetMaxAlpha = effectiveAlpha;
+        mBottomSheetAlpha = transitionFraction * effectiveAlpha;
+        invalidateHeader();
     }
 
     /**
