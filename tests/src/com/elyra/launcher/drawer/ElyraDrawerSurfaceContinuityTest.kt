@@ -28,16 +28,17 @@ class ElyraDrawerSurfaceContinuityTest {
     }
 
     @Test
-    fun systemTopShadowIsClippedBeforeTheTranslucentSheet() {
+    fun systemUiShadowsRemainOutsideTheCompleteTranslucentSheet() {
         val rootView = source("src/com/android/launcher3/LauncherRootView.java")
         val sysUiScrim = source("src/com/android/launcher3/graphics/SysUiScrim.java")
 
-        assertTrue(rootView.contains("getElyraDrawerSheetTopForSystemScrim()"))
-        assertTrue(rootView.contains("mSysUiScrim.draw(canvas, topScrimClipBottom)"))
+        assertTrue(rootView.contains("getElyraDrawerSheetBoundsForSystemScrim("))
+        assertTrue(rootView.contains("mSysUiScrim.draw(canvas, drawerSheetBounds)"))
         assertTrue(
-            sysUiScrim.contains("topScrimClipBottom != Float.POSITIVE_INFINITY"),
+            sysUiScrim.contains("excludedContentSurface != null"),
         )
         assertTrue(sysUiScrim.contains("canvas.clipRect("))
+        assertTrue(sysUiScrim.contains("canvas.clipOutRect(excludedContentSurface)"))
     }
 
     @Test
@@ -55,6 +56,25 @@ class ElyraDrawerSurfaceContinuityTest {
     }
 
     @Test
+    fun rootPaintAndSystemExclusionShareCompleteSheetBounds() {
+        val allApps = source(
+            "src/com/android/launcher3/allapps/ActivityAllAppsContainerView.java",
+        )
+        val boundsMethod = allApps.substringAfter(
+            "private void getBottomSheetSurfaceBounds(",
+        ).substringBefore("public void setElyraBottomControlsLayout(")
+        val rootDraw = allApps.substringAfter(
+            "public void drawOnScrimWithScaleAndBottomOffset(",
+        ).substringBefore("if (isElyraBottomSearch())")
+
+        assertTrue(boundsMethod.contains("panel.getTop()"))
+        assertTrue(boundsMethod.contains("panel.getBottom()"))
+        assertTrue(boundsMethod.contains("bottomOffsetPx"))
+        assertTrue(rootDraw.contains("getBottomSheetSurfaceBounds("))
+        assertTrue(rootDraw.contains("mTmpPath.addRoundRect(mTmpRectF"))
+    }
+
+    @Test
     fun safeInsetRemainsPaddingWithoutIndependentBackground() {
         val allApps = source(
             "src/com/android/launcher3/allapps/ActivityAllAppsContainerView.java",
@@ -65,6 +85,57 @@ class ElyraDrawerSurfaceContinuityTest {
         assertTrue(insetBlock.contains("drawerSheetTopPadding("))
         assertTrue(insetBlock.contains("setPadding("))
         assertFalse(insetBlock.contains("setBackground"))
+    }
+
+    @Test
+    fun modernSheetUsesTheSameRootTokenInBothThemes() {
+        val allApps = source(
+            "src/com/android/launcher3/allapps/ActivityAllAppsContainerView.java",
+        )
+        val resolver = allApps.substringAfter("private int resolveElyraDrawerRootColor()")
+            .substringBefore("protected boolean isSearchBarFloating()")
+
+        assertTrue(resolver.contains("R.color.elyra_drawer_root_surface"))
+        assertFalse(resolver.contains("Utilities.isDarkTheme"))
+        assertTrue(resolver.contains("ColorUtils.setAlphaComponent(color, 255)"))
+    }
+
+    @Test
+    fun modernSheetDoesNotPaintAnIndependentBottomRootBand() {
+        val allApps = source(
+            "src/com/android/launcher3/allapps/ActivityAllAppsContainerView.java",
+        )
+        val dispatchDraw = allApps.substringAfter(
+            "protected void dispatchDraw(Canvas canvas)",
+        ).substringBefore("protected void updateSearchResultsVisibility()")
+
+        assertTrue(dispatchDraw.contains("!isElyraBottomSearch()"))
+        assertTrue(dispatchDraw.contains("mNavBarScrimPaint"))
+    }
+
+    @Test
+    fun drawerContentContainersRemainTransparent() {
+        listOf(
+            "res/layout/all_apps.xml",
+            "res/layout/all_apps_content.xml",
+            "res/layout/all_apps_rv_layout.xml",
+            "res/layout/search_results_rv_layout.xml",
+        ).forEach { path ->
+            assertFalse(path, source(path).contains("android:background="))
+        }
+    }
+
+    @Test
+    fun modernStateDoesNotStackAFullScreenWorkspaceScrim() {
+        val allAppsState = source(
+            "quickstep/src/com/android/launcher3/uioverrides/states/AllAppsState.java",
+        )
+        val scrimPolicy = allAppsState.substringAfter(
+            "public int getWorkspaceScrimColor(Launcher launcher)",
+        )
+
+        assertTrue(scrimPolicy.contains("ElyraBottomSearch.isEnabled(launcher)"))
+        assertTrue(scrimPolicy.contains("Color.TRANSPARENT"))
     }
 
     private fun source(path: String): String = File(projectRoot, path).readText()

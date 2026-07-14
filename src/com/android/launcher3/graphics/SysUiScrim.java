@@ -34,6 +34,7 @@ import android.util.DisplayMetrics;
 import android.view.View;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.android.launcher3.BaseDraggingActivity;
@@ -138,19 +139,18 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
      * Draw the top and bottom scrims
      */
     public void draw(Canvas canvas) {
-        draw(canvas, Float.POSITIVE_INFINITY);
+        draw(canvas, null);
     }
 
     /**
-     * Draws the system-UI scrims while keeping the top shadow above an optional
-     * content-surface boundary. The bottom navigation scrim is intentionally not
-     * clipped.
+     * Draws the system-UI scrims outside an optional content surface. This keeps
+     * both contrast gradients from becoming extra tonal layers beneath a
+     * translucent surface while preserving them everywhere outside its bounds.
      *
-     * @param topScrimClipBottom bottom edge available to the top shadow, in this
-     *                           canvas' coordinates; positive infinity preserves
-     *                           the standard full top-shadow path
+     * @param excludedContentSurface complete bounds owned by a foreground surface,
+     *                               or {@code null} for the standard full path
      */
-    public void draw(Canvas canvas, float topScrimClipBottom) {
+    public void draw(Canvas canvas, @Nullable RectF excludedContentSurface) {
         if (canvas == null)
             return;
         if (!mHideSysUiScrim) {
@@ -172,18 +172,23 @@ public class SysUiScrim implements View.OnAttachStateChangeListener {
 
             if (mDrawTopScrim && mTopMaskBitmap != null) {
                 int restoreCount = canvas.save();
-                if (topScrimClipBottom != Float.POSITIVE_INFINITY) {
+                if (excludedContentSurface != null) {
                     canvas.clipRect(
                             mTopMaskRect.left,
                             mTopMaskRect.top,
                             mTopMaskRect.right,
-                            Math.max(mTopMaskRect.top, topScrimClipBottom));
+                            Math.max(mTopMaskRect.top, excludedContentSurface.top));
                 }
                 canvas.drawBitmap(mTopMaskBitmap, null, mTopMaskRect, mTopMaskPaint);
                 canvas.restoreToCount(restoreCount);
             }
             if (mDrawBottomScrim && mBottomMaskBitmap != null) {
+                int restoreCount = canvas.save();
+                if (excludedContentSurface != null) {
+                    canvas.clipOutRect(excludedContentSurface);
+                }
                 canvas.drawBitmap(mBottomMaskBitmap, null, mBottomMaskRect, mBottomMaskPaint);
+                canvas.restoreToCount(restoreCount);
             }
         }
     }

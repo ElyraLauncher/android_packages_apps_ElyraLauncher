@@ -888,9 +888,10 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
      * stack another translucent layer into the root.
      */
     private int resolveElyraDrawerRootColor() {
-        int color = Utilities.isDarkTheme(getContext())
-                ? Themes.getColorBackgroundFloating(getContext())
-                : getContext().getColor(R.color.elyra_drawer_root_surface);
+        // values/ and values-night/ provide the two counterparts of the same
+        // Level 0 surface. Resolve that one semantic token in both themes so the
+        // full sheet cannot pick up a separate runtime-only dark composition.
+        int color = getContext().getColor(R.color.elyra_drawer_root_surface);
         var colorOptions = PreferenceExtensionsKt.firstBlocking(
                 pref2.getAppDrawerBackgroundColor());
         int configuredColor = colorOptions.getColorPreferenceEntry().getLightColor()
@@ -920,26 +921,44 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     /**
-     * Returns the current rounded-sheet top in the parent/root coordinate space
-     * so the launcher status shadow can stop before entering this translucent
-     * surface. A non-finite value leaves the normal workspace shadow untouched
-     * whenever the sheet is not actually being drawn.
+     * Writes the complete live rounded-sheet bounds in the launcher scrim's
+     * coordinate space. System-UI contrast gradients use these bounds to remain
+     * outside the translucent Level 0 surface instead of showing through its top
+     * or bottom regions.
+     *
+     * @return whether the modern sheet is currently visible and {@code outBounds}
+     *         contains usable bounds
      */
-    public float getElyraDrawerSheetTopForSystemScrim() {
+    public boolean getElyraDrawerSheetBoundsForSystemScrim(@NonNull RectF outBounds) {
         if (!isElyraBottomSearch()
                 || getVisibility() != VISIBLE
                 || mBottomSheetBackground == null
                 || mBottomSheetBackground.getVisibility() != VISIBLE
                 || mBottomSheetAlpha <= 0f) {
-            return Float.POSITIVE_INFINITY;
+            outBounds.setEmpty();
+            return false;
         }
-        float scale = getScaleY();
-        float verticalScaleOffset = (1 - scale)
-                * (mBottomSheetBackground.getHeight() - getHeight() / 2f);
-        return getTop()
-                + getTranslationY()
-                + mBottomSheetBackground.getTop()
-                + verticalScaleOffset;
+        getBottomSheetSurfaceBounds(outBounds, getScaleY(), /* bottomOffsetPx= */ 0);
+        return !outBounds.isEmpty();
+    }
+
+    /**
+     * Single bounds policy shared by the Level 0 paint and by background-layer
+     * exclusion. Keeping this calculation in one place prevents a system scrim
+     * from peeking through only part of the sheet during scale transitions.
+     */
+    private void getBottomSheetSurfaceBounds(
+            @NonNull RectF outBounds, float scale, @Px int bottomOffsetPx) {
+        final View panel = mBottomSheetBackground;
+        final float translationY = ((View) panel.getParent()).getTranslationY();
+        final float horizontalScaleOffset = (1 - scale) * panel.getWidth() / 2f;
+        final float verticalScaleOffset =
+                (1 - scale) * (panel.getHeight() - getHeight() / 2f);
+        outBounds.set(
+                panel.getLeft() + horizontalScaleOffset,
+                panel.getTop() + translationY + verticalScaleOffset,
+                panel.getRight() - horizontalScaleOffset,
+                panel.getBottom() + translationY + bottomOffsetPx);
     }
 
     public void setElyraBottomControlsLayout(int controlsHeight, int controlsBottomInset) {
@@ -1425,7 +1444,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
 
-        if (mNavBarScrimHeight > 0) {
+        // The modern Level 0 surface already extends through the navigation
+        // inset. A second rectangular nav scrim here would create a bottom band.
+        if (mNavBarScrimHeight > 0 && !isElyraBottomSearch()) {
             canvas.drawRect(0, getHeight() - mNavBarScrimHeight, getWidth(), getHeight(),
                     mNavBarScrimPaint);
         }
@@ -1665,24 +1686,16 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         final boolean hasBottomSheet = panel.getVisibility() == VISIBLE;
         final float translationY = ((View) panel.getParent()).getTranslationY();
 
-        final float horizontalScaleOffset = (1 - scale) * panel.getWidth() / 2;
-        final float verticalScaleOffset = (1 - scale) * (panel.getHeight() - getHeight() / 2);
-
         final float topNoScale = panel.getTop() + translationY;
-        final float topWithScale = topNoScale + verticalScaleOffset;
-        final float leftWithScale = panel.getLeft() + horizontalScaleOffset;
-        final float rightWithScale = panel.getRight() - horizontalScaleOffset;
-        final float bottomWithOffset = panel.getBottom() + bottomOffsetPx;
+        getBottomSheetSurfaceBounds(mTmpRectF, scale, bottomOffsetPx);
+        final float topWithScale = mTmpRectF.top;
+        final float leftWithScale = mTmpRectF.left;
+        final float rightWithScale = mTmpRectF.right;
         // Draw full background panel for tablets.
         if (hasBottomSheet) {
             mHeaderPaint.setColor(mBottomSheetBackgroundColor);
             mHeaderPaint.setAlpha((int) (255 * mBottomSheetAlpha));
 
-            mTmpRectF.set(
-                    leftWithScale,
-                    topWithScale,
-                    rightWithScale,
-                    bottomWithOffset);
             mTmpPath.reset();
             mTmpPath.addRoundRect(mTmpRectF, mBottomSheetCornerRadii, Direction.CW);
             canvas.drawPath(mTmpPath, mHeaderPaint);
@@ -1742,8 +1755,8 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             float left = 0f;
             float right = canvas.getWidth();
             if (hasBottomSheet) {
-                left = mBottomSheetBackground.getLeft() + horizontalScaleOffset;
-                right = mBottomSheetBackground.getRight() - horizontalScaleOffset;
+                left = leftWithScale;
+                right = rightWithScale;
             }
 
             final float tabTopWithScale = hasBottomSheet

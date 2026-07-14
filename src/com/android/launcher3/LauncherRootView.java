@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -33,6 +34,7 @@ import app.lawnchair.util.FileAccessState;
 public class LauncherRootView extends InsettableFrameLayout {
 
     private final Rect mTempRect = new Rect();
+    private final RectF mElyraDrawerSheetBounds = new RectF();
 
     private final StatefulActivity mActivity;
 
@@ -175,14 +177,16 @@ public class LauncherRootView extends InsettableFrameLayout {
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        float topScrimClipBottom = Float.POSITIVE_INFINITY;
+        RectF drawerSheetBounds = null;
         if (mActivity instanceof Launcher) {
             ActivityAllAppsContainerView<?> appsView = ((Launcher) mActivity).getAppsView();
-            if (appsView != null) {
-                topScrimClipBottom = appsView.getElyraDrawerSheetTopForSystemScrim();
+            if (appsView != null
+                    && appsView.getElyraDrawerSheetBoundsForSystemScrim(
+                            mElyraDrawerSheetBounds)) {
+                drawerSheetBounds = mElyraDrawerSheetBounds;
             }
         }
-        mSysUiScrim.draw(canvas, topScrimClipBottom);
+        mSysUiScrim.draw(canvas, drawerSheetBounds);
         super.dispatchDraw(canvas);
     }
 
