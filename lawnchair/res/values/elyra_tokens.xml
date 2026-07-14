@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026, The Elyra Launcher Project. Licensed under the Apache License, Version 2.0.
 
-     Elyra design tokens (light / default). These are additive foundation tokens:
-     no existing view references them yet, so they do not change current launcher
-     behavior. The palette is an original Elyra identity (deep emerald base, mint /
-     teal accent) and contains no values copied from any reference launcher.
+     Elyra design tokens (light / default). The drawer tokens provide one shared
+     translucent surface and foreground family for the real All Apps components.
+     The palette is an original Elyra identity (deep emerald base, mint / teal
+     accent) and contains no values copied from any reference launcher.
      Dark-mode overrides live in values-night/elyra_tokens.xml. -->
 <resources>
     <!-- Color tokens. The primary accent is the existing brand color
@@ -23,7 +23,7 @@
     <color name="elyra_drawer_text_primary">#FF142621</color>
     <color name="elyra_drawer_text_secondary">#C43F544E</color>
     <color name="elyra_drawer_app_label">#F20B211B</color>
-    <color name="elyra_drawer_text_selected">#FFFFFFFF</color>
+    <color name="elyra_drawer_text_selected">#FF0B4B40</color>
     <color name="elyra_drawer_text_unselected">#E0142F28</color>
     <color name="elyra_drawer_search_hint">#B8465B55</color>
     <color name="elyra_drawer_search_cursor">#FF126B5B</color>
@@ -34,19 +34,33 @@
          tokens carry their own translucency and are deliberately stronger than
          the root so cards and controls remain legible without becoming flat white. -->
     <color name="elyra_drawer_root_surface">#FFE3ECE8</color>
-    <color name="elyra_drawer_capsule_surface">#DCF2F7F4</color>
-    <color name="elyra_drawer_selected_pill_surface">@color/elyra_accent</color>
-    <color name="elyra_drawer_suggestion_surface">#E8F6FAF8</color>
-    <color name="elyra_drawer_card_surface">#E6F3F8F5</color>
-    <color name="elyra_drawer_search_surface">#EEFAFCFB</color>
-    <color name="elyra_drawer_button_surface">#E8F4F8F6</color>
-    <color name="elyra_drawer_popup_surface">#F0F7FAF8</color>
-    <color name="elyra_drawer_index_popup_surface">#F2F5F9F7</color>
-    <color name="elyra_drawer_surface_stroke">#66182E28</color>
+    <!-- Unified frosted component family. The root is drawn once with the user's
+         drawer opacity. Level 1 is the shared in-sheet card/control layer; Level
+         2 is the stronger selected/popup layer. Their translucent neutral-mint
+         tones allow the wallpaper-aware root to influence every component
+         without letting wallpaper detail overpower content. -->
+    <color name="elyra_drawer_surface_level_1">#DCF3F8F5</color>
+    <color name="elyra_drawer_surface_level_2">#ECF7FAF8</color>
+    <color name="elyra_drawer_outline_level_1">#4736504A</color>
+    <color name="elyra_drawer_outline_level_2">#5936504A</color>
+
+    <!-- Component aliases keep ownership explicit while preventing independent
+         per-view color and alpha choices. -->
+    <color name="elyra_drawer_capsule_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_elevated_card_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_card_outline">@color/elyra_drawer_outline_level_1</color>
+    <color name="elyra_drawer_suggestion_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_card_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_search_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_button_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_selected_pill_surface">@color/elyra_drawer_surface_level_2</color>
+    <color name="elyra_drawer_popup_surface">@color/elyra_drawer_surface_level_2</color>
+    <color name="elyra_drawer_index_popup_surface">@color/elyra_drawer_surface_level_2</color>
+    <color name="elyra_drawer_surface_stroke">@color/elyra_drawer_outline_level_1</color>
 
     <!-- Compatibility alias retained for callers outside the refined drawer
          surfaces. New drawer controls use the component-specific tokens above. -->
-    <color name="elyra_drawer_control_surface">@color/elyra_drawer_search_surface</color>
+    <color name="elyra_drawer_control_surface">@color/elyra_drawer_surface_level_1</color>
 
     <!-- Corner radius tokens -->
     <dimen name="elyra_radius_small">8dp</dimen>
@@ -114,18 +128,5 @@
     <dimen name="elyra_color_dot_ring_gap">2dp</dimen>
     <dimen name="elyra_color_dot_hairline">1dp</dimen>
 
-    <!-- Coherent translucent surface alphas (0-255) for drawer chrome. Shared by
-         the segmented capsule, category cards and the color panel so the drawer
-         reads as one Elyra/Material surface language. Prepared for future
-         user-facing surface customization; adopt incrementally. -->
-    <!-- Light-mode surface alphas strengthened for readable tonal separation over
-         bright wallpaper. Elevated surfaces (suggestion/card/capsule/panel) stay
-         above the drawer-root sheet so they read as raised, and all remain < 255 so
-         wallpaper stays perceptible. Dark counterparts in values-night are unchanged. -->
-    <integer name="elyra_surface_alpha_panel">230</integer>
-    <integer name="elyra_surface_alpha_capsule">212</integer>
-    <integer name="elyra_surface_alpha_card">220</integer>
-    <integer name="elyra_surface_alpha_suggestion">222</integer>
-    <integer name="elyra_surface_alpha_hairline">66</integer>
     <integer name="elyra_drawer_sheet_alpha">206</integer>
 </resources>

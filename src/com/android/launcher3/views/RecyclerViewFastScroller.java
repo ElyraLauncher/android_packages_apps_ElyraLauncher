@@ -54,8 +54,6 @@ import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 import java.util.Collections;
 import java.util.List;
 
-import app.lawnchair.theme.color.tokens.ColorTokens;
-
 /**
  * The track and scrollbar that shows when you scroll the list.
  */
@@ -159,15 +157,11 @@ public class RecyclerViewFastScroller extends View {
         super(context, attrs, defStyleAttr);
 
         mTrackPaint = new Paint();
-        mTrackPaint.setColor(Utilities.isDarkTheme(context)
-                ? ColorTokens.TextColorPrimary.resolveColor(getContext())
-                : context.getColor(R.color.elyra_drawer_text_primary));
+        mTrackPaint.setColor(context.getColor(R.color.elyra_drawer_text_primary));
         mTrackPaint.setAlpha(MAX_TRACK_ALPHA);
 
         mIndexPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mIndexPaint.setColor(Utilities.isDarkTheme(context)
-                ? ColorTokens.TextColorPrimary.resolveColor(getContext())
-                : context.getColor(R.color.elyra_drawer_text_unselected));
+        mIndexPaint.setColor(context.getColor(R.color.elyra_drawer_text_unselected));
         mIndexPaint.setAlpha(Utilities.isDarkTheme(context) ? 112 : 170);
         mIndexPaint.setTextAlign(Paint.Align.CENTER);
         mIndexPaint.setTextSize(getResources().getDimension(
@@ -208,20 +202,16 @@ public class RecyclerViewFastScroller extends View {
         if (compact) {
             GradientDrawable background = new GradientDrawable();
             background.setShape(GradientDrawable.RECTANGLE);
-            background.setColor(Utilities.isDarkTheme(getContext())
-                    ? Themes.getColorBackgroundFloating(getContext())
-                    : getContext().getColor(R.color.elyra_drawer_index_popup_surface));
+            background.setColor(
+                    getContext().getColor(R.color.elyra_drawer_index_popup_surface));
             background.setCornerRadius(
                     getResources().getDimensionPixelSize(R.dimen.elyra_fastscroll_popup_size) / 2f);
             background.setStroke(
                     getResources().getDimensionPixelSize(R.dimen.search_decoration_padding),
-                    Utilities.isDarkTheme(getContext())
-                            ? Themes.getAttrColor(getContext(), android.R.attr.textColorTertiary)
-                            : getContext().getColor(R.color.elyra_drawer_surface_stroke));
+                    getContext().getColor(R.color.elyra_drawer_outline_level_2));
             mPopupView.setBackground(background);
-            mPopupView.setTextColor(Utilities.isDarkTheme(getContext())
-                    ? Themes.getAttrColor(getContext(), android.R.attr.textColorPrimary)
-                    : getContext().getColor(R.color.elyra_drawer_text_primary));
+            mPopupView.setTextColor(
+                    getContext().getColor(R.color.elyra_drawer_text_primary));
             mPopupView.setPadding(0, 0, 0, 0);
         } else {
             mPopupView.setBackground(

@@ -14,17 +14,31 @@
     <color name="elyra_surface_elevated">#FF17453B</color>
     <color name="elyra_text_primary">#FFEAF5F1</color>
     <color name="elyra_text_secondary">#FFA9C7BE</color>
-    <color name="elyra_drawer_surface_stroke">#38EAF5F1</color>
-    <color name="elyra_drawer_control_surface">#B8282C30</color>
+    <!-- Dark counterpart of the same Level 0/1/2 drawer family. -->
+    <color name="elyra_drawer_root_surface">#FF17211F</color>
+    <color name="elyra_drawer_surface_level_1">#C2263230</color>
+    <color name="elyra_drawer_surface_level_2">#E02B3734</color>
+    <color name="elyra_drawer_outline_level_1">#45DCEBE6</color>
+    <color name="elyra_drawer_outline_level_2">#59E6F2EE</color>
+    <color name="elyra_drawer_capsule_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_elevated_card_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_card_outline">@color/elyra_drawer_outline_level_1</color>
+    <color name="elyra_drawer_suggestion_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_card_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_search_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_button_surface">@color/elyra_drawer_surface_level_1</color>
+    <color name="elyra_drawer_selected_pill_surface">@color/elyra_drawer_surface_level_2</color>
+    <color name="elyra_drawer_popup_surface">@color/elyra_drawer_surface_level_2</color>
+    <color name="elyra_drawer_index_popup_surface">@color/elyra_drawer_surface_level_2</color>
+    <color name="elyra_drawer_text_primary">#F2ECF5F2</color>
+    <color name="elyra_drawer_text_secondary">#B8B8CAC4</color>
+    <color name="elyra_drawer_text_selected">#FFF4FBF8</color>
+    <color name="elyra_drawer_text_unselected">#C7C5D6D0</color>
+    <color name="elyra_drawer_search_hint">#B8CAD8D3</color>
+    <color name="elyra_drawer_search_cursor">#FF8FF2D8</color>
+    <color name="elyra_drawer_icon_foreground">#E6EAF5F1</color>
+    <color name="elyra_drawer_surface_stroke">@color/elyra_drawer_outline_level_1</color>
+    <color name="elyra_drawer_control_surface">@color/elyra_drawer_surface_level_1</color>
 
-    <!-- Dark aliases keep the existing control colors byte-for-byte unchanged. -->
-    <color name="elyra_drawer_search_surface">#B8282C30</color>
-    <color name="elyra_drawer_button_surface">#B8282C30</color>
-
-    <integer name="elyra_surface_alpha_panel">202</integer>
-    <integer name="elyra_surface_alpha_capsule">180</integer>
-    <integer name="elyra_surface_alpha_card">184</integer>
-    <integer name="elyra_surface_alpha_suggestion">186</integer>
-    <integer name="elyra_surface_alpha_hairline">48</integer>
     <integer name="elyra_drawer_sheet_alpha">172</integer>
 </resources>

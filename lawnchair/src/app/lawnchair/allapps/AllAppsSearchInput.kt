@@ -165,7 +165,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         hint = ViewCompat.requireViewById(this, R.id.hint)
 
         input = ViewCompat.requireViewById(this, R.id.input)
-        if (bottomAligned && !Utilities.isDarkTheme(context)) {
+        if (bottomAligned) {
             val primary = ContextCompat.getColor(context, R.color.elyra_drawer_text_primary)
             val hintColor = ContextCompat.getColor(context, R.color.elyra_drawer_search_hint)
             hint.setTextColor(hintColor)
@@ -203,7 +203,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         actionButton = ViewCompat.requireViewById(this, R.id.action_btn)
         with(actionButton) {
             isVisible = false
-            if (bottomAligned && !Utilities.isDarkTheme(context)) {
+            if (bottomAligned) {
                 imageTintList = ColorStateList.valueOf(
                     ContextCompat.getColor(context, R.color.elyra_drawer_icon_foreground))
             }
@@ -287,7 +287,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                     themed = isThemed,
                     method = method,
                 )
-                if (bottomAligned && !Utilities.isDarkTheme(context)) {
+                if (bottomAligned) {
                     imageTintList = ColorStateList.valueOf(
                         ContextCompat.getColor(context, R.color.elyra_drawer_icon_foreground))
                 }
@@ -880,11 +880,7 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             gravity = Gravity.CENTER
             textSize = 13f
             setSingleLine(true)
-            setTextColor(if (Utilities.isDarkTheme(context)) {
-                Themes.getAttrColor(context, android.R.attr.textColorSecondary)
-            } else {
-                ContextCompat.getColor(context, R.color.elyra_drawer_text_secondary)
-            })
+            setTextColor(ContextCompat.getColor(context, R.color.elyra_drawer_text_secondary))
             background = colorDotBackground(bucket, selected)
             isClickable = false
             layoutParams = FrameLayout.LayoutParams(chipSize, chipSize, Gravity.CENTER)
@@ -947,11 +943,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
         val ring = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(Color.TRANSPARENT)
-            setStroke(ringWidth, if (Utilities.isDarkTheme(context)) {
-                Themes.getAttrColor(context, android.R.attr.textColorPrimary)
-            } else {
-                ContextCompat.getColor(context, R.color.elyra_drawer_text_primary)
-            })
+            setStroke(
+                ringWidth,
+                ContextCompat.getColor(context, R.color.elyra_drawer_text_primary),
+            )
         }
         val inset = ringWidth + gap
         val insetFill = InsetDrawable(fill, inset, inset, inset, inset)
@@ -961,14 +956,10 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     private fun roundedPanelBackground(): GradientDrawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = resources.getDimensionPixelSize(R.dimen.elyra_radius_large).toFloat()
-        setColor(if (Utilities.isDarkTheme(context)) {
-            ContextCompat.getColor(context, R.color.elyra_drawer_control_surface)
-        } else {
-            ContextCompat.getColor(context, R.color.elyra_drawer_popup_surface)
-        })
+        setColor(ContextCompat.getColor(context, R.color.elyra_drawer_popup_surface))
         setStroke(
             resources.getDimensionPixelSize(R.dimen.elyra_color_dot_hairline),
-            ContextCompat.getColor(context, R.color.elyra_drawer_surface_stroke),
+            ContextCompat.getColor(context, R.color.elyra_drawer_outline_level_2),
         )
     }
 

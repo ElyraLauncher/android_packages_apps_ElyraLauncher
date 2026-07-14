@@ -303,17 +303,18 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
         FrameLayout capsule = new FrameLayout(context);
         capsule.setPadding(dp(3), dp(3), dp(3), dp(3));
-        capsule.setBackground(roundedDrawable(drawerSurfaceColor(
-                context,
-                R.color.elyra_drawer_capsule_surface,
-                R.integer.elyra_surface_alpha_capsule), dp(22)));
+        capsule.setBackground(roundedDrawableWithStroke(
+                context.getColor(R.color.elyra_drawer_capsule_surface),
+                dp(22),
+                context.getColor(R.color.elyra_drawer_outline_level_1),
+                dp(1)));
 
         View selectedPill = new View(context);
-        selectedPill.setBackground(roundedDrawable(
-                Utilities.isDarkTheme(context)
-                        ? Themes.getColorAccent(context)
-                        : context.getColor(R.color.elyra_drawer_selected_pill_surface),
-                dp(19)));
+        selectedPill.setBackground(roundedDrawableWithStroke(
+                context.getColor(R.color.elyra_drawer_selected_pill_surface),
+                dp(19),
+                context.getColor(R.color.elyra_drawer_outline_level_2),
+                dp(1)));
         FrameLayout.LayoutParams pillLp = new FrameLayout.LayoutParams(
                 0, dimen(R.dimen.elyra_drawer_segment_indicator_height));
         pillLp.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
@@ -335,10 +336,8 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
         ImageButton overflow = new ImageButton(context);
         overflow.setImageResource(R.drawable.elyra_ic_more_vert);
-        if (!Utilities.isDarkTheme(context)) {
-            overflow.setImageTintList(ColorStateList.valueOf(
-                    context.getColor(R.color.elyra_drawer_icon_foreground)));
-        }
+        overflow.setImageTintList(ColorStateList.valueOf(
+                context.getColor(R.color.elyra_drawer_icon_foreground)));
         overflow.setBackgroundResource(R.drawable.pill_ripple);
         overflow.setScaleType(ImageView.ScaleType.CENTER);
         overflow.setContentDescription(context.getString(R.string.elyra_drawer_options_title));
@@ -379,11 +378,11 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         card.setClipChildren(false);
         card.setClipToPadding(false);
         card.setPadding(dp(14), dp(10), dp(14), dp(10));
+        card.setElevation(dp(1));
         card.setBackground(roundedDrawableWithStroke(
-                drawerSurfaceColor(context, R.color.elyra_drawer_suggestion_surface,
-                        R.integer.elyra_surface_alpha_suggestion),
+                context.getColor(R.color.elyra_drawer_suggestion_surface),
                 dp(24),
-                drawerOutlineColor(context),
+                context.getColor(R.color.elyra_drawer_card_outline),
                 dp(1)));
 
         LinearLayout icons = new LinearLayout(context);
@@ -414,10 +413,9 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         card.setFocusable(true);
         card.setElevation(dp(1));
         card.setBackground(roundedRippleDrawable(
-                drawerSurfaceColor(context, R.color.elyra_drawer_card_surface,
-                        R.integer.elyra_surface_alpha_card),
+                context.getColor(R.color.elyra_drawer_card_surface),
                 dimen(R.dimen.elyra_radius_large),
-                drawerOutlineColor(context),
+                context.getColor(R.color.elyra_drawer_card_outline),
                 dp(1)));
 
         TextView label = new TextView(context);
@@ -426,8 +424,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         label.setIncludeFontPadding(false);
         label.setTextSize(14);
         label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        label.setTextColor(drawerTextColor(context, R.color.elyra_drawer_text_primary,
-                android.R.attr.textColorPrimary));
+        label.setTextColor(context.getColor(R.color.elyra_drawer_text_primary));
         label.setGravity(Gravity.START);
         card.addView(label, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -436,8 +433,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         count.setSingleLine(true);
         count.setIncludeFontPadding(false);
         count.setTextSize(11);
-        count.setTextColor(drawerTextColor(context, R.color.elyra_drawer_text_secondary,
-                android.R.attr.textColorSecondary));
+        count.setTextColor(context.getColor(R.color.elyra_drawer_text_secondary));
         count.setGravity(Gravity.START);
         LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -508,11 +504,8 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     private void bindElyraSegment(TextView button, boolean selected) {
         button.setSelected(selected);
         Context context = button.getContext();
-        int selectedColor = drawerTextColor(
-                context, R.color.elyra_drawer_text_selected, R.attr.textColorOnAccent);
-        int unselectedColor = drawerTextColor(
-                context, R.color.elyra_drawer_text_unselected,
-                android.R.attr.textColorSecondary);
+        int selectedColor = context.getColor(R.color.elyra_drawer_text_selected);
+        int unselectedColor = context.getColor(R.color.elyra_drawer_text_unselected);
         button.setTextColor(selected ? selectedColor : unselectedColor);
         button.setBackgroundColor(Color.TRANSPARENT);
     }
@@ -611,12 +604,13 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
                 more.setTextSize(11);
                 more.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
                 more.setGravity(Gravity.CENTER);
-                more.setTextColor(drawerTextColor(
-                        card.getContext(), R.color.elyra_drawer_text_primary,
-                        android.R.attr.textColorPrimary));
-                more.setBackground(roundedDrawable(drawerSurfaceColor(
-                        card.getContext(), R.color.elyra_drawer_capsule_surface,
-                        R.integer.elyra_surface_alpha_capsule), dp(10)));
+                more.setTextColor(
+                        card.getContext().getColor(R.color.elyra_drawer_text_primary));
+                more.setBackground(roundedDrawableWithStroke(
+                        card.getContext().getColor(R.color.elyra_drawer_capsule_surface),
+                        dp(10),
+                        card.getContext().getColor(R.color.elyra_drawer_card_outline),
+                        dp(1)));
                 previewItem = more;
             } else if (previewIndex < categoryCard.getPreview().size()) {
                 AppInfo app = categoryCard.getPreview().get(previewIndex);
@@ -694,32 +688,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
     }
 
-    private int drawerSurfaceColor(Context context, int lightColorRes, int darkAlphaRes) {
-        if (!Utilities.isDarkTheme(context)) {
-            return context.getColor(lightColorRes);
-        }
-        return translucentColor(
-                Themes.getColorBackgroundFloating(context), surfaceAlpha(darkAlphaRes));
-    }
-
-    private int drawerOutlineColor(Context context) {
-        if (!Utilities.isDarkTheme(context)) {
-            return context.getColor(R.color.elyra_drawer_surface_stroke);
-        }
-        return translucentColor(
-                Themes.getAttrColor(context, android.R.attr.textColorPrimary),
-                surfaceAlpha(R.integer.elyra_surface_alpha_hairline));
-    }
-
     private int drawerTextColor(Context context, int lightColorRes, int darkAttr) {
         return Utilities.isDarkTheme(context)
                 ? Themes.getAttrColor(context, darkAttr)
                 : context.getColor(lightColorRes);
-    }
-
-    /** Shared dark drawer surface alpha (0-255) from the existing design tokens. */
-    private int surfaceAlpha(int resId) {
-        return mActivityContext.getResources().getInteger(resId);
     }
 
     private int dimen(int resId) {
