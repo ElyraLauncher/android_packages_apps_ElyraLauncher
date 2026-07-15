@@ -35,7 +35,6 @@ import static com.android.launcher3.util.LogConfig.SEARCH_LOGGING;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.ArrayMap;
 import android.util.Log;
 import android.view.View;
 
@@ -55,8 +54,6 @@ import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * A RecyclerView with custom fast scroll support for the all apps view.
@@ -70,8 +67,11 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     protected final int mNumAppsPerRow;
     private final AllAppsFastScrollHelper mFastScrollHelper;
     private int mCumulativeVerticalScroll;
-    private final Map<String, Integer> mElyraSectionPositions = new ArrayMap<>();
-    private String mElyraLastSection;
+    @Nullable private ElyraSectionIndexSnapshot mElyraSectionSnapshot;
+    private int mElyraLastSectionIndex = RecyclerView.NO_POSITION;
+    private int mElyraPendingSectionIndex = RecyclerView.NO_POSITION;
+    private boolean mElyraSectionJumpPosted;
+    private final Runnable mElyraSectionJump = this::applyPendingElyraSectionJump;
 
     public AlphabeticalAppsList<?> mApps;
 
@@ -99,8 +99,9 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
      */
     public void setApps(AlphabeticalAppsList<?> apps) {
         mApps = apps;
-        mElyraSectionPositions.clear();
-        mElyraLastSection = null;
+        cancelElyraSectionJump();
+        mElyraSectionSnapshot = null;
+        mElyraLastSectionIndex = RecyclerView.NO_POSITION;
     }
 
     public AlphabeticalAppsList<?> getApps() {
@@ -207,46 +208,122 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         return section.sectionName;
     }
 
-    /** Immediately aligns fast scrolling to a visible alphabetical section. */
-    public void prepareSectionPositionMap() {
-        mElyraSectionPositions.clear();
-        if (mApps == null) return;
+    /** Captures one immutable, adapter-bound section index for the current drawer model. */
+    public void prepareSectionIndexSnapshot() {
+        mElyraSectionSnapshot = null;
+        if (mApps == null || getAdapter() == null) return;
         List<AlphabeticalAppsList.FastScrollSectionInfo> sections =
                 mApps.getFastScrollerSections();
-        if (sections.isEmpty()) return;
-        int first = sections.get(0).position;
-        mElyraSectionPositions.put("#", first);
-        for (char letter = 'A'; letter <= 'Z'; letter++) {
-            int selected = first;
-            for (AlphabeticalAppsList.FastScrollSectionInfo section : sections) {
-                selected = section.position;
-                String name = section.sectionName.toString().toUpperCase(Locale.ROOT);
-                if (name.compareTo(String.valueOf(letter)) >= 0) break;
-            }
-            mElyraSectionPositions.put(String.valueOf(letter), selected);
+        CharSequence[] names = new CharSequence[sections.size()];
+        int[] positions = new int[sections.size()];
+        for (int i = 0; i < sections.size(); i++) {
+            names[i] = sections.get(i).sectionName;
+            positions[i] = sections.get(i).position;
         }
-        mElyraLastSection = null;
+        mElyraSectionSnapshot = ElyraSectionIndexSnapshot.create(
+                mApps.getAdapterGeneration(), currentElyraSectionMode(), getAdapter().getItemCount(),
+                getAdapter(), names, positions);
+        mElyraLastSectionIndex = RecyclerView.NO_POSITION;
     }
 
-    public void scrollToSectionName(String target) {
-        if (target.equals(mElyraLastSection)) return;
-        if (mElyraSectionPositions.isEmpty()) prepareSectionPositionMap();
-        Integer position = mElyraSectionPositions.get(target);
-        if (position == null) return;
-        mElyraLastSection = target;
-        RecyclerView.LayoutManager layoutManager = getLayoutManager();
-        if (layoutManager instanceof GridLayoutManager) {
-            ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
-        } else {
-            scrollToPosition(position);
+    /** Requests an immediate indexed jump, rejecting stale adapter generations. */
+    public boolean scrollToSectionIndex(int index) {
+        if (index == mElyraLastSectionIndex) return true;
+        ElyraSectionIndexSnapshot snapshot = mElyraSectionSnapshot;
+        if (snapshot == null) {
+            prepareSectionIndexSnapshot();
+            snapshot = mElyraSectionSnapshot;
         }
+        ElyraSectionIndexSnapshot.Resolution resolution = resolveElyraSection(snapshot, index);
+        if (resolution == null) {
+            prepareSectionIndexSnapshot();
+            return false;
+        }
+        if (isComputingLayout()) {
+            mElyraPendingSectionIndex = index;
+            if (!mElyraSectionJumpPosted) {
+                mElyraSectionJumpPosted = true;
+                postOnAnimation(mElyraSectionJump);
+            }
+            return true;
+        }
+        return applyElyraSectionJump(index, resolution);
+    }
+
+    @Nullable
+    private ElyraSectionIndexSnapshot.Resolution resolveElyraSection(
+            @Nullable ElyraSectionIndexSnapshot snapshot, int index) {
+        RecyclerView.Adapter<?> adapter = getAdapter();
+        if (snapshot == null || mApps == null || adapter == null || !isAttachedToWindow()
+                || getLayoutManager() == null) {
+            return null;
+        }
+        return snapshot.resolve(index, mApps.getAdapterGeneration(), currentElyraSectionMode(),
+                adapter.getItemCount(), adapter);
+    }
+
+    private boolean applyElyraSectionJump(int index,
+            @NonNull ElyraSectionIndexSnapshot.Resolution resolution) {
+        RecyclerView.LayoutManager layoutManager = getLayoutManager();
+        RecyclerView.Adapter<?> adapter = getAdapter();
+        if (layoutManager == null || adapter == null || resolution.position < 0
+                || resolution.position >= adapter.getItemCount()) return false;
+        stopScroll();
+        if (layoutManager instanceof GridLayoutManager) {
+            ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(
+                    resolution.position, 0);
+        } else {
+            layoutManager.scrollToPosition(resolution.position);
+        }
+        mElyraLastSectionIndex = index;
+        return true;
+    }
+
+    private void applyPendingElyraSectionJump() {
+        mElyraSectionJumpPosted = false;
+        int index = mElyraPendingSectionIndex;
+        mElyraPendingSectionIndex = RecyclerView.NO_POSITION;
+        if (index == RecyclerView.NO_POSITION) return;
+        ElyraSectionIndexSnapshot.Resolution resolution = resolveElyraSection(
+                mElyraSectionSnapshot, index);
+        if (resolution == null) {
+            prepareSectionIndexSnapshot();
+        } else if (!isComputingLayout()) {
+            applyElyraSectionJump(index, resolution);
+        } else {
+            mElyraPendingSectionIndex = index;
+            mElyraSectionJumpPosted = true;
+            postOnAnimation(mElyraSectionJump);
+        }
+    }
+
+    private ElyraSectionIndexSnapshot.Mode currentElyraSectionMode() {
+        if (mApps == null) return ElyraSectionIndexSnapshot.Mode.FILTERED;
+        if (mApps.isElyraCategoryUiMode()) return ElyraSectionIndexSnapshot.Mode.CATEGORIES;
+        return mApps.hasSearchResults()
+                ? ElyraSectionIndexSnapshot.Mode.FILTERED
+                : ElyraSectionIndexSnapshot.Mode.ALL_APPS;
+    }
+
+    public void cancelElyraSectionJump() {
+        if (mElyraSectionJumpPosted) removeCallbacks(mElyraSectionJump);
+        mElyraSectionJumpPosted = false;
+        mElyraPendingSectionIndex = RecyclerView.NO_POSITION;
     }
 
     @Override
     public void onFastScrollCompleted() {
         super.onFastScrollCompleted();
         mFastScrollHelper.onFastScrollCompleted();
-        mElyraLastSection = null;
+        cancelElyraSectionJump();
+        mElyraLastSectionIndex = RecyclerView.NO_POSITION;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        cancelElyraSectionJump();
+        mElyraSectionSnapshot = null;
+        super.onDetachedFromWindow();
     }
 
     @Override

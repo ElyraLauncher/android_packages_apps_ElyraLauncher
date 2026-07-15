@@ -137,7 +137,7 @@ public class RecyclerViewFastScroller extends View {
     private boolean mCompactPopup;
     private CharSequence mPopupSectionName;
     private Insets mSystemGestureInsets;
-    private String mPendingCompactSection;
+    private int mPendingCompactSectionIndex = RecyclerView.NO_POSITION;
     private int mPendingCompactTouchY;
     private float mPendingCompactBoundedY;
     private boolean mCompactFramePosted;
@@ -366,7 +366,7 @@ public class RecyclerViewFastScroller extends View {
     private void calcTouchOffsetAndPrepToFastScroll(int downY, int lastY) {
         mIsDragging = true;
         if (mCompactPopup && mRv instanceof AllAppsRecyclerView) {
-            ((AllAppsRecyclerView) mRv).prepareSectionPositionMap();
+            ((AllAppsRecyclerView) mRv).prepareSectionIndexSnapshot();
         }
         if (mCanThumbDetach) {
             mIsThumbDetached = true;
@@ -386,8 +386,7 @@ public class RecyclerViewFastScroller extends View {
             int railY = y - mRv.getScrollBarTop();
             int index = ElyraDrawerLayoutPolicy.railIndex(
                     railY, mRv.getScrollbarTrackHeight());
-            mPendingCompactSection = String.valueOf(
-                    ElyraDrawerLayoutPolicy.INDEX_LABELS.charAt(index));
+            mPendingCompactSectionIndex = index;
             mPendingCompactTouchY = Utilities.boundToRange(
                     railY, 0, mRv.getScrollbarTrackHeight());
             mPendingCompactBoundedY = boundedY;
@@ -410,11 +409,14 @@ public class RecyclerViewFastScroller extends View {
     }
 
     private void applyPendingCompactUpdate() {
-        String sectionName = mPendingCompactSection;
-        if (!mIsDragging || sectionName == null || !(mRv instanceof AllAppsRecyclerView)) return;
-        mPendingCompactSection = null;
+        int sectionIndex = mPendingCompactSectionIndex;
+        if (!mIsDragging || sectionIndex == RecyclerView.NO_POSITION
+                || !(mRv instanceof AllAppsRecyclerView)) return;
+        mPendingCompactSectionIndex = RecyclerView.NO_POSITION;
+        String sectionName = String.valueOf(
+                ElyraDrawerLayoutPolicy.INDEX_LABELS.charAt(sectionIndex));
         if (!sectionName.contentEquals(mPopupSectionName)) {
-            ((AllAppsRecyclerView) mRv).scrollToSectionName(sectionName);
+            if (!((AllAppsRecyclerView) mRv).scrollToSectionIndex(sectionIndex)) return;
             mPopupSectionName = sectionName;
             mPopupView.setText(sectionName);
             performHapticFeedback(CLOCK_TICK);
@@ -427,14 +429,17 @@ public class RecyclerViewFastScroller extends View {
 
     /** End any active fast scrolling touch handling, if applicable. */
     public void endFastScrolling() {
-        if (mPendingCompactSection != null) {
+        if (mPendingCompactSectionIndex != RecyclerView.NO_POSITION) {
             applyPendingCompactUpdate();
         }
         if (mCompactFramePosted) {
             Choreographer.getInstance().removeFrameCallback(mCompactFrameCallback);
             mCompactFramePosted = false;
         }
-        mPendingCompactSection = null;
+        mPendingCompactSectionIndex = RecyclerView.NO_POSITION;
+        if (mRv instanceof AllAppsRecyclerView) {
+            ((AllAppsRecyclerView) mRv).cancelElyraSectionJump();
+        }
         mRv.onFastScrollCompleted();
         mTouchOffsetY = 0;
         mLastTouchY = 0;

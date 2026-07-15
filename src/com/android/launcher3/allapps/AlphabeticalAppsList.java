@@ -105,6 +105,7 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
     private AppInfoComparator mAppNameComparator;
     private int mNumAppsPerRowAllApps;
     private int mNumAppRowsInAdapter;
+    private long mAdapterGeneration;
     public Predicate<ItemInfo> mItemFilter;
 
     public AlphabeticalAppsList(Context context, @Nullable AllAppsStore<T> appsStore,
@@ -154,6 +155,11 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
      */
     public List<AdapterItem> getAdapterItems() {
         return mAdapterItems;
+    }
+
+    /** Monotonically identifies the adapter model currently being displayed. */
+    public long getAdapterGeneration() {
+        return mAdapterGeneration;
     }
 
     /** Returns a detached snapshot for asynchronous drawer-owned indexing work. */
@@ -340,6 +346,7 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
             mNumAppRowsInAdapter = rowIndex + 1;
         }
 
+        mAdapterGeneration++;
         if (mAdapter != null) {
             DiffUtil.calculateDiff(new MyDiffCallback(oldItems, mAdapterItems), false)
                     .dispatchUpdatesTo(mAdapter);
