@@ -1,11 +1,13 @@
 package app.lawnchair.search.algorithms
 
 import android.content.Context
+import android.os.Trace
 import app.lawnchair.preferences2.PreferenceManager2
 import app.lawnchair.search.adapter.SPACE
 import app.lawnchair.search.adapter.SearchTargetCompat
 import app.lawnchair.search.adapter.SearchTargetFactory
 import app.lawnchair.util.isDefaultLauncher
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.LauncherModel
 import com.android.launcher3.allapps.BaseAllAppsAdapter
@@ -73,7 +75,12 @@ class LawnchairAppSearchAlgorithm(
         appState.model.enqueueModelUpdateTask(object : LauncherModel.ModelUpdateTask {
             override fun execute(app: ModelTaskController, dataModel: BgDataModel, apps: AllAppsList) {
                 val snapshot = apps.data.toList()
-                val results = getResult(snapshot, query)
+                if (BuildConfig.DEBUG) Trace.beginSection("ElyraLocalSearchFiltering")
+                val results = try {
+                    getResult(snapshot, query)
+                } finally {
+                    if (BuildConfig.DEBUG) Trace.endSection()
+                }
                 Executors.MAIN_EXECUTOR.execute {
                     if (requestGeneration.isCurrent(request)) {
                         callback.onSearchResult(query, results)

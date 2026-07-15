@@ -18,7 +18,9 @@ package app.lawnchair.search.algorithms
 
 import android.content.Context
 import android.os.Handler
+import android.os.Trace
 import app.lawnchair.preferences2.PreferenceManager2
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.allapps.BaseAllAppsAdapter
 import com.android.launcher3.model.data.AppInfo
@@ -77,7 +79,12 @@ class ElyraAppColorSearchAlgorithm(
         val request = requestGeneration.next()
         delegate.cancel(true)
         appState.model.enqueueModelUpdateTask { _, _, apps ->
-            val result = getColorMatchResult(apps.data.toList(), query, bucket)
+            if (BuildConfig.DEBUG) Trace.beginSection("ElyraColorFiltering")
+            val result = try {
+                getColorMatchResult(apps.data.toList(), query, bucket)
+            } finally {
+                if (BuildConfig.DEBUG) Trace.endSection()
+            }
             resultHandler.post {
                 if (requestGeneration.isCurrent(request) && selectedBucket() == bucket) {
                     callback.onSearchResult(query, result)

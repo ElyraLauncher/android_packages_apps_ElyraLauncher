@@ -11,6 +11,8 @@
 package com.elyra.launcher.drawer
 
 import android.content.Context
+import android.os.Trace
+import com.android.launcher3.BuildConfig
 import com.android.launcher3.model.data.AppInfo
 import com.android.launcher3.util.Executors
 import com.elyra.launcher.allapps.ElyraAppIconColorExtractor
@@ -66,38 +68,48 @@ object ElyraDrawerModelCoordinator {
     }
 
     private fun reconcileSnapshot(pending: PendingReconcile) {
-        val next = pending.apps.associateBy(
-            keySelector = { it.toComponentKey().toString() },
-            valueTransform = { app ->
-                AppSignature(
-                    componentKey = app.toComponentKey().toString(),
-                    packageName = app.targetPackage.orEmpty(),
-                    label = app.title?.toString().orEmpty(),
-                    iconIdentity = System.identityHashCode(app.bitmap),
-                )
-            },
-        )
-        val changed = changedKeys(signatures, next)
+        if (BuildConfig.DEBUG) Trace.beginSection("ElyraPackageBatchReconcile")
+        try {
+            val next = pending.apps.associateBy(
+                keySelector = { it.toComponentKey().toString() },
+                valueTransform = { app ->
+                    AppSignature(
+                        componentKey = app.toComponentKey().toString(),
+                        packageName = app.targetPackage.orEmpty(),
+                        label = app.title?.toString().orEmpty(),
+                        iconIdentity = System.identityHashCode(app.bitmap),
+                    )
+                },
+            )
+            val changed = changedKeys(signatures, next)
 
-        if (changed.isNotEmpty()) {
-            val removed = signatures.keys.filterTo(HashSet()) { it !in next }
-            ElyraCategoryCardModel.invalidate(changed)
-            ElyraAppIconColorExtractor.invalidate(changed)
-            ElyraDrawerSuggestions.invalidate(changed)
-            ElyraDrawerSuggestions.removeUsage(pending.context, removed)
-            val affectedApps = pending.apps.filter { it.toComponentKey().toString() in changed }
-            ElyraCategoryCardModel.warm(pending.context, affectedApps)
-            ElyraDrawerSuggestions.warmInstallTimes(pending.context, affectedApps)
-            signatures.clear()
-            signatures.putAll(next)
-        }
+            if (changed.isNotEmpty()) {
+                val removed = signatures.keys.filterTo(HashSet()) { it !in next }
+                ElyraCategoryCardModel.invalidate(changed)
+                ElyraAppIconColorExtractor.invalidate(changed)
+                ElyraDrawerSuggestions.invalidate(changed)
+                ElyraDrawerSuggestions.removeUsage(pending.context, removed)
+                val affectedApps = pending.apps.filter { it.toComponentKey().toString() in changed }
+                ElyraCategoryCardModel.warm(pending.context, affectedApps)
+                ElyraDrawerSuggestions.warmInstallTimes(pending.context, affectedApps)
+                signatures.clear()
+                signatures.putAll(next)
+            }
 
-        if (generation.get() == pending.request) {
-            Executors.MAIN_EXECUTOR.execute {
-                if (generation.get() == pending.request && changed.isNotEmpty()) {
-                    pending.onReady.run()
+            if (generation.get() == pending.request) {
+                Executors.MAIN_EXECUTOR.execute {
+                    if (generation.get() == pending.request && changed.isNotEmpty()) {
+                        if (BuildConfig.DEBUG) Trace.beginSection("ElyraPackageBatchApply")
+                        try {
+                            pending.onReady.run()
+                        } finally {
+                            if (BuildConfig.DEBUG) Trace.endSection()
+                        }
+                    }
                 }
             }
+        } finally {
+            if (BuildConfig.DEBUG) Trace.endSection()
         }
     }
 

@@ -13,17 +13,17 @@ package com.elyra.launcher.drawer
 /** Cancellation-safe ownership for category root/detail navigation. */
 class ElyraCategoryMotionStateMachine {
     enum class State {
-        CATEGORIES_ROOT,
+        ROOT,
         CATEGORY_OPENING,
         CATEGORY_DETAIL,
         CATEGORY_CLOSING,
     }
 
-    var state: State = State.CATEGORIES_ROOT
+    var state: State = State.ROOT
         private set
 
     fun requestOpen(): Boolean {
-        if (state != State.CATEGORIES_ROOT) return false
+        if (state != State.ROOT) return false
         state = State.CATEGORY_OPENING
         return true
     }
@@ -42,12 +42,12 @@ class ElyraCategoryMotionStateMachine {
 
     fun markClosed(): Boolean {
         if (state != State.CATEGORY_CLOSING) return false
-        state = State.CATEGORIES_ROOT
+        state = State.ROOT
         return true
     }
 
     /** Restores a valid non-transitional state after teardown or model replacement. */
     fun forceRoot() {
-        state = State.CATEGORIES_ROOT
+        state = State.ROOT
     }
 }

@@ -34,6 +34,7 @@ import static com.android.launcher3.util.LogConfig.SEARCH_LOGGING;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.os.Trace;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -44,6 +45,7 @@ import androidx.core.util.Consumer;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.FastScrollRecyclerView;
@@ -253,13 +255,18 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     @Nullable
     private ElyraSectionIndexSnapshot.Resolution resolveElyraSection(
             @Nullable ElyraSectionIndexSnapshot snapshot, int index) {
+        if (BuildConfig.DEBUG) Trace.beginSection("ElyraAzSectionResolve");
         RecyclerView.Adapter<?> adapter = getAdapter();
         if (snapshot == null || mApps == null || adapter == null || !isAttachedToWindow()
                 || getLayoutManager() == null) {
+            if (BuildConfig.DEBUG) Trace.endSection();
             return null;
         }
-        return snapshot.resolve(index, mApps.getAdapterGeneration(), currentElyraSectionMode(),
+        ElyraSectionIndexSnapshot.Resolution resolution = snapshot.resolve(
+                index, mApps.getAdapterGeneration(), currentElyraSectionMode(),
                 adapter.getItemCount(), adapter);
+        if (BuildConfig.DEBUG) Trace.endSection();
+        return resolution;
     }
 
     private boolean applyElyraSectionJump(int index,
@@ -268,6 +275,7 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         RecyclerView.Adapter<?> adapter = getAdapter();
         if (layoutManager == null || adapter == null || resolution.position < 0
                 || resolution.position >= adapter.getItemCount()) return false;
+        if (BuildConfig.DEBUG) Trace.beginSection("ElyraAzAdapterJump");
         stopScroll();
         if (layoutManager instanceof GridLayoutManager) {
             ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(
@@ -275,6 +283,7 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
         } else {
             layoutManager.scrollToPosition(resolution.position);
         }
+        if (BuildConfig.DEBUG) Trace.endSection();
         mElyraLastSectionIndex = index;
         return true;
     }

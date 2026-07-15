@@ -25,7 +25,7 @@ public class ElyraCategoryMotionStateMachineTest {
         assertTrue(state.requestClose());
         assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORY_CLOSING, state.getState());
         assertTrue(state.markClosed());
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORIES_ROOT, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.ROOT, state.getState());
     }
 
     @Test
@@ -45,7 +45,7 @@ public class ElyraCategoryMotionStateMachineTest {
         assertTrue(state.requestClose());
         assertFalse(state.markOpened());
         assertTrue(state.markClosed());
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORIES_ROOT, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.ROOT, state.getState());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ElyraCategoryMotionStateMachineTest {
 
         state.requestOpen();
         state.forceRoot();
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORIES_ROOT, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.ROOT, state.getState());
         assertFalse(state.requestClose());
     }
 }

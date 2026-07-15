@@ -26,6 +26,32 @@ class ElyraDrawerModelCoordinatorTest {
     }
 
     @Test
+    fun packageReplacementKeepsOneStableComponentIdentity() {
+        val key = "pkg/.Main#user"
+        val old = mapOf(key to signature("App", icon = 1))
+        val next = mapOf(key to signature("App", icon = 2))
+
+        assertEquals(setOf(key), ElyraDrawerModelCoordinator.changedKeys(old, next))
+        assertEquals(1, next.size)
+    }
+
+    @Test
+    fun updateDoesNotInvalidateUnaffectedComponent() {
+        val affected = "pkg/.Main#user"
+        val stable = "other/.Main#user"
+        val old = mapOf(
+            affected to signature("Old"),
+            stable to ElyraDrawerModelCoordinator.AppSignature(stable, "other", "Other", 8),
+        )
+        val next = mapOf(
+            affected to signature("New", icon = 2),
+            stable to old.getValue(stable),
+        )
+
+        assertEquals(setOf(affected), ElyraDrawerModelCoordinator.changedKeys(old, next))
+    }
+
+    @Test
     fun removalInvalidatesOnlyRemovedComponent() {
         val old = mapOf("pkg/.Main#user" to signature("App"))
         assertEquals(old.keys, ElyraDrawerModelCoordinator.changedKeys(old, emptyMap()))

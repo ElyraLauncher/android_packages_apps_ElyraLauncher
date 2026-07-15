@@ -24,6 +24,7 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCH
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_PRIVATE_SPACE_USER_INSTALLED_APPS_COUNT;
 
 import android.content.Context;
+import android.os.Trace;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ImageSpan;
@@ -32,6 +33,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.recyclerview.widget.DiffUtil;
 
+import com.android.launcher3.BuildConfig;
 import com.android.launcher3.Flags;
 import com.android.launcher3.R;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
@@ -348,8 +350,13 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
 
         mAdapterGeneration++;
         if (mAdapter != null) {
-            DiffUtil.calculateDiff(new MyDiffCallback(oldItems, mAdapterItems), false)
-                    .dispatchUpdatesTo(mAdapter);
+            if (BuildConfig.DEBUG) Trace.beginSection("ElyraAllAppsListSubmission");
+            try {
+                DiffUtil.calculateDiff(new MyDiffCallback(oldItems, mAdapterItems), false)
+                        .dispatchUpdatesTo(mAdapter);
+            } finally {
+                if (BuildConfig.DEBUG) Trace.endSection();
+            }
         }
     }
 

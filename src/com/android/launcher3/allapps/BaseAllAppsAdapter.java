@@ -456,6 +456,17 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         // each icon as its accessibility description.
         icons.setClipChildren(false);
         icons.setClipToPadding(false);
+        int suggestionCells = ElyraDrawerLayoutPolicy.suggestionCount(
+                mActivityContext.getDeviceProfile().numShownAllAppsColumns);
+        int iconCellHeight = Math.max(
+                dp(48), mActivityContext.getDeviceProfile().allAppsIconSizePx);
+        for (int i = 0; i < suggestionCells; i++) {
+            BubbleTextView icon = (BubbleTextView) mLayoutInflater.inflate(
+                    R.layout.all_apps_prediction_row_icon, icons, false);
+            icon.setLayoutParams(new LinearLayout.LayoutParams(0, iconCellHeight, 1f));
+            icon.setVisibility(View.GONE);
+            icons.addView(icon);
+        }
         card.addView(icons, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -507,6 +518,29 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         GridLayout preview = new GridLayout(context);
         preview.setColumnCount(2);
         preview.setRowCount(2);
+        for (int i = 0; i < 4; i++) {
+            FrameLayout slot = new FrameLayout(context);
+            ImageView icon = new ImageView(context);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            slot.addView(icon, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            TextView more = new TextView(context);
+            more.setTextSize(11);
+            more.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+            more.setGravity(Gravity.CENTER);
+            more.setTextColor(context.getColor(R.color.elyra_drawer_text_primary));
+            more.setBackground(roundedDrawableWithStroke(
+                    context.getColor(R.color.elyra_drawer_capsule_surface),
+                    dp(10), context.getColor(R.color.elyra_drawer_card_outline), dp(1)));
+            more.setVisibility(View.GONE);
+            slot.addView(more, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            GridLayout.LayoutParams slotLp = new GridLayout.LayoutParams();
+            slotLp.width = dp(32);
+            slotLp.height = dp(32);
+            slotLp.setMargins(dp(3), dp(3), dp(3), dp(3));
+            preview.addView(slot, slotLp);
+        }
         LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(dp(76), dp(76));
         previewLp.gravity = Gravity.CENTER_HORIZONTAL;
         previewLp.topMargin = dp(8);
@@ -608,21 +642,21 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
 
     private void bindElyraSuggestions(LinearLayout card, List<AppInfo> suggestions) {
         LinearLayout icons = (LinearLayout) card.getChildAt(0);
-        icons.removeAllViews();
         if (suggestions == null) {
             card.setVisibility(GONE);
             return;
         }
         card.setVisibility(View.VISIBLE);
-        int maxSuggestions = ElyraDrawerLayoutPolicy.suggestionCount(
-                mActivityContext.getDeviceProfile().numShownAllAppsColumns);
-        int suggestionIndex = 0;
-        for (AppInfo app : suggestions) {
-            if (suggestionIndex++ >= maxSuggestions) {
-                break;
+        int visibleCount = Math.min(icons.getChildCount(), suggestions.size());
+        for (int index = 0; index < icons.getChildCount(); index++) {
+            BubbleTextView icon = (BubbleTextView) icons.getChildAt(index);
+            if (index >= visibleCount) {
+                icon.reset();
+                icon.setVisibility(View.GONE);
+                continue;
             }
-            BubbleTextView icon = (BubbleTextView) mLayoutInflater.inflate(
-                    R.layout.all_apps_prediction_row_icon, icons, false);
+            AppInfo app = suggestions.get(index);
+            icon.setVisibility(View.VISIBLE);
             icon.reset();
             icon.applyFromApplicationInfo(app);
             icon.setText(null);
@@ -634,11 +668,6 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
             icon.setOnClickListener(mOnIconClickListener);
             icon.setOnLongClickListener(mOnIconLongClickListener);
-            int iconCellHeight = Math.max(
-                    dp(48), mActivityContext.getDeviceProfile().allAppsIconSizePx);
-            icon.setLayoutParams(new LinearLayout.LayoutParams(
-                    0, iconCellHeight, 1f));
-            icons.addView(icon);
         }
     }
 
@@ -669,41 +698,24 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             }
         });
 
-        preview.removeAllViews();
         for (int previewIndex = 0; previewIndex < 4; previewIndex++) {
-            View previewItem;
+            FrameLayout slot = (FrameLayout) preview.getChildAt(previewIndex);
+            ImageView icon = (ImageView) slot.getChildAt(0);
+            TextView more = (TextView) slot.getChildAt(1);
+            icon.setVisibility(View.GONE);
+            icon.setImageDrawable(null);
+            icon.setContentDescription(null);
+            more.setVisibility(View.GONE);
             if (previewIndex == 3 && appCount > 4) {
-                TextView more = new TextView(card.getContext());
                 more.setText(card.getContext().getString(
                         R.string.elyra_category_more_apps, appCount - 3));
-                more.setTextSize(11);
-                more.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-                more.setGravity(Gravity.CENTER);
-                more.setTextColor(
-                        card.getContext().getColor(R.color.elyra_drawer_text_primary));
-                more.setBackground(roundedDrawableWithStroke(
-                        card.getContext().getColor(R.color.elyra_drawer_capsule_surface),
-                        dp(10),
-                        card.getContext().getColor(R.color.elyra_drawer_card_outline),
-                        dp(1)));
-                previewItem = more;
+                more.setVisibility(View.VISIBLE);
             } else if (previewIndex < categoryCard.getPreview().size()) {
                 AppInfo app = categoryCard.getPreview().get(previewIndex);
-                ImageView icon = new ImageView(card.getContext());
                 icon.setImageDrawable(app.newIcon(card.getContext(), false));
                 icon.setContentDescription(app.title);
-                icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                previewItem = icon;
-            } else {
-                previewItem = new View(card.getContext());
-                previewItem.setVisibility(View.INVISIBLE);
-                previewItem.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+                icon.setVisibility(View.VISIBLE);
             }
-            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = dp(32);
-            lp.height = dp(32);
-            lp.setMargins(dp(3), dp(3), dp(3), dp(3));
-            preview.addView(previewItem, lp);
         }
         updateElyraDrawerVisualState();
     }
