@@ -229,6 +229,9 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private int mTabsProtectionAlpha;
     private int mElyraBottomControlsHeight;
     private int mElyraBottomControlsBottomInset;
+    private boolean mElyraBottomInsetsRefreshPosted;
+    private boolean mElyraVisualModeInitialized;
+    private boolean mElyraLastCategoryVisualMode;
     private final ElyraCategoryMotionController mElyraCategoryMotionController;
 
     private final PreferenceManager2 pref2;
@@ -334,7 +337,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mSearchRecyclerView = findViewById(R.id.search_results_list_view);
         mFastScroller = findViewById(R.id.fast_scroller);
         mFastScroller.setPopupView(findViewById(R.id.fast_scroller_popup), true);
-        mFastScroller.setVisibility(getElyraFastScrollerVisibility());
+        setElyraFastScrollerVisibility(getElyraFastScrollerVisibility());
         mSearchContainer = inflateSearchBar();
         if (!isSearchBarFloating()) {
             // Add the search box above everything else in this container (if the flag is
@@ -469,14 +472,15 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         if (!mSearchTransitionController.isRunning() && goingToSearch == isSearching()) {
             return;
         }
-        mFastScroller.setVisibility(goingToSearch ? INVISIBLE : getElyraFastScrollerVisibility());
+        setElyraFastScrollerVisibility(
+                goingToSearch ? INVISIBLE : getElyraFastScrollerVisibility());
         if (goingToSearch) {
             // Fade out the button to pause work apps.
             mWorkManager.onActivePageChanged(SEARCH);
         } else if (mAllAppsTransitionController != null) {
             // If exiting search, revert predictive back scale on all apps
             mAllAppsTransitionController.animateAllAppsToNoScale();
-            mFastScroller.setVisibility(getElyraFastScrollerVisibility());
+            setElyraFastScrollerVisibility(getElyraFastScrollerVisibility());
         }
         mSearchTransitionController.animateToState(goingToSearch, durationMs,
                 /* onEndRunnable = */ () -> {
@@ -1052,19 +1056,25 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                 panel.getBottom() + translationY + bottomOffsetPx);
     }
 
-    public void setElyraBottomControlsLayout(int controlsHeight, int controlsBottomInset) {
+    public boolean setElyraBottomControlsLayout(int controlsHeight, int controlsBottomInset) {
         int boundedHeight = Math.max(0, controlsHeight);
         int boundedInset = Math.max(0, controlsBottomInset);
         if (mElyraBottomControlsHeight == boundedHeight
                 && mElyraBottomControlsBottomInset == boundedInset) {
-            return;
+            return false;
         }
         mElyraBottomControlsHeight = boundedHeight;
         mElyraBottomControlsBottomInset = boundedInset;
+        return true;
     }
 
     public void refreshElyraBottomContentInsets() {
-        mAH.forEach(AdapterHolder::applyPadding);
+        if (mElyraBottomInsetsRefreshPosted) return;
+        mElyraBottomInsetsRefreshPosted = true;
+        post(() -> {
+            mElyraBottomInsetsRefreshPosted = false;
+            if (isAttachedToWindow()) mAH.forEach(AdapterHolder::applyPadding);
+        });
     }
 
     private int getBottomControlsHeightForPadding() {
@@ -1716,11 +1726,23 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     public void updateElyraDrawerVisualState() {
-        if (mSearchUiManager != null) {
-            mSearchUiManager.onElyraDrawerModeChanged(isElyraCategoryUiMode());
+        boolean categoryMode = isElyraCategoryUiMode();
+        if (mSearchUiManager != null && (!mElyraVisualModeInitialized
+                || mElyraLastCategoryVisualMode != categoryMode)) {
+            mSearchUiManager.onElyraDrawerModeChanged(categoryMode);
+            mElyraLastCategoryVisualMode = categoryMode;
+            mElyraVisualModeInitialized = true;
         }
         if (mFastScroller != null) {
-            mFastScroller.setVisibility(getElyraFastScrollerVisibility());
+            setElyraFastScrollerVisibility(getElyraFastScrollerVisibility());
+        }
+    }
+
+    private void setElyraFastScrollerVisibility(int visibility) {
+        if (mFastScroller == null) return;
+        if (visibility != VISIBLE) mFastScroller.cancelPendingCompactUpdate();
+        if (mFastScroller.getVisibility() != visibility) {
+            mFastScroller.setVisibility(visibility);
         }
     }
 
@@ -2034,9 +2056,16 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
                     }
                     effectiveBottomPadding = mPadding.bottom + bottomOffset;
                 }
-                mRecyclerView.setClipToPadding(false);
-                mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,
-                        effectiveBottomPadding);
+                if (mRecyclerView.getClipToPadding()) {
+                    mRecyclerView.setClipToPadding(false);
+                }
+                if (mRecyclerView.getPaddingLeft() != mPadding.left
+                        || mRecyclerView.getPaddingTop() != mPadding.top
+                        || mRecyclerView.getPaddingRight() != mPadding.right
+                        || mRecyclerView.getPaddingBottom() != effectiveBottomPadding) {
+                    mRecyclerView.setPadding(mPadding.left, mPadding.top, mPadding.right,
+                            effectiveBottomPadding);
+                }
             }
         }
 

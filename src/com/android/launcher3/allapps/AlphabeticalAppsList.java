@@ -108,6 +108,7 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
     private int mNumAppsPerRowAllApps;
     private int mNumAppRowsInAdapter;
     private long mAdapterGeneration;
+    private long mQueryFilterGeneration;
     public Predicate<ItemInfo> mItemFilter;
 
     public AlphabeticalAppsList(Context context, @Nullable AllAppsStore<T> appsStore,
@@ -162,6 +163,11 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
     /** Monotonically identifies the adapter model currently being displayed. */
     public long getAdapterGeneration() {
         return mAdapterGeneration;
+    }
+
+    /** Monotonically identifies the displayed text/color filter state. */
+    public long getQueryFilterGeneration() {
+        return mQueryFilterGeneration;
     }
 
     /** Returns a detached snapshot for asynchronous drawer-owned indexing work. */
@@ -223,6 +229,7 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
         if (results != null) {
             mSearchResults.addAll(results);
         }
+        mQueryFilterGeneration++;
         updateAdapterItems();
         return true;
     }

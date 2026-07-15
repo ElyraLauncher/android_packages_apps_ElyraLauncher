@@ -45,9 +45,10 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.FastScrollRecyclerView;
-import com.android.launcher3.allapps.AllAppsRecyclerView;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
+import com.android.launcher3.allapps.AllAppsRecyclerView;
+import com.android.launcher3.allapps.ElyraSectionIndexSnapshot;
 import com.android.launcher3.graphics.FastScrollThumbDrawable;
 import com.android.launcher3.util.Themes;
 import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
@@ -137,12 +138,11 @@ public class RecyclerViewFastScroller extends View {
     private boolean mCompactPopup;
     private CharSequence mPopupSectionName;
     private Insets mSystemGestureInsets;
-    private int mPendingCompactSectionIndex = RecyclerView.NO_POSITION;
+    private final ElyraCompactSectionUpdateState mCompactUpdateState =
+            new ElyraCompactSectionUpdateState();
     private int mPendingCompactTouchY;
     private float mPendingCompactBoundedY;
-    private boolean mCompactFramePosted;
     private final Choreographer.FrameCallback mCompactFrameCallback = frameTimeNanos -> {
-        mCompactFramePosted = false;
         applyPendingCompactUpdate();
     };
 
@@ -229,6 +229,7 @@ public class RecyclerViewFastScroller extends View {
     }
 
     public void setRecyclerView(FastScrollRecyclerView rv) {
+        cancelPendingCompactUpdate();
         if (mRv != null && mOnScrollListener != null) {
             mRv.removeOnScrollListener(mOnScrollListener);
         }
@@ -386,19 +387,24 @@ public class RecyclerViewFastScroller extends View {
             int railY = y - mRv.getScrollBarTop();
             int index = ElyraDrawerLayoutPolicy.railIndex(
                     railY, mRv.getScrollbarTrackHeight());
-            mPendingCompactSectionIndex = index;
+            ElyraSectionIndexSnapshot.Resolution request =
+                    ((AllAppsRecyclerView) mRv).resolveElyraSectionRequest(index);
+            if (request == null) {
+                cancelPendingCompactUpdate();
+                animatePopupVisibility(false);
+                return;
+            }
             mPendingCompactTouchY = Utilities.boundToRange(
                     railY, 0, mRv.getScrollbarTrackHeight());
             mPendingCompactBoundedY = boundedY;
-            if (!mCompactFramePosted) {
-                mCompactFramePosted = true;
+            if (mCompactUpdateState.replace(request)) {
                 Choreographer.getInstance().postFrameCallback(mCompactFrameCallback);
             }
             return;
         } else {
             sectionName = mRv.scrollToPositionAtProgress(progress);
         }
-        if (!sectionName.equals(mPopupSectionName)) {
+        if (!TextUtils.equals(sectionName, mPopupSectionName)) {
             mPopupSectionName = sectionName;
             mPopupView.setText(sectionName);
             performHapticFeedback(CLOCK_TICK);
@@ -409,14 +415,20 @@ public class RecyclerViewFastScroller extends View {
     }
 
     private void applyPendingCompactUpdate() {
-        int sectionIndex = mPendingCompactSectionIndex;
-        if (!mIsDragging || sectionIndex == RecyclerView.NO_POSITION
-                || !(mRv instanceof AllAppsRecyclerView)) return;
-        mPendingCompactSectionIndex = RecyclerView.NO_POSITION;
-        String sectionName = String.valueOf(
-                ElyraDrawerLayoutPolicy.INDEX_LABELS.charAt(sectionIndex));
-        if (!sectionName.contentEquals(mPopupSectionName)) {
-            if (!((AllAppsRecyclerView) mRv).scrollToSectionIndex(sectionIndex)) return;
+        ElyraSectionIndexSnapshot.Resolution request = mCompactUpdateState.takeForFrame();
+        if (!mIsDragging || request == null || !isAttachedToWindow()
+                || !(mRv instanceof AllAppsRecyclerView) || !mRv.isAttachedToWindow()
+                || mPopupView == null) {
+            return;
+        }
+        CharSequence sectionName = request.requestedSection;
+        if (TextUtils.isEmpty(sectionName)
+                || !((AllAppsRecyclerView) mRv).applyElyraSectionRequest(request)) {
+            mPopupSectionName = null;
+            animatePopupVisibility(false);
+            return;
+        }
+        if (!ElyraCompactSectionUpdateState.labelsEqual(sectionName, mPopupSectionName)) {
             mPopupSectionName = sectionName;
             mPopupView.setText(sectionName);
             performHapticFeedback(CLOCK_TICK);
@@ -429,14 +441,11 @@ public class RecyclerViewFastScroller extends View {
 
     /** End any active fast scrolling touch handling, if applicable. */
     public void endFastScrolling() {
-        if (mPendingCompactSectionIndex != RecyclerView.NO_POSITION) {
-            applyPendingCompactUpdate();
-        }
-        if (mCompactFramePosted) {
+        if (mCompactUpdateState.isFrameScheduled()) {
             Choreographer.getInstance().removeFrameCallback(mCompactFrameCallback);
-            mCompactFramePosted = false;
         }
-        mPendingCompactSectionIndex = RecyclerView.NO_POSITION;
+        if (mCompactUpdateState.hasPendingRequest()) applyPendingCompactUpdate();
+        mCompactUpdateState.clear();
         if (mRv instanceof AllAppsRecyclerView) {
             ((AllAppsRecyclerView) mRv).cancelElyraSectionJump();
         }
@@ -449,6 +458,33 @@ public class RecyclerViewFastScroller extends View {
             animatePopupVisibility(false);
             showActiveScrollbar(false);
         }
+    }
+
+    /** Clears adapter-bound compact requests without allowing a stale frame callback to run. */
+    public void cancelPendingCompactUpdate() {
+        boolean wasDragging = mIsDragging;
+        if (mCompactUpdateState.isFrameScheduled()) {
+            Choreographer.getInstance().removeFrameCallback(mCompactFrameCallback);
+        }
+        mCompactUpdateState.clear();
+        mPopupSectionName = null;
+        if (mPopupView != null) animatePopupVisibility(false);
+        if (mIsDragging) {
+            mIsDragging = false;
+            mTouchOffsetY = 0;
+            mIgnoreDragGesture = false;
+            showActiveScrollbar(false);
+        }
+        if (wasDragging && mRv != null) mRv.onFastScrollCompleted();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        cancelPendingCompactUpdate();
+        if (mRv instanceof AllAppsRecyclerView) {
+            ((AllAppsRecyclerView) mRv).cancelElyraSectionJump();
+        }
+        super.onDetachedFromWindow();
     }
 
     @Override

@@ -698,8 +698,9 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
             ?.coerceAtLeast(0)
             ?: latestInsets.bottom.coerceAtLeast(0)
         val controlsHeight = if (isInvisible) 0 else bottomControls.measuredHeight
-        appsView.setElyraBottomControlsLayout(controlsHeight, bottomInset)
-        appsView.refreshElyraBottomContentInsets()
+        if (appsView.setElyraBottomControlsLayout(controlsHeight, bottomInset)) {
+            appsView.refreshElyraBottomContentInsets()
+        }
     }
 
     private fun updateActionButtonVisibility() {

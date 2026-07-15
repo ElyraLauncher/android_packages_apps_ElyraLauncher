@@ -71,9 +71,38 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     private int mCumulativeVerticalScroll;
     @Nullable private ElyraSectionIndexSnapshot mElyraSectionSnapshot;
     private int mElyraLastSectionIndex = RecyclerView.NO_POSITION;
-    private int mElyraPendingSectionIndex = RecyclerView.NO_POSITION;
+    @Nullable private ElyraSectionIndexSnapshot.Resolution mElyraPendingResolution;
     private boolean mElyraSectionJumpPosted;
     private final Runnable mElyraSectionJump = this::applyPendingElyraSectionJump;
+    private boolean mElyraSectionRebuildPosted;
+    private final Runnable mElyraSectionRebuild = () -> {
+        mElyraSectionRebuildPosted = false;
+        if (isAttachedToWindow()) prepareSectionIndexSnapshot();
+    };
+    private final AdapterDataObserver mElyraAdapterObserver = new AdapterDataObserver() {
+        @Override
+        public void onChanged() { invalidateElyraSectionIndex(true); }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            invalidateElyraSectionIndex(true);
+        }
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            invalidateElyraSectionIndex(true);
+        }
+
+        @Override
+        public void onItemRangeRemoved(int positionStart, int itemCount) {
+            invalidateElyraSectionIndex(true);
+        }
+
+        @Override
+        public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
+            invalidateElyraSectionIndex(true);
+        }
+    };
 
     public AlphabeticalAppsList<?> mApps;
 
@@ -101,9 +130,16 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
      */
     public void setApps(AlphabeticalAppsList<?> apps) {
         mApps = apps;
-        cancelElyraSectionJump();
-        mElyraSectionSnapshot = null;
-        mElyraLastSectionIndex = RecyclerView.NO_POSITION;
+        invalidateElyraSectionIndex(false);
+    }
+
+    @Override
+    public void setAdapter(@Nullable Adapter adapter) {
+        Adapter<?> previous = getAdapter();
+        if (previous != null) previous.unregisterAdapterDataObserver(mElyraAdapterObserver);
+        super.setAdapter(adapter);
+        if (adapter != null) adapter.registerAdapterDataObserver(mElyraAdapterObserver);
+        invalidateElyraSectionIndex(false);
     }
 
     public AlphabeticalAppsList<?> getApps() {
@@ -211,9 +247,12 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     }
 
     /** Captures one immutable, adapter-bound section index for the current drawer model. */
-    public void prepareSectionIndexSnapshot() {
+    public boolean prepareSectionIndexSnapshot() {
         mElyraSectionSnapshot = null;
-        if (mApps == null || getAdapter() == null) return;
+        if (mApps == null || getAdapter() == null || !isAttachedToWindow()
+                || currentElyraSectionMode() != ElyraSectionIndexSnapshot.Mode.ALL_APPS) {
+            return false;
+        }
         List<AlphabeticalAppsList.FastScrollSectionInfo> sections =
                 mApps.getFastScrollerSections();
         CharSequence[] names = new CharSequence[sections.size()];
@@ -223,33 +262,45 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
             positions[i] = sections.get(i).position;
         }
         mElyraSectionSnapshot = ElyraSectionIndexSnapshot.create(
-                mApps.getAdapterGeneration(), currentElyraSectionMode(), getAdapter().getItemCount(),
-                getAdapter(), names, positions);
+                mApps.getAdapterGeneration(), mApps.getQueryFilterGeneration(),
+                currentElyraSectionMode(), getAdapter().getItemCount(), getAdapter(), names,
+                positions);
         mElyraLastSectionIndex = RecyclerView.NO_POSITION;
+        return true;
     }
 
-    /** Requests an immediate indexed jump, rejecting stale adapter generations. */
-    public boolean scrollToSectionIndex(int index) {
-        if (index == mElyraLastSectionIndex) return true;
+    /** Resolves a request against the immutable adapter snapshot without scrolling. */
+    @Nullable
+    public ElyraSectionIndexSnapshot.Resolution resolveElyraSectionRequest(int index) {
         ElyraSectionIndexSnapshot snapshot = mElyraSectionSnapshot;
-        if (snapshot == null) {
-            prepareSectionIndexSnapshot();
-            snapshot = mElyraSectionSnapshot;
+        Adapter<?> adapter = getAdapter();
+        if (snapshot != null && mApps != null && adapter != null
+                && !snapshot.matches(mApps.getAdapterGeneration(),
+                        mApps.getQueryFilterGeneration(), currentElyraSectionMode(),
+                        adapter.getItemCount(), adapter)) {
+            invalidateElyraSectionIndex(true);
+            return null;
         }
-        ElyraSectionIndexSnapshot.Resolution resolution = resolveElyraSection(snapshot, index);
-        if (resolution == null) {
-            prepareSectionIndexSnapshot();
+        return resolveElyraSection(snapshot, index);
+    }
+
+    /** Applies an already resolved request only while its complete model state is current. */
+    public boolean applyElyraSectionRequest(
+            @NonNull ElyraSectionIndexSnapshot.Resolution resolution) {
+        if (resolution.sectionIndex == mElyraLastSectionIndex) return true;
+        if (!isCurrentElyraResolution(resolution)) {
+            logElyraSectionRequest("rejected", resolution);
             return false;
         }
         if (isComputingLayout()) {
-            mElyraPendingSectionIndex = index;
+            mElyraPendingResolution = resolution;
             if (!mElyraSectionJumpPosted) {
                 mElyraSectionJumpPosted = true;
                 postOnAnimation(mElyraSectionJump);
             }
             return true;
         }
-        return applyElyraSectionJump(index, resolution);
+        return applyElyraSectionJump(resolution);
     }
 
     @Nullable
@@ -263,18 +314,20 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
             return null;
         }
         ElyraSectionIndexSnapshot.Resolution resolution = snapshot.resolve(
-                index, mApps.getAdapterGeneration(), currentElyraSectionMode(),
-                adapter.getItemCount(), adapter);
+                index, mApps.getAdapterGeneration(), mApps.getQueryFilterGeneration(),
+                currentElyraSectionMode(), adapter.getItemCount(), adapter);
         if (BuildConfig.DEBUG) Trace.endSection();
         return resolution;
     }
 
-    private boolean applyElyraSectionJump(int index,
+    private boolean applyElyraSectionJump(
             @NonNull ElyraSectionIndexSnapshot.Resolution resolution) {
         RecyclerView.LayoutManager layoutManager = getLayoutManager();
         RecyclerView.Adapter<?> adapter = getAdapter();
-        if (layoutManager == null || adapter == null || resolution.position < 0
-                || resolution.position >= adapter.getItemCount()) return false;
+        if (!isCurrentElyraResolution(resolution) || layoutManager == null || adapter == null) {
+            logElyraSectionRequest("rejected", resolution);
+            return false;
+        }
         if (BuildConfig.DEBUG) Trace.beginSection("ElyraAzAdapterJump");
         stopScroll();
         if (layoutManager instanceof GridLayoutManager) {
@@ -284,26 +337,50 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
             layoutManager.scrollToPosition(resolution.position);
         }
         if (BuildConfig.DEBUG) Trace.endSection();
-        mElyraLastSectionIndex = index;
+        mElyraLastSectionIndex = resolution.sectionIndex;
+        logElyraSectionRequest("applied", resolution);
         return true;
     }
 
     private void applyPendingElyraSectionJump() {
         mElyraSectionJumpPosted = false;
-        int index = mElyraPendingSectionIndex;
-        mElyraPendingSectionIndex = RecyclerView.NO_POSITION;
-        if (index == RecyclerView.NO_POSITION) return;
-        ElyraSectionIndexSnapshot.Resolution resolution = resolveElyraSection(
-                mElyraSectionSnapshot, index);
-        if (resolution == null) {
-            prepareSectionIndexSnapshot();
-        } else if (!isComputingLayout()) {
-            applyElyraSectionJump(index, resolution);
+        ElyraSectionIndexSnapshot.Resolution resolution = mElyraPendingResolution;
+        mElyraPendingResolution = null;
+        if (resolution == null || !isCurrentElyraResolution(resolution)) return;
+        if (!isComputingLayout()) {
+            applyElyraSectionJump(resolution);
         } else {
-            mElyraPendingSectionIndex = index;
+            mElyraPendingResolution = resolution;
             mElyraSectionJumpPosted = true;
             postOnAnimation(mElyraSectionJump);
         }
+    }
+
+    private boolean isCurrentElyraResolution(
+            @NonNull ElyraSectionIndexSnapshot.Resolution resolution) {
+        Adapter<?> adapter = getAdapter();
+        return isAttachedToWindow() && mApps != null && adapter != null
+                && getLayoutManager() != null
+                && resolution.mode == currentElyraSectionMode()
+                && resolution.adapterGeneration == mApps.getAdapterGeneration()
+                && resolution.queryFilterGeneration == mApps.getQueryFilterGeneration()
+                && resolution.adapterToken == adapter
+                && resolution.itemCount == adapter.getItemCount()
+                && resolution.position >= 0 && resolution.position < adapter.getItemCount();
+    }
+
+    private void logElyraSectionRequest(@NonNull String result,
+            @NonNull ElyraSectionIndexSnapshot.Resolution request) {
+        if (!BuildConfig.DEBUG) return;
+        Adapter<?> adapter = getAdapter();
+        Log.d(TAG, "A-Z " + result + " section=" + request.requestedSection
+                + " position=" + request.position
+                + " requestGeneration=" + request.adapterGeneration
+                + " currentGeneration=" + (mApps == null ? -1 : mApps.getAdapterGeneration())
+                + " requestCount=" + request.itemCount
+                + " currentCount=" + (adapter == null ? -1 : adapter.getItemCount())
+                + " mode=" + currentElyraSectionMode()
+                + " computingLayout=" + isComputingLayout());
     }
 
     private ElyraSectionIndexSnapshot.Mode currentElyraSectionMode() {
@@ -317,7 +394,18 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     public void cancelElyraSectionJump() {
         if (mElyraSectionJumpPosted) removeCallbacks(mElyraSectionJump);
         mElyraSectionJumpPosted = false;
-        mElyraPendingSectionIndex = RecyclerView.NO_POSITION;
+        mElyraPendingResolution = null;
+    }
+
+    private void invalidateElyraSectionIndex(boolean rebuildAfterCommit) {
+        cancelElyraSectionJump();
+        mElyraSectionSnapshot = null;
+        mElyraLastSectionIndex = RecyclerView.NO_POSITION;
+        if (mScrollbar != null) mScrollbar.cancelPendingCompactUpdate();
+        if (rebuildAfterCommit && isAttachedToWindow() && !mElyraSectionRebuildPosted) {
+            mElyraSectionRebuildPosted = true;
+            postOnAnimation(mElyraSectionRebuild);
+        }
     }
 
     @Override
@@ -331,6 +419,8 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     @Override
     protected void onDetachedFromWindow() {
         cancelElyraSectionJump();
+        if (mElyraSectionRebuildPosted) removeCallbacks(mElyraSectionRebuild);
+        mElyraSectionRebuildPosted = false;
         mElyraSectionSnapshot = null;
         super.onDetachedFromWindow();
     }

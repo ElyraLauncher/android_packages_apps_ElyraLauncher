@@ -62,7 +62,7 @@ class ElyraDrawerSurfaceContinuityTest {
         )
         val boundsMethod = allApps.substringAfter(
             "private void getBottomSheetSurfaceBounds(",
-        ).substringBefore("public void setElyraBottomControlsLayout(")
+        ).substringBefore("public boolean setElyraBottomControlsLayout(")
         val rootDraw = allApps.substringAfter(
             "public void drawOnScrimWithScaleAndBottomOffset(",
         ).substringBefore("if (isElyraBottomSearch())")

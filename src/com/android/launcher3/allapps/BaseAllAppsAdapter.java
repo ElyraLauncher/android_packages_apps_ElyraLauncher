@@ -598,7 +598,6 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
                     mApps.showElyraAllApps();
                     scrollElyraActiveRecyclerViewToTop();
                 }));
-        updateElyraDrawerVisualState();
     }
 
     private void bindElyraSegment(TextView button, boolean selected) {
@@ -717,7 +716,6 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
                 icon.setVisibility(View.VISIBLE);
             }
         }
-        updateElyraDrawerVisualState();
     }
 
     private void bindElyraCategoryHeader(TextView header, CharSequence label) {
@@ -725,7 +723,6 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         header.setText(safeLabel);
         header.setContentDescription(safeLabel);
         header.setOnClickListener(null);
-        updateElyraDrawerVisualState();
     }
 
     private void scrollElyraActiveRecyclerViewToTop() {
@@ -738,13 +735,6 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             recyclerView.scrollToTop();
         }
         appsView.updateElyraDrawerVisualState();
-    }
-
-    private void updateElyraDrawerVisualState() {
-        ActivityAllAppsContainerView<?> appsView = mActivityContext.getAppsView();
-        if (appsView != null) {
-            appsView.updateElyraDrawerVisualState();
-        }
     }
 
     private GradientDrawable roundedDrawable(int color, int radius) {
