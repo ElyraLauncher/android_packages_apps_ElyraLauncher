@@ -25,6 +25,7 @@ import com.android.launcher3.views.ActivityContext
 import com.elyra.launcher.drawer.ElyraAppCategory
 import com.elyra.launcher.drawer.ElyraCategoryCardModel
 import com.elyra.launcher.drawer.ElyraDrawer
+import com.elyra.launcher.drawer.ElyraDrawerModelCoordinator
 import com.elyra.launcher.drawer.ElyraDrawerSuggestions
 import com.patrykmichalik.opto.core.onEach
 import java.util.function.Predicate
@@ -54,6 +55,7 @@ class LawnchairAlphabeticalAppsList<T>(
     private val filteredList = mutableListOf<AppInfo>()
     private var elyraDrawerMode = ElyraDrawerMode.ALL_APPS
     private var elyraSelectedCategory: ElyraAppCategory? = null
+    private val ownsElyraDrawerModel = privateProfileManager != null
 
     private val folderOrder = FolderOrderUtils.stringToIntList(prefs.drawerListOrder.get())
 
@@ -122,7 +124,12 @@ class LawnchairAlphabeticalAppsList<T>(
                 val selectedCategory = elyraSelectedCategory
                 val selectedCard = cards.firstOrNull { it.category == selectedCategory }
                 if (selectedCard != null) {
-                    mAdapterItems.add(AdapterItem.asElyraCategoryHeader(selectedCard.label))
+                    mAdapterItems.add(
+                        AdapterItem.asElyraCategoryHeader(
+                            selectedCard.category,
+                            selectedCard.label,
+                        ),
+                    )
                     position++
                     return super.addAppsWithSections(selectedCard.apps, position)
                 }
@@ -227,8 +234,13 @@ class LawnchairAlphabeticalAppsList<T>(
     }
 
     override fun onAppsUpdated() {
-        ElyraDrawerSuggestions.onPackagesChanged()
         super.onAppsUpdated()
+        if (ownsElyraDrawerModel) {
+            ElyraDrawerModelCoordinator.reconcile(context, getAppsSnapshot()) {
+                updateAdapterItems()
+                context.launcher.appsView?.onElyraDrawerCachesReady()
+            }
+        }
     }
 
     override fun onIdpChanged(modelPropertiesChanged: Boolean) {

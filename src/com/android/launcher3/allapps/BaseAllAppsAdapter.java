@@ -64,10 +64,12 @@ import com.android.launcher3.model.data.FolderInfo;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 import com.elyra.launcher.drawer.ElyraCategoryCardModel;
+import com.elyra.launcher.drawer.ElyraAppCategory;
 import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 import com.elyra.launcher.drawer.ElyraDrawerOptions;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Adapter for all the apps.
@@ -149,6 +151,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         public ElyraCategoryCardModel.CategoryCard elyraCategoryCard = null;
         public boolean elyraCategoryCardsSelected = false;
         public CharSequence elyraCategoryLabel = null;
+        public ElyraAppCategory elyraCategory = null;
         public List<AppInfo> elyraSuggestions = null;
 
         // Private App Decorator
@@ -192,8 +195,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             return item;
         }
 
-        public static AdapterItem asElyraCategoryHeader(CharSequence categoryLabel) {
+        public static AdapterItem asElyraCategoryHeader(
+                ElyraAppCategory category, CharSequence categoryLabel) {
             AdapterItem item = new AdapterItem(VIEW_TYPE_ELYRA_CATEGORY_HEADER);
+            item.elyraCategory = category;
             item.elyraCategoryLabel = categoryLabel;
             return item;
         }
@@ -214,7 +219,24 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
          * Returns true if the items represent the same object
          */
         public boolean isSameAs(AdapterItem other) {
-            return (other.viewType == viewType) && (other.getClass() == getClass());
+            if (other.viewType != viewType || other.getClass() != getClass()) {
+                return false;
+            }
+            if (viewType == VIEW_TYPE_ICON) {
+                return Objects.equals(componentIdentity(itemInfo), componentIdentity(other.itemInfo));
+            }
+            if (viewType == VIEW_TYPE_FOLDER) {
+                return folderInfo != null && other.folderInfo != null
+                        && folderInfo.id == other.folderInfo.id;
+            }
+            if (viewType == VIEW_TYPE_ELYRA_CATEGORY_CARD) {
+                return elyraCategoryCard != null && other.elyraCategoryCard != null
+                        && elyraCategoryCard.getCategory() == other.elyraCategoryCard.getCategory();
+            }
+            if (viewType == VIEW_TYPE_ELYRA_CATEGORY_HEADER) {
+                return elyraCategory == other.elyraCategory;
+            }
+            return true;
         }
 
         /**
@@ -223,7 +245,48 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
          * as well. Returning true will prevent redrawing of thee item.
          */
         public boolean isContentSame(AdapterItem other) {
-            return itemInfo == null && other.itemInfo == null;
+            if (viewType == VIEW_TYPE_ICON) {
+                return Objects.equals(itemInfo.title, other.itemInfo.title)
+                        && itemInfo.bitmap == other.itemInfo.bitmap
+                        && itemInfo.runtimeStatusFlags == other.itemInfo.runtimeStatusFlags;
+            }
+            if (viewType == VIEW_TYPE_ELYRA_CATEGORY_TABS) {
+                return elyraCategoryCardsSelected == other.elyraCategoryCardsSelected;
+            }
+            if (viewType == VIEW_TYPE_ELYRA_CATEGORY_CARD) {
+                return Objects.equals(elyraCategoryCard, other.elyraCategoryCard);
+            }
+            if (viewType == VIEW_TYPE_ELYRA_CATEGORY_HEADER) {
+                return Objects.equals(elyraCategoryLabel, other.elyraCategoryLabel);
+            }
+            if (viewType == VIEW_TYPE_ELYRA_SUGGESTIONS) {
+                return Objects.equals(elyraSuggestions, other.elyraSuggestions);
+            }
+            return itemInfo == other.itemInfo && folderInfo == other.folderInfo;
+        }
+
+        public long stableId() {
+            String identity;
+            if (viewType == VIEW_TYPE_ICON) {
+                identity = componentIdentity(itemInfo);
+            } else if (viewType == VIEW_TYPE_FOLDER && folderInfo != null) {
+                identity = Long.toString(folderInfo.id);
+            } else if (viewType == VIEW_TYPE_ELYRA_CATEGORY_CARD && elyraCategoryCard != null) {
+                identity = elyraCategoryCard.getCategory().name();
+            } else if (viewType == VIEW_TYPE_ELYRA_CATEGORY_HEADER && elyraCategory != null) {
+                identity = elyraCategory.name();
+            } else if (viewType == VIEW_TYPE_EMPTY_SEARCH && itemInfo != null) {
+                identity = String.valueOf(itemInfo.title);
+            } else {
+                identity = getClass().getName();
+            }
+            return ((long) viewType << 32) ^ Integer.toUnsignedLong(identity.hashCode());
+        }
+
+        private static String componentIdentity(AppInfo info) {
+            return info == null || info.getTargetComponent() == null
+                    ? ""
+                    : info.toComponentKey().toString();
         }
 
         @Nullable
@@ -261,6 +324,7 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         mOnIconLongClickListener = mActivityContext.getAllAppsItemLongClickListener();
 
         mAdapterProvider = adapterProvider;
+        setHasStableIds(true);
     }
 
     /** Checks if the passed viewType represents all apps divider. */
@@ -486,12 +550,14 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         bindElyraSegment(categories, item.elyraCategoryCardsSelected);
         updateElyraSegmentPill(capsule, item.elyraCategoryCardsSelected);
         all.setOnClickListener(view -> {
-            mApps.showElyraAllApps();
-            scrollElyraActiveRecyclerViewToTop();
+            ActivityAllAppsContainerView<?> appsView = mActivityContext.getAppsView();
+            if (appsView != null) appsView.switchElyraDrawerMode(false);
+            else mApps.showElyraAllApps();
         });
         categories.setOnClickListener(view -> {
-            mApps.showElyraCategoryCards();
-            scrollElyraActiveRecyclerViewToTop();
+            ActivityAllAppsContainerView<?> appsView = mActivityContext.getAppsView();
+            if (appsView != null) appsView.switchElyraDrawerMode(true);
+            else mApps.showElyraCategoryCards();
         });
         overflow.setOnClickListener(view ->
                 ElyraDrawerOptions.show(view, () -> {
@@ -529,7 +595,10 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             if (previous == null) {
                 pill.setTranslationX(target);
             } else if (!previous.equals(categoriesSelected)) {
-                pill.animate().translationX(target).setDuration(160).start();
+                pill.animate().cancel();
+                pill.animate().translationX(target).setDuration(190)
+                        .setInterpolator(com.android.app.animation.Interpolators.EMPHASIZED)
+                        .start();
             } else {
                 pill.setTranslationX(target);
             }
@@ -576,9 +645,11 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     private void bindElyraCategoryCard(LinearLayout card,
             ElyraCategoryCardModel.CategoryCard categoryCard) {
         if (categoryCard == null) {
+            card.setTag(null);
             card.setVisibility(GONE);
             return;
         }
+        card.setTag(categoryCard.getCategory());
         card.setVisibility(View.VISIBLE);
         TextView label = (TextView) card.getChildAt(0);
         TextView count = (TextView) card.getChildAt(1);
@@ -590,8 +661,12 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
         count.setText(countLabel);
         card.setContentDescription(categoryCard.getLabel() + ", " + countLabel);
         card.setOnClickListener(view -> {
-            mApps.selectElyraCategory(categoryCard.getCategory());
-            scrollElyraActiveRecyclerViewToTop();
+            ActivityAllAppsContainerView<?> appsView = mActivityContext.getAppsView();
+            if (appsView != null) {
+                appsView.openElyraCategoryFromCard(view, categoryCard);
+            } else {
+                mApps.selectElyraCategory(categoryCard.getCategory());
+            }
         });
 
         preview.removeAllViews();
@@ -866,6 +941,11 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
     public int getItemViewType(int position) {
         AdapterItem item = mApps.getAdapterItems().get(position);
         return item.viewType;
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return mApps.getAdapterItems().get(position).stableId();
     }
 
     protected static boolean isViewType(int viewType, int viewTypeMask) {

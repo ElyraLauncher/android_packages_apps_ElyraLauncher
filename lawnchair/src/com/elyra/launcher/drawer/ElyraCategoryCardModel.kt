@@ -19,6 +19,7 @@ package com.elyra.launcher.drawer
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import com.android.launcher3.model.data.AppInfo
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Builds the local category card models that back the drawer Categories view.
@@ -30,7 +31,7 @@ import com.android.launcher3.model.data.AppInfo
  * signal used for suggestions (package recency, then label) so the preview cluster
  * is stable and uses real installed apps.
  *
- * The Android-declared [ApplicationInfo.category] lookup is cached per package so
+ * The Android-declared [ApplicationInfo.category] lookup is cached per component so
  * repeated drawer rebuilds do not re-query PackageManager.
  */
 object ElyraCategoryCardModel {
@@ -49,18 +50,39 @@ object ElyraCategoryCardModel {
         val preview: List<AppInfo>,
     )
 
-    private val categoryCache = HashMap<String, ElyraAppCategory>()
+    private val categoryCache = ConcurrentHashMap<String, ElyraAppCategory>()
 
-    private fun resolveCategory(context: Context, app: AppInfo): ElyraAppCategory {
+    private fun resolveCategory(app: AppInfo): ElyraAppCategory {
         val pkg = app.targetPackage ?: return ElyraAppCategory.Other
-        categoryCache[pkg]?.let { return it }
-        val applicationCategory = try {
-            context.packageManager.getApplicationInfo(pkg, 0).category
-        } catch (_: Exception) {
-            ApplicationInfo.CATEGORY_UNDEFINED
+        val key = app.toComponentKey().toString()
+        return categoryCache[key]
+            ?: ElyraAppCategoryClassifier.classify(
+                pkg,
+                app.title,
+                ApplicationInfo.CATEGORY_UNDEFINED,
+            )
+    }
+
+    /** Resolves PackageManager metadata on Launcher3's model executor. */
+    fun warm(context: Context, apps: List<AppInfo>) {
+        apps.forEach { app ->
+            val pkg = app.targetPackage ?: return@forEach
+            val key = app.toComponentKey().toString()
+            val applicationCategory = try {
+                context.packageManager.getApplicationInfo(pkg, 0).category
+            } catch (_: Exception) {
+                ApplicationInfo.CATEGORY_UNDEFINED
+            }
+            categoryCache[key] = ElyraAppCategoryClassifier.classify(
+                pkg,
+                app.title,
+                applicationCategory,
+            )
         }
-        return ElyraAppCategoryClassifier.classify(pkg, app.title, applicationCategory)
-            .also { categoryCache[pkg] = it }
+    }
+
+    fun invalidate(componentKeys: Set<String>) {
+        componentKeys.forEach(categoryCache::remove)
     }
 
     /**
@@ -76,7 +98,7 @@ object ElyraCategoryCardModel {
     ): List<CategoryCard> {
         val byCategory = LinkedHashMap<ElyraAppCategory, MutableList<AppInfo>>()
         apps.forEach { app ->
-            byCategory.getOrPut(resolveCategory(context, app)) { mutableListOf() }.add(app)
+            byCategory.getOrPut(resolveCategory(app)) { mutableListOf() }.add(app)
         }
 
         return ElyraAppCategory.entries.mapNotNull { category ->

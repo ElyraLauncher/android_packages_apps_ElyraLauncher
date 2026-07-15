@@ -98,6 +98,9 @@ import com.android.launcher3.views.ScrimView;
 import com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip;
 import com.android.systemui.shared.system.BlurUtils;
 import com.elyra.launcher.allapps.ElyraBottomSearch;
+import com.elyra.launcher.drawer.ElyraAppCategory;
+import com.elyra.launcher.drawer.ElyraCategoryCardModel;
+import com.elyra.launcher.drawer.ElyraDrawerModelCoordinator;
 import com.elyra.launcher.drawer.ElyraDrawerLayoutPolicy;
 import com.elyra.launcher.drawer.ElyraDrawer;
 import com.patrykmichalik.opto.core.PreferenceExtensionsKt;
@@ -226,6 +229,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     private int mTabsProtectionAlpha;
     private int mElyraBottomControlsHeight;
     private int mElyraBottomControlsBottomInset;
+    private final ElyraCategoryMotionController mElyraCategoryMotionController;
 
     private final PreferenceManager2 pref2;
     private final PreferenceManager pref;
@@ -270,6 +274,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mAH = Arrays.asList(null, null, null);
         mNavBarScrimPaint = new Paint();
         mNavBarScrimPaint.setColor(Themes.getNavBarScrimColor(mActivityContext));
+        mElyraCategoryMotionController = new ElyraCategoryMotionController(this);
 
         AllAppsStore.OnUpdateListener onAppsUpdated = this::onAppsUpdated;
         mAllAppsStore.addUpdateListener(onAppsUpdated);
@@ -388,6 +393,8 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
 
     @Override
     protected void onDetachedFromWindow() {
+        mElyraCategoryMotionController.dispose();
+        ElyraDrawerModelCoordinator.cancelPending();
         super.onDetachedFromWindow();
         unregisterElyraBlurAvailabilityListener();
         mActivityContext.removeOnDeviceProfileChangeListener(this);
@@ -1342,6 +1349,8 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
             mPrivateProfileManager.reset();
         }
 
+        post(mElyraCategoryMotionController::onModelUpdated);
+
         mActivityContext.getStatsLogManager().logger()
                 .withCardinality(mAllAppsStore.getApps().length)
                 .log(LAUNCHER_ALLAPPS_COUNT);
@@ -1658,11 +1667,13 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     public boolean canHandleElyraCategoryBack() {
-        return getPersonalAppList().canHandleElyraCategoryBack();
+        return mElyraCategoryMotionController.canHandleBack()
+                || getPersonalAppList().canHandleElyraCategoryBack();
     }
 
     public boolean handleElyraCategoryBack() {
-        return getPersonalAppList().handleElyraCategoryBack();
+        return mElyraCategoryMotionController.handleBack()
+                || getPersonalAppList().handleElyraCategoryBack();
     }
 
     public boolean isElyraCategoryUiMode() {
@@ -1671,6 +1682,37 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
 
     public void refreshElyraDrawerSuggestions() {
         mAH.get(AdapterHolder.MAIN).mAppsList.refreshElyraDrawer();
+    }
+
+    public boolean openElyraCategoryFromCard(
+            View source, ElyraCategoryCardModel.CategoryCard categoryCard) {
+        return mElyraCategoryMotionController.openCategory(source, categoryCard);
+    }
+
+    public void switchElyraDrawerMode(boolean categories) {
+        mElyraCategoryMotionController.switchMode(categories);
+    }
+
+    void selectElyraCategoryForMotion(ElyraAppCategory category) {
+        getPersonalAppList().selectElyraCategory(category);
+        updateElyraDrawerVisualState();
+    }
+
+    void showElyraCategoryCardsForMotion() {
+        getPersonalAppList().showElyraCategoryCards();
+        updateElyraDrawerVisualState();
+    }
+
+    void showElyraAllAppsForMotion() {
+        getPersonalAppList().showElyraAllApps();
+        updateElyraDrawerVisualState();
+    }
+
+    public void onElyraDrawerCachesReady() {
+        if (mSearchUiManager != null) {
+            mSearchUiManager.refreshResults();
+        }
+        mElyraCategoryMotionController.onModelUpdated();
     }
 
     public void updateElyraDrawerVisualState() {

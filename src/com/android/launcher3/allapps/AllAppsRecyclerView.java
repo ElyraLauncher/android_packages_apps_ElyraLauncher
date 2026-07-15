@@ -35,12 +35,14 @@ import static com.android.launcher3.util.LogConfig.SEARCH_LOGGING;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Consumer;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.DeviceProfile;
@@ -53,6 +55,8 @@ import com.android.launcher3.logging.StatsLogManager;
 import com.android.launcher3.views.ActivityContext;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * A RecyclerView with custom fast scroll support for the all apps view.
@@ -66,6 +70,8 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     protected final int mNumAppsPerRow;
     private final AllAppsFastScrollHelper mFastScrollHelper;
     private int mCumulativeVerticalScroll;
+    private final Map<String, Integer> mElyraSectionPositions = new ArrayMap<>();
+    private String mElyraLastSection;
 
     public AlphabeticalAppsList<?> mApps;
 
@@ -93,6 +99,8 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
      */
     public void setApps(AlphabeticalAppsList<?> apps) {
         mApps = apps;
+        mElyraSectionPositions.clear();
+        mElyraLastSection = null;
     }
 
     public AlphabeticalAppsList<?> getApps() {
@@ -200,28 +208,45 @@ public class AllAppsRecyclerView extends FastScrollRecyclerView {
     }
 
     /** Immediately aligns fast scrolling to a visible alphabetical section. */
-    public void scrollToSectionName(String target) {
+    public void prepareSectionPositionMap() {
+        mElyraSectionPositions.clear();
+        if (mApps == null) return;
         List<AlphabeticalAppsList.FastScrollSectionInfo> sections =
                 mApps.getFastScrollerSections();
-        if (sections.isEmpty()) {
-            return;
-        }
-        AlphabeticalAppsList.FastScrollSectionInfo selected = sections.get(0);
-        if (!"#".equals(target)) {
+        if (sections.isEmpty()) return;
+        int first = sections.get(0).position;
+        mElyraSectionPositions.put("#", first);
+        for (char letter = 'A'; letter <= 'Z'; letter++) {
+            int selected = first;
             for (AlphabeticalAppsList.FastScrollSectionInfo section : sections) {
-                selected = section;
-                if (section.sectionName.toString().compareToIgnoreCase(target) >= 0) {
-                    break;
-                }
+                selected = section.position;
+                String name = section.sectionName.toString().toUpperCase(Locale.ROOT);
+                if (name.compareTo(String.valueOf(letter)) >= 0) break;
             }
+            mElyraSectionPositions.put(String.valueOf(letter), selected);
         }
-        scrollToPosition(selected.position);
+        mElyraLastSection = null;
+    }
+
+    public void scrollToSectionName(String target) {
+        if (target.equals(mElyraLastSection)) return;
+        if (mElyraSectionPositions.isEmpty()) prepareSectionPositionMap();
+        Integer position = mElyraSectionPositions.get(target);
+        if (position == null) return;
+        mElyraLastSection = target;
+        RecyclerView.LayoutManager layoutManager = getLayoutManager();
+        if (layoutManager instanceof GridLayoutManager) {
+            ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(position, 0);
+        } else {
+            scrollToPosition(position);
+        }
     }
 
     @Override
     public void onFastScrollCompleted() {
         super.onFastScrollCompleted();
         mFastScrollHelper.onFastScrollCompleted();
+        mElyraLastSection = null;
     }
 
     @Override

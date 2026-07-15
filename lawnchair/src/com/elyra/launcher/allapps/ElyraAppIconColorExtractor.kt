@@ -43,6 +43,10 @@ object ElyraAppIconColorExtractor {
         cache.clear()
     }
 
+    fun invalidate(componentKeys: Set<String>) {
+        componentKeys.forEach(cache::remove)
+    }
+
     private fun Drawable.toSampleBitmap(): Bitmap {
         if (this is BitmapDrawable && bitmap != null && !bitmap.isRecycled) {
             return Bitmap.createScaledBitmap(bitmap, ICON_SAMPLE_SIZE, ICON_SAMPLE_SIZE, true)

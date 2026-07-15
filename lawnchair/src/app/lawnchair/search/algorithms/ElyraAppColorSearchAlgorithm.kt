@@ -17,6 +17,7 @@
 package app.lawnchair.search.algorithms
 
 import android.content.Context
+import android.os.Handler
 import app.lawnchair.preferences2.PreferenceManager2
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.allapps.BaseAllAppsAdapter
@@ -26,8 +27,8 @@ import com.android.launcher3.search.StringMatcherUtility
 import com.android.launcher3.util.Executors
 import com.elyra.launcher.allapps.ElyraAppColorBucket
 import com.elyra.launcher.allapps.ElyraAppIconColorExtractor
+import com.elyra.launcher.drawer.ElyraRequestGeneration
 import com.patrykmichalik.opto.core.firstBlocking
-import android.os.Handler
 
 class ElyraAppColorSearchAlgorithm(
     context: Context,
@@ -38,10 +39,12 @@ class ElyraAppColorSearchAlgorithm(
     private val appState = LauncherAppState.getInstance(context)
     private val resultHandler = Handler(Executors.MAIN_EXECUTOR.looper)
     private val prefs2 = PreferenceManager2.getInstance(context)
+    private val requestGeneration = ElyraRequestGeneration()
 
     override fun doSearch(query: String, callback: SearchCallback<BaseAllAppsAdapter.AdapterItem>) {
         val bucket = selectedBucket()
         if (bucket == null) {
+            requestGeneration.cancel()
             delegate.doSearch(query, callback)
             return
         }
@@ -51,6 +54,7 @@ class ElyraAppColorSearchAlgorithm(
     override fun doZeroStateSearch(callback: SearchCallback<BaseAllAppsAdapter.AdapterItem>) {
         val bucket = selectedBucket()
         if (bucket == null) {
+            requestGeneration.cancel()
             delegate.doZeroStateSearch(callback)
             return
         }
@@ -58,6 +62,7 @@ class ElyraAppColorSearchAlgorithm(
     }
 
     override fun cancel(interruptActiveRequests: Boolean) {
+        requestGeneration.cancel()
         delegate.cancel(interruptActiveRequests)
         if (interruptActiveRequests) {
             resultHandler.removeCallbacksAndMessages(null)
@@ -69,9 +74,15 @@ class ElyraAppColorSearchAlgorithm(
         bucket: ElyraAppColorBucket,
         callback: SearchCallback<BaseAllAppsAdapter.AdapterItem>,
     ) {
+        val request = requestGeneration.next()
+        delegate.cancel(true)
         appState.model.enqueueModelUpdateTask { _, _, apps ->
-            val result = getColorMatchResult(apps.data, query, bucket)
-            resultHandler.post { callback.onSearchResult(query, result) }
+            val result = getColorMatchResult(apps.data.toList(), query, bucket)
+            resultHandler.post {
+                if (requestGeneration.isCurrent(request) && selectedBucket() == bucket) {
+                    callback.onSearchResult(query, result)
+                }
+            }
         }
     }
 

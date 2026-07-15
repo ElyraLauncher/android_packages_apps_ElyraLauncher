@@ -524,9 +524,6 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
     }
 
     override fun onAppsUpdated() {
-        if (colorSearchEnabled) {
-            ElyraAppIconColorExtractor.clear()
-        }
         searchBarController.refreshSearchResult()
     }
 

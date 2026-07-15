@@ -156,6 +156,11 @@ public class AlphabeticalAppsList<T extends Context & ActivityContext> implement
         return mAdapterItems;
     }
 
+    /** Returns a detached snapshot for asynchronous drawer-owned indexing work. */
+    protected List<AppInfo> getAppsSnapshot() {
+        return new ArrayList<>(mApps);
+    }
+
     /**
      * Returns the child adapter item with IME launch focus.
      */

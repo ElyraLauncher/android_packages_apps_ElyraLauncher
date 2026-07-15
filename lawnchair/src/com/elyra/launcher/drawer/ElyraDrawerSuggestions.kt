@@ -107,24 +107,49 @@ object ElyraDrawerSuggestions {
             .apply()
     }
 
-    /** Package/model changes invalidate install timestamps, including reinstalls. */
+    /** Package/model changes invalidate only affected install timestamps. */
     @JvmStatic
     fun onPackagesChanged() {
         synchronized(installTimeCache) { installTimeCache.clear() }
     }
 
-    private fun installTime(context: Context, app: AppInfo, key: String): Long {
+    fun invalidate(componentKeys: Set<String>) {
+        synchronized(installTimeCache) { componentKeys.forEach(installTimeCache::remove) }
+    }
+
+    /** Removes local ranking signals only when an application leaves the model. */
+    fun removeUsage(context: Context, componentKeys: Set<String>) {
+        if (componentKeys.isEmpty()) return
+        val editor = context.applicationContext.getSharedPreferences(
+            PREFERENCES,
+            Context.MODE_PRIVATE,
+        ).edit()
+        componentKeys.forEach { key ->
+            editor.remove(LAST_PREFIX + key)
+            editor.remove(COUNT_PREFIX + key)
+        }
+        editor.apply()
+    }
+
+    /** Populates install metadata on Launcher3's model executor. */
+    fun warmInstallTimes(context: Context, apps: List<AppInfo>) {
+        apps.forEach { app ->
+            val key = app.toComponentKey().toString()
+            val pkg = app.targetPackage ?: return@forEach
+            val time = try {
+                context.packageManager.getPackageInfo(pkg, 0).firstInstallTime
+            } catch (_: Exception) {
+                0L
+            }
+            synchronized(installTimeCache) { installTimeCache[key] = time }
+        }
+    }
+
+    private fun installTime(key: String): Long {
         synchronized(installTimeCache) {
             installTimeCache[key]?.let { return it }
         }
-        val pkg = app.targetPackage ?: return 0L
-        val time = try {
-            context.packageManager.getPackageInfo(pkg, 0).firstInstallTime
-        } catch (_: Exception) {
-            0L
-        }
-        synchronized(installTimeCache) { installTimeCache[key] = time }
-        return time
+        return 0L
     }
 
     /**
@@ -158,7 +183,7 @@ object ElyraDrawerSuggestions {
                         nowMillis = nowMillis,
                         lastLaunchMillis = preferences.getLong(LAST_PREFIX + key, 0L),
                         launchCount = preferences.getLong(COUNT_PREFIX + key, 0L),
-                        installMillis = installTime(context, app, key),
+                        installMillis = installTime(key),
                         platformRank = predictionRanks[key],
                     ),
                     tiebreak = app.title?.toString()?.lowercase().orEmpty(),
