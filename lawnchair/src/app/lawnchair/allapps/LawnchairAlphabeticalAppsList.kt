@@ -53,6 +53,7 @@ class LawnchairAlphabeticalAppsList<T>(
     private val viewModel: FolderViewModel by (context as ComponentActivity).viewModels()
     private var folderList = mutableListOf<FolderInfo>()
     private val filteredList = mutableListOf<AppInfo>()
+    private var elyraCategoryCards: List<ElyraCategoryCardModel.CategoryCard> = emptyList()
     private var elyraDrawerMode = ElyraDrawerMode.ALL_APPS
     private var elyraSelectedCategory: ElyraAppCategory? = null
     private val ownsElyraDrawerModel = privateProfileManager != null
@@ -111,7 +112,11 @@ class LawnchairAlphabeticalAppsList<T>(
             )
             position++
 
-            val cards = ElyraCategoryCardModel.build(validApps, context)
+            val cards = elyraCategoryCards.ifEmpty {
+                ElyraCategoryCardModel.build(validApps, context).also {
+                    elyraCategoryCards = it
+                }
+            }
             if (elyraDrawerMode == ElyraDrawerMode.CATEGORIES_ROOT) {
                 cards.forEach { card ->
                     mAdapterItems.add(AdapterItem.asElyraCategoryCard(card))
@@ -230,13 +235,16 @@ class LawnchairAlphabeticalAppsList<T>(
     }
 
     override fun refreshElyraDrawer() {
+        elyraCategoryCards = emptyList()
         updateAdapterItems()
     }
 
     override fun onAppsUpdated() {
+        elyraCategoryCards = emptyList()
         super.onAppsUpdated()
         if (ownsElyraDrawerModel) {
             ElyraDrawerModelCoordinator.reconcile(context, getAppsSnapshot()) {
+                elyraCategoryCards = emptyList()
                 updateAdapterItems()
                 context.launcher.appsView?.onElyraDrawerCachesReady()
             }

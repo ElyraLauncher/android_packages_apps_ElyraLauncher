@@ -702,18 +702,25 @@ public abstract class BaseAllAppsAdapter<T extends Context & ActivityContext> ex
             ImageView icon = (ImageView) slot.getChildAt(0);
             TextView more = (TextView) slot.getChildAt(1);
             icon.setVisibility(View.GONE);
-            icon.setImageDrawable(null);
             icon.setContentDescription(null);
             more.setVisibility(View.GONE);
             if (previewIndex == 3 && appCount > 4) {
+                if (icon.getDrawable() != null) icon.setImageDrawable(null);
+                icon.setTag(null);
                 more.setText(card.getContext().getString(
                         R.string.elyra_category_more_apps, appCount - 3));
                 more.setVisibility(View.VISIBLE);
             } else if (previewIndex < categoryCard.getPreview().size()) {
                 AppInfo app = categoryCard.getPreview().get(previewIndex);
-                icon.setImageDrawable(app.newIcon(card.getContext(), false));
+                if (icon.getTag() != app) {
+                    icon.setImageDrawable(app.newIcon(card.getContext(), false));
+                    icon.setTag(app);
+                }
                 icon.setContentDescription(app.title);
                 icon.setVisibility(View.VISIBLE);
+            } else {
+                if (icon.getDrawable() != null) icon.setImageDrawable(null);
+                icon.setTag(null);
             }
         }
     }

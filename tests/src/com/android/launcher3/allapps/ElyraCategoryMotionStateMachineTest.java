@@ -19,11 +19,13 @@ public class ElyraCategoryMotionStateMachineTest {
         ElyraCategoryMotionStateMachine state = new ElyraCategoryMotionStateMachine();
 
         assertTrue(state.requestOpen());
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORY_OPENING, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.PREPARING, state.getState());
+        assertTrue(state.markPrepared());
+        assertEquals(ElyraCategoryMotionStateMachine.State.OPENING, state.getState());
         assertTrue(state.markOpened());
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORY_DETAIL, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.DETAIL, state.getState());
         assertTrue(state.requestClose());
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORY_CLOSING, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.CLOSING, state.getState());
         assertTrue(state.markClosed());
         assertEquals(ElyraCategoryMotionStateMachine.State.ROOT, state.getState());
     }
@@ -34,14 +36,40 @@ public class ElyraCategoryMotionStateMachineTest {
 
         assertTrue(state.requestOpen());
         assertFalse(state.requestOpen());
-        assertEquals(ElyraCategoryMotionStateMachine.State.CATEGORY_OPENING, state.getState());
+        assertEquals(ElyraCategoryMotionStateMachine.State.PREPARING, state.getState());
     }
 
     @Test
-    public void backDuringOpen_entersClosingAndCanRecover() {
+    public void detailCannotOpenBeforePreparationCommit() {
         ElyraCategoryMotionStateMachine state = new ElyraCategoryMotionStateMachine();
 
         assertTrue(state.requestOpen());
+        assertFalse(state.markOpened());
+        assertEquals(ElyraCategoryMotionStateMachine.State.PREPARING, state.getState());
+        assertTrue(state.markPrepared());
+        assertTrue(state.markOpened());
+        assertEquals(ElyraCategoryMotionStateMachine.State.DETAIL, state.getState());
+    }
+
+    @Test
+    public void backDuringPreparation_entersClosingAndCanRecover() {
+        ElyraCategoryMotionStateMachine state = new ElyraCategoryMotionStateMachine();
+
+        assertTrue(state.requestOpen());
+        assertTrue(state.requestClose());
+        assertEquals(ElyraCategoryMotionStateMachine.State.CLOSING, state.getState());
+        assertFalse(state.markPrepared());
+        assertFalse(state.markOpened());
+        assertTrue(state.markClosed());
+        assertEquals(ElyraCategoryMotionStateMachine.State.ROOT, state.getState());
+    }
+
+    @Test
+    public void backDuringOpening_entersClosingAndCanRecover() {
+        ElyraCategoryMotionStateMachine state = new ElyraCategoryMotionStateMachine();
+
+        assertTrue(state.requestOpen());
+        assertTrue(state.markPrepared());
         assertTrue(state.requestClose());
         assertFalse(state.markOpened());
         assertTrue(state.markClosed());

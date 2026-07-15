@@ -14,9 +14,10 @@ package com.elyra.launcher.drawer
 class ElyraCategoryMotionStateMachine {
     enum class State {
         ROOT,
-        CATEGORY_OPENING,
-        CATEGORY_DETAIL,
-        CATEGORY_CLOSING,
+        PREPARING,
+        OPENING,
+        DETAIL,
+        CLOSING,
     }
 
     var state: State = State.ROOT
@@ -24,24 +25,32 @@ class ElyraCategoryMotionStateMachine {
 
     fun requestOpen(): Boolean {
         if (state != State.ROOT) return false
-        state = State.CATEGORY_OPENING
+        state = State.PREPARING
+        return true
+    }
+
+    fun markPrepared(): Boolean {
+        if (state != State.PREPARING) return false
+        state = State.OPENING
         return true
     }
 
     fun markOpened(): Boolean {
-        if (state != State.CATEGORY_OPENING) return false
-        state = State.CATEGORY_DETAIL
+        if (state != State.OPENING) return false
+        state = State.DETAIL
         return true
     }
 
     fun requestClose(): Boolean {
-        if (state != State.CATEGORY_OPENING && state != State.CATEGORY_DETAIL) return false
-        state = State.CATEGORY_CLOSING
+        if (state != State.PREPARING && state != State.OPENING && state != State.DETAIL) {
+            return false
+        }
+        state = State.CLOSING
         return true
     }
 
     fun markClosed(): Boolean {
-        if (state != State.CATEGORY_CLOSING) return false
+        if (state != State.CLOSING) return false
         state = State.ROOT
         return true
     }

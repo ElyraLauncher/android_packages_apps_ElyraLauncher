@@ -9,14 +9,10 @@ import static com.android.app.animation.Interpolators.EMPHASIZED;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.os.Parcelable;
 import android.os.Trace;
-import android.text.TextPaint;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.TextView;
 
@@ -24,83 +20,100 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.BuildConfig;
-import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
+import com.android.launcher3.model.data.AppInfo;
 import com.elyra.launcher.drawer.ElyraAppCategory;
 import com.elyra.launcher.drawer.ElyraCategoryCardModel;
 import com.elyra.launcher.drawer.ElyraCategoryMotionStateMachine;
+import com.elyra.launcher.drawer.ElyraDrawerModelCoordinator;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Owns one shared-container category transition while the real All Apps model remains
- * authoritative. The stabilization baseline intentionally animates no individual app icons.
+ * Owns the stable category root/detail transition. The real adapter is committed and laid out
+ * before detail content becomes visible; no overlay, bounds morph, or per-icon animation exists.
  */
 final class ElyraCategoryMotionController {
-    private static final long OPEN_MS = 290;
-    private static final long CLOSE_MS = 265;
-    private static final float OPEN_CONTENT_SCALE = 0.97f;
-    private static final float ROOT_CONTENT_SCALE = 0.985f;
+    private static final long ROOT_EXIT_MS = 80;
+    private static final long DETAIL_ENTER_MS = 170;
+    private static final long DETAIL_EXIT_MS = 80;
+    private static final long ROOT_ENTER_MS = 150;
+    private static final long TAB_EXIT_MS = 70;
+    private static final long TAB_ENTER_MS = 120;
+    private static final float ROOT_EXIT_SCALE = 0.985f;
+    private static final float DETAIL_ENTER_SCALE = 0.975f;
 
     private final ActivityAllAppsContainerView<?> mContainer;
     private final ElyraCategoryMotionStateMachine mState =
             new ElyraCategoryMotionStateMachine();
-    private final int[] mContainerLocation = new int[2];
-    private final int[] mViewLocation = new int[2];
 
     @Nullable private ValueAnimator mAnimator;
-    @Nullable private MorphView mMorph;
     @Nullable private ElyraCategoryCardModel.CategoryCard mCard;
+    @Nullable private View mSourceView;
     @Nullable private Parcelable mRootScrollState;
     @Nullable private Parcelable mAllScrollState;
     @Nullable private Parcelable mCategoriesScrollState;
-    @Nullable private RectF mSourceBounds;
-    @Nullable private View mSourceView;
-    @Nullable private View mClosingSource;
+    private List<AppInfo> mDetailSnapshot = Collections.emptyList();
+    private long mPreparationModelGeneration;
     private int mTransitionGeneration;
+    private boolean mTabSwitching;
+
+    @Nullable private RecyclerView mPendingRecyclerView;
+    @Nullable private RecyclerView.Adapter<?> mPendingAdapter;
+    @Nullable private RecyclerView.AdapterDataObserver mPendingAdapterObserver;
+    @Nullable private Runnable mPendingCommitRunnable;
+    @Nullable private Runnable mPendingBeforePreDrawAction;
+    @Nullable private Runnable mPendingReadyAction;
+    @Nullable private ViewTreeObserver.OnPreDrawListener mPendingPreDrawListener;
+
     private int mNextTraceCookie;
     private int mOpenTraceCookie;
     private int mCloseTraceCookie;
     private int mTabTraceCookie;
-    private boolean mTabSwitching;
 
     ElyraCategoryMotionController(ActivityAllAppsContainerView<?> container) {
         mContainer = container;
     }
 
     boolean openCategory(View source, ElyraCategoryCardModel.CategoryCard card) {
-        if (mTabSwitching || !source.isAttachedToWindow() || source.getWidth() <= 0
-                || source.getHeight() <= 0 || !mState.requestOpen()) {
-            return false;
-        }
         AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
-        if (rv == null || rv.getLayoutManager() == null) {
-            mState.forceRoot();
+        if (mTabSwitching || rv == null || rv.getAdapter() == null
+                || rv.getLayoutManager() == null || !rv.isAttachedToWindow()
+                || !source.isAttachedToWindow() || source.getWidth() <= 0
+                || source.getHeight() <= 0 || card.getApps().isEmpty()
+                || !mState.requestOpen()) {
             return false;
         }
 
         mCard = card;
         mSourceView = source;
         mRootScrollState = saveScrollState(rv);
-        mSourceBounds = bounds(source);
-        float[] sourceTitle = titlePosition(source, mSourceBounds);
-        float sourceRadius = mContainer.getResources().getDimension(R.dimen.elyra_radius_large);
-        mMorph = new MorphView(source, mSourceBounds, card.getLabel(), sourceTitle,
-                mContainer.getContext().getColor(R.color.elyra_drawer_card_surface),
-                mContainer.getContext().getColor(R.color.elyra_drawer_card_outline),
-                sourceRadius);
-        addMorph();
+        mDetailSnapshot = Collections.unmodifiableList(new ArrayList<>(card.getApps()));
+        mPreparationModelGeneration = ElyraDrawerModelCoordinator.currentGeneration();
+        int generation = beginTransition();
+        mOpenTraceCookie = beginTrace("ElyraCategoryOpen");
 
+        rv.stopScroll();
+        rv.setEnabled(false);
+        restoreViewProperties(rv);
+        source.animate().cancel();
         source.setScaleX(0.975f);
         source.setScaleY(0.975f);
-        mOpenTraceCookie = beginTrace("ElyraCategoryOpen");
-        int generation = ++mTransitionGeneration;
+        source.animate().scaleX(1f).scaleY(1f).setDuration(90)
+                .setInterpolator(EMPHASIZED).start();
 
-        // Commit and measure the real destination before the first animation frame.
-        beginSyncTrace("ElyraCategoryOpenPrepare");
-        mContainer.selectElyraCategoryForMotion(card.getCategory());
-        endSyncTrace();
-        prepareRecyclerForTransition(rv, OPEN_CONTENT_SCALE);
-        rv.scrollToPosition(0);
-        rv.postOnAnimation(() -> rv.postOnAnimation(() -> prepareOpen(generation, rv)));
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            rv.setAlpha(0f);
+            beginDetailCommit(generation, rv);
+            return true;
+        }
+        startAnimator(ROOT_EXIT_MS, generation, progress -> {
+            rv.setAlpha(1f - progress);
+            setScale(rv, lerp(1f, ROOT_EXIT_SCALE, progress));
+            rv.setTranslationY(lerp(0f, -dp(6), progress));
+        }, () -> beginDetailCommit(generation, rv));
         return true;
     }
 
@@ -110,184 +123,330 @@ final class ElyraCategoryMotionController {
 
     boolean handleBack() {
         ElyraCategoryMotionStateMachine.State state = mState.getState();
-        if (state == ElyraCategoryMotionStateMachine.State.CATEGORY_CLOSING) return true;
-        if (!mState.requestClose()) return false;
-
-        RectF startBounds = mMorph == null
-                ? detailBounds(mContainer.getActiveRecyclerView())
-                : mMorph.currentBounds();
-        float startRadius = mMorph == null ? dp(14) : mMorph.currentRadius();
-        float[] startTitle = mMorph == null
-                ? detailTitlePosition(mContainer.getActiveRecyclerView(), startBounds)
-                : mMorph.currentTitle();
-        cancelAnimator();
-        endTrace("ElyraCategoryOpen", mOpenTraceCookie);
-        mOpenTraceCookie = 0;
-        startClose(startBounds, startRadius, startTitle);
+        if (state == ElyraCategoryMotionStateMachine.State.CLOSING) return true;
+        if (state == ElyraCategoryMotionStateMachine.State.PREPARING
+                || state == ElyraCategoryMotionStateMachine.State.OPENING) {
+            mState.requestClose();
+            restoreCategoryRoot(/* focusSource= */ true);
+            return true;
+        }
+        if (state != ElyraCategoryMotionStateMachine.State.DETAIL
+                || !mState.requestClose()) {
+            return false;
+        }
+        startClose();
         return true;
     }
 
     void switchMode(boolean categories) {
         if (mTabSwitching || canHandleBack()
-                || categories == mContainer.isElyraCategoryUiMode()) return;
+                || categories == mContainer.isElyraCategoryUiMode()) {
+            return;
+        }
         AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
-        if (rv == null) return;
+        if (rv == null || rv.getAdapter() == null || !rv.isAttachedToWindow()) return;
+
         mTabSwitching = true;
         if (categories) mAllScrollState = saveScrollState(rv);
         else mCategoriesScrollState = saveScrollState(rv);
-        Runnable swap = () -> {
+        int generation = beginTransition();
+        mTabTraceCookie = beginTrace("ElyraDrawerTabSwitch");
+        rv.stopScroll();
+        rv.setEnabled(false);
+
+        Runnable commit = () -> beginAdapterCommit(rv, generation, () -> {
             if (categories) mContainer.showElyraCategoryCardsForMotion();
             else mContainer.showElyraAllAppsForMotion();
-            Parcelable restore = categories ? mCategoriesScrollState : mAllScrollState;
-            rv.postOnAnimation(() -> {
-                restoreScrollState(rv, restore);
-                if (ValueAnimator.areAnimatorsEnabled()) {
-                    rv.setTranslationX(categories ? dp(8) : -dp(8));
-                    rv.animate().alpha(1f).translationX(0f).setDuration(110)
-                            .setInterpolator(EMPHASIZED)
-                            .withEndAction(this::finishTabSwitch).start();
-                } else {
-                    rv.setAlpha(1f);
-                    rv.setTranslationX(0f);
-                    finishTabSwitch();
-                }
-                mContainer.updateElyraDrawerVisualState();
-            });
-        };
+        }, () -> restoreScrollState(
+                rv, categories ? mCategoriesScrollState : mAllScrollState), () -> {
+            rv.setAlpha(0f);
+            rv.setTranslationY(categories ? dp(4) : -dp(4));
+            if (!ValueAnimator.areAnimatorsEnabled()) {
+                finishTabSwitch(rv);
+                return;
+            }
+            startAnimator(TAB_ENTER_MS, generation, progress -> {
+                rv.setAlpha(progress);
+                rv.setTranslationY(lerp(categories ? dp(4) : -dp(4), 0f, progress));
+            }, () -> finishTabSwitch(rv));
+        });
+
         if (!ValueAnimator.areAnimatorsEnabled()) {
             rv.setAlpha(0f);
-            swap.run();
+            commit.run();
             return;
         }
-        mTabTraceCookie = beginTrace("ElyraDrawerTabSwitch");
-        rv.animate().cancel();
-        rv.animate().alpha(0f).translationX(categories ? -dp(8) : dp(8)).setDuration(100)
-                .setInterpolator(EMPHASIZED).withEndAction(swap).start();
+        startAnimator(TAB_EXIT_MS, generation, progress -> rv.setAlpha(1f - progress), commit);
     }
 
-    /** Package/model changes settle transitions before replacing transition-owned state. */
+    /** Package/model changes invalidate preparation rather than mutating transition-owned data. */
     void onModelUpdated() {
         ElyraCategoryMotionStateMachine.State state = mState.getState();
-        if (state == ElyraCategoryMotionStateMachine.State.CATEGORY_OPENING) {
-            cancelAnimator();
-            if (mContainer.getPersonalAppList().canHandleElyraCategoryBack()) {
-                finishOpenImmediately();
-            } else {
-                settleRoot();
-            }
-        } else if (state == ElyraCategoryMotionStateMachine.State.CATEGORY_CLOSING
-                || (state == ElyraCategoryMotionStateMachine.State.CATEGORY_DETAIL
-                && !mContainer.getPersonalAppList().canHandleElyraCategoryBack())) {
-            settleRoot();
+        if (mTabSwitching) {
+            cancelTabSwitch();
+            return;
+        }
+        if (state == ElyraCategoryMotionStateMachine.State.PREPARING
+                || state == ElyraCategoryMotionStateMachine.State.OPENING
+                || state == ElyraCategoryMotionStateMachine.State.CLOSING) {
+            restoreCategoryRoot(/* focusSource= */ false);
+        } else if (state == ElyraCategoryMotionStateMachine.State.DETAIL
+                && !mContainer.getPersonalAppList().canHandleElyraCategoryBack()) {
+            restoreCategoryRoot(/* focusSource= */ false);
         }
     }
 
     void dispose() {
-        ElyraCategoryMotionStateMachine.State state = mState.getState();
-        cancelAnimator();
-        if (state == ElyraCategoryMotionStateMachine.State.CATEGORY_OPENING
-                || state == ElyraCategoryMotionStateMachine.State.CATEGORY_CLOSING) {
+        invalidateTransition();
+        if (mContainer.getPersonalAppList().canHandleElyraCategoryBack()) {
             mContainer.showElyraCategoryCardsForMotion();
         }
         cleanupTransitionViews();
         mState.forceRoot();
         clearCategorySession();
-        endTrace("ElyraCategoryOpen", mOpenTraceCookie);
-        endTrace("ElyraCategoryClose", mCloseTraceCookie);
-        endTrace("ElyraDrawerTabSwitch", mTabTraceCookie);
-        mOpenTraceCookie = mCloseTraceCookie = mTabTraceCookie = 0;
         mTabSwitching = false;
+        endAllTraces();
     }
 
-    private void prepareOpen(int generation, AllAppsRecyclerView rv) {
-        if (generation != mTransitionGeneration
-                || mState.getState()
-                != ElyraCategoryMotionStateMachine.State.CATEGORY_OPENING
-                || mMorph == null || !rv.isAttachedToWindow()) {
+    private void beginDetailCommit(int generation, AllAppsRecyclerView rv) {
+        if (!isCurrent(generation, ElyraCategoryMotionStateMachine.State.PREPARING)
+                || mDetailSnapshot.isEmpty()
+                || mPreparationModelGeneration
+                != ElyraDrawerModelCoordinator.currentGeneration()) {
+            restoreCategoryRoot(/* focusSource= */ false);
             return;
         }
-        RectF destination = detailBounds(rv);
-        if (destination.width() <= 0 || destination.height() <= 0) {
-            finishOpenImmediately();
+        rv.setAlpha(0f);
+        setScale(rv, DETAIL_ENTER_SCALE);
+        rv.setTranslationY(dp(10));
+        beginAdapterCommit(rv, generation,
+                () -> {
+                    beginSyncTrace("ElyraCategoryDetailCommit");
+                    try {
+                        mContainer.selectElyraCategoryForMotion(mCard.getCategory());
+                    } finally {
+                        endSyncTrace();
+                    }
+                },
+                () -> rv.scrollToPosition(0),
+                () -> onDetailPrepared(generation, rv));
+    }
+
+    private void onDetailPrepared(int generation, AllAppsRecyclerView rv) {
+        if (!isCurrent(generation, ElyraCategoryMotionStateMachine.State.PREPARING)
+                || mPreparationModelGeneration
+                != ElyraDrawerModelCoordinator.currentGeneration()
+                || !mContainer.getPersonalAppList().canHandleElyraCategoryBack()
+                || rv.getAdapter() == null || rv.getAdapter().getItemCount() == 0
+                || rv.getWidth() <= 0 || rv.getHeight() <= 0
+                || !mState.markPrepared()) {
+            restoreCategoryRoot(/* focusSource= */ false);
             return;
         }
-        TextView title = findHeader(rv);
-        mMorph.setTarget(destination, title == null
-                        ? detailTitlePosition(rv, destination) : baseline(title),
-                dp(14));
         if (!ValueAnimator.areAnimatorsEnabled()) {
-            finishOpenImmediately();
+            finishOpen(rv);
             return;
         }
-        rv.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        mMorph.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        mAnimator = createAnimator(OPEN_MS, generation, progress -> {
-            if (mMorph == null) return;
-            mMorph.setProgress(progress);
-            rv.setAlpha(clamp((progress - 0.12f) / 0.88f));
-            setScale(rv, OPEN_CONTENT_SCALE + (1f - OPEN_CONTENT_SCALE) * progress);
-        }, () -> finishOpen(title));
-        mAnimator.start();
+        startAnimator(DETAIL_ENTER_MS, generation, progress -> {
+            rv.setAlpha(progress);
+            setScale(rv, lerp(DETAIL_ENTER_SCALE, 1f, progress));
+            rv.setTranslationY(lerp(dp(10), 0f, progress));
+        }, () -> finishOpen(rv));
     }
 
-    private void startClose(RectF startBounds, float startRadius, float[] startTitle) {
+    private void finishOpen(AllAppsRecyclerView rv) {
+        if (!mState.markOpened()) return;
+        cleanupTransitionViews();
+        TextView title = findHeader(rv);
+        if (title != null) {
+            title.setFocusable(true);
+            title.requestFocus();
+            title.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+        } else if (rv.getChildCount() > 0) {
+            rv.getChildAt(0).requestFocus();
+        }
+        endTrace("ElyraCategoryOpen", mOpenTraceCookie);
+        mOpenTraceCookie = 0;
+        mContainer.updateElyraDrawerVisualState();
+    }
+
+    private void startClose() {
         AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
-        if (rv == null || mCard == null) {
-            settleRoot();
+        if (rv == null || rv.getAdapter() == null) {
+            restoreCategoryRoot(/* focusSource= */ true);
             return;
         }
+        int generation = beginTransition();
         mCloseTraceCookie = beginTrace("ElyraCategoryClose");
-        removeMorph();
-        mMorph = new MorphView(rv, startBounds, mCard.getLabel(), startTitle,
-                mContainer.getContext().getColor(R.color.elyra_drawer_card_surface),
-                mContainer.getContext().getColor(R.color.elyra_drawer_card_outline),
-                startRadius);
-        addMorph();
+        rv.stopScroll();
+        rv.setEnabled(false);
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            rv.setAlpha(0f);
+            beginRootCommit(generation, rv);
+            return;
+        }
+        startAnimator(DETAIL_EXIT_MS, generation, progress -> {
+            rv.setAlpha(1f - progress);
+            setScale(rv, lerp(1f, ROOT_EXIT_SCALE, progress));
+            rv.setTranslationY(lerp(0f, dp(6), progress));
+        }, () -> beginRootCommit(generation, rv));
+    }
 
-        beginSyncTrace("ElyraCategoryClosePrepare");
-        mContainer.showElyraCategoryCardsForMotion();
-        endSyncTrace();
-        prepareRecyclerForTransition(rv, ROOT_CONTENT_SCALE);
-        int generation = ++mTransitionGeneration;
-        rv.postOnAnimation(() -> {
-            restoreScrollState(rv, mRootScrollState);
-            rv.postOnAnimation(() -> prepareClose(generation, rv, startBounds));
+    private void beginRootCommit(int generation, AllAppsRecyclerView rv) {
+        if (!isCurrent(generation, ElyraCategoryMotionStateMachine.State.CLOSING)) return;
+        rv.setAlpha(0f);
+        setScale(rv, ROOT_EXIT_SCALE);
+        rv.setTranslationY(-dp(6));
+        beginAdapterCommit(rv, generation, mContainer::showElyraCategoryCardsForMotion,
+                () -> restoreScrollState(rv, mRootScrollState), () -> {
+            if (!ValueAnimator.areAnimatorsEnabled()) {
+                finishClose(rv);
+                return;
+            }
+            startAnimator(ROOT_ENTER_MS, generation, progress -> {
+                rv.setAlpha(progress);
+                setScale(rv, lerp(ROOT_EXIT_SCALE, 1f, progress));
+                rv.setTranslationY(lerp(-dp(6), 0f, progress));
+            }, () -> finishClose(rv));
         });
     }
 
-    private void prepareClose(int generation, AllAppsRecyclerView rv, RectF expanded) {
-        if (generation != mTransitionGeneration
-                || mState.getState()
-                != ElyraCategoryMotionStateMachine.State.CATEGORY_CLOSING
-                || mMorph == null || !rv.isAttachedToWindow()) {
-            return;
-        }
-        View source = findCategoryCard(rv, mCard == null ? null : mCard.getCategory());
-        RectF target = source == null ? fallbackSource(expanded) : bounds(source);
-        mMorph.setTarget(target, titlePosition(source, target),
-                mContainer.getResources().getDimension(R.dimen.elyra_radius_large));
-        if (source != null) {
-            source.setAlpha(0f);
-            mClosingSource = source;
-        }
-        if (!ValueAnimator.areAnimatorsEnabled()) {
-            finishClose(source);
-            return;
-        }
-        rv.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        mMorph.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        mAnimator = createAnimator(CLOSE_MS, generation, progress -> {
-            if (mMorph == null) return;
-            mMorph.setProgress(progress);
-            rv.setAlpha(clamp((progress - 0.10f) / 0.90f));
-            setScale(rv, ROOT_CONTENT_SCALE + (1f - ROOT_CONTENT_SCALE) * progress);
-        }, () -> finishClose(source));
-        mAnimator.start();
+    private void finishClose(AllAppsRecyclerView rv) {
+        if (!mState.markClosed()) mState.forceRoot();
+        ElyraAppCategory sourceCategory = mCard == null ? null : mCard.getCategory();
+        cleanupTransitionViews();
+        View source = findCategoryCard(rv, sourceCategory);
+        if (source != null && source.isAttachedToWindow()) source.requestFocus();
+        clearCategorySession();
+        endTrace("ElyraCategoryClose", mCloseTraceCookie);
+        mCloseTraceCookie = 0;
+        mContainer.updateElyraDrawerVisualState();
     }
 
-    private ValueAnimator createAnimator(long duration, int generation, ProgressConsumer update,
+    private void restoreCategoryRoot(boolean focusSource) {
+        ElyraAppCategory sourceCategory = mCard == null ? null : mCard.getCategory();
+        int generation = invalidateTransition();
+        mState.forceRoot();
+        AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
+        if (rv == null) {
+            cleanupTransitionViews();
+            clearCategorySession();
+            endCategoryTraces();
+            return;
+        }
+        rv.setAlpha(0f);
+        rv.setEnabled(false);
+        Runnable finish = () -> {
+            cleanupTransitionViews();
+            if (focusSource) {
+                View source = findCategoryCard(rv, sourceCategory);
+                if (source != null) source.requestFocus();
+            }
+            clearCategorySession();
+            endCategoryTraces();
+            mContainer.updateElyraDrawerVisualState();
+        };
+        if (mContainer.getPersonalAppList().canHandleElyraCategoryBack()) {
+            beginAdapterCommit(rv, generation,
+                    mContainer::showElyraCategoryCardsForMotion,
+                    () -> restoreScrollState(rv, mRootScrollState), finish);
+        } else {
+            finish.run();
+        }
+    }
+
+    private void beginAdapterCommit(AllAppsRecyclerView rv, int generation,
+            Runnable mutation, Runnable beforePreDraw, Runnable ready) {
+        clearPendingPreparation();
+        RecyclerView.Adapter<?> adapter = rv.getAdapter();
+        if (adapter == null || !rv.isAttachedToWindow() || generation != mTransitionGeneration) {
+            abortInvalidPreparation();
+            return;
+        }
+        mPendingRecyclerView = rv;
+        mPendingAdapter = adapter;
+        mPendingBeforePreDrawAction = beforePreDraw;
+        mPendingReadyAction = ready;
+        mPendingAdapterObserver = new RecyclerView.AdapterDataObserver() {
+            @Override public void onChanged() { scheduleAdapterCommit(generation, rv); }
+            @Override public void onItemRangeChanged(int start, int count) {
+                scheduleAdapterCommit(generation, rv);
+            }
+            @Override public void onItemRangeInserted(int start, int count) {
+                scheduleAdapterCommit(generation, rv);
+            }
+            @Override public void onItemRangeRemoved(int start, int count) {
+                scheduleAdapterCommit(generation, rv);
+            }
+            @Override public void onItemRangeMoved(int from, int to, int count) {
+                scheduleAdapterCommit(generation, rv);
+            }
+        };
+        adapter.registerAdapterDataObserver(mPendingAdapterObserver);
+        mutation.run();
+        // A committed list can legitimately produce an empty DiffUtil dispatch. The next frame is
+        // still the adapter commit boundary and is coalesced with observer callbacks below.
+        scheduleAdapterCommit(generation, rv);
+    }
+
+    private void scheduleAdapterCommit(int generation, AllAppsRecyclerView rv) {
+        if (mPendingCommitRunnable != null) return;
+        mPendingCommitRunnable = () -> {
+            Runnable callback = mPendingCommitRunnable;
+            mPendingCommitRunnable = null;
+            if (callback == null || generation != mTransitionGeneration
+                    || rv != mPendingRecyclerView || !rv.isAttachedToWindow()
+                    || rv.getAdapter() != mPendingAdapter) {
+                clearPendingPreparation();
+                return;
+            }
+            Runnable beforePreDraw = mPendingBeforePreDrawAction;
+            Runnable ready = mPendingReadyAction;
+            unregisterPendingAdapterObserver();
+            mPendingBeforePreDrawAction = null;
+            mPendingReadyAction = null;
+            if (beforePreDraw != null) beforePreDraw.run();
+            waitForValidPreDraw(rv, generation, ready);
+        };
+        rv.postOnAnimation(mPendingCommitRunnable);
+    }
+
+    private void waitForValidPreDraw(AllAppsRecyclerView rv, int generation,
+            @Nullable Runnable ready) {
+        if (ready == null) return;
+        ViewTreeObserver observer = rv.getViewTreeObserver();
+        if (!observer.isAlive()) {
+            clearPendingPreparation();
+            return;
+        }
+        mPendingRecyclerView = rv;
+        mPendingReadyAction = ready;
+        mPendingPreDrawListener = () -> {
+            if (generation != mTransitionGeneration || !rv.isAttachedToWindow()) {
+                clearPendingPreparation();
+                return true;
+            }
+            RecyclerView.Adapter<?> adapter = rv.getAdapter();
+            if (rv.getWidth() <= 0 || rv.getHeight() <= 0 || adapter == null
+                    || adapter.getItemCount() <= 0) {
+                return true;
+            }
+            Runnable action = mPendingReadyAction;
+            removePendingPreDrawListener();
+            mPendingReadyAction = null;
+            mPendingRecyclerView = null;
+            if (action != null) action.run();
+            return true;
+        };
+        observer.addOnPreDrawListener(mPendingPreDrawListener);
+        rv.invalidate();
+    }
+
+    private void startAnimator(long duration, int generation, ProgressConsumer update,
             Runnable end) {
+        cancelAnimatorOnly();
         ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        mAnimator = animator;
         animator.setDuration(duration);
         animator.setInterpolator(EMPHASIZED);
         animator.addUpdateListener(value -> {
@@ -296,64 +455,105 @@ final class ElyraCategoryMotionController {
             }
         });
         animator.addListener(new AnimatorListenerAdapter() {
-            private boolean cancelled;
-            @Override public void onAnimationCancel(Animator animation) { cancelled = true; }
+            private boolean mCancelled;
+            @Override public void onAnimationCancel(Animator animation) { mCancelled = true; }
             @Override public void onAnimationEnd(Animator animation) {
-                if (!cancelled && generation == mTransitionGeneration) end.run();
+                if (mAnimator == animation) mAnimator = null;
+                if (!mCancelled && generation == mTransitionGeneration) end.run();
             }
         });
-        return animator;
+        animator.start();
     }
 
-    private void finishOpen(@Nullable TextView title) {
-        if (!mState.markOpened()) return;
+    private int beginTransition() {
+        clearPendingPreparation();
+        cancelAnimatorOnly();
+        return ++mTransitionGeneration;
+    }
+
+    private int invalidateTransition() {
+        int generation = ++mTransitionGeneration;
+        clearPendingPreparation();
+        cancelAnimatorOnly();
+        return generation;
+    }
+
+    private void cancelAnimatorOnly() {
+        if (mAnimator != null) {
+            ValueAnimator animator = mAnimator;
+            mAnimator = null;
+            animator.cancel();
+        }
+    }
+
+    /** One deterministic visual/listener cleanup path for completion, cancellation, and detach. */
+    private void cleanupTransitionViews() {
+        clearPendingPreparation();
+        cancelAnimatorOnly();
+        restoreSource(mSourceView);
+        AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
+        if (rv != null) {
+            rv.animate().cancel();
+            restoreViewProperties(rv);
+            rv.setEnabled(true);
+            rv.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void clearPendingPreparation() {
+        if (mPendingRecyclerView != null && mPendingCommitRunnable != null) {
+            mPendingRecyclerView.removeCallbacks(mPendingCommitRunnable);
+        }
+        mPendingCommitRunnable = null;
+        unregisterPendingAdapterObserver();
+        removePendingPreDrawListener();
+        mPendingBeforePreDrawAction = null;
+        mPendingReadyAction = null;
+        mPendingRecyclerView = null;
+    }
+
+    private void unregisterPendingAdapterObserver() {
+        if (mPendingAdapter != null && mPendingAdapterObserver != null) {
+            mPendingAdapter.unregisterAdapterDataObserver(mPendingAdapterObserver);
+        }
+        mPendingAdapterObserver = null;
+        mPendingAdapter = null;
+    }
+
+    private void removePendingPreDrawListener() {
+        if (mPendingRecyclerView != null && mPendingPreDrawListener != null) {
+            ViewTreeObserver observer = mPendingRecyclerView.getViewTreeObserver();
+            if (observer.isAlive()) observer.removeOnPreDrawListener(mPendingPreDrawListener);
+        }
+        mPendingPreDrawListener = null;
+    }
+
+    private void cancelTabSwitch() {
+        invalidateTransition();
         cleanupTransitionViews();
-        if (title != null) {
-            title.setFocusable(true);
-            title.requestFocus();
-            title.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
-        } else {
-            AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
-            if (rv != null && rv.getChildCount() > 0) rv.getChildAt(0).requestFocus();
-        }
-        endTrace("ElyraCategoryOpen", mOpenTraceCookie);
-        mOpenTraceCookie = 0;
-        mContainer.updateElyraDrawerVisualState();
+        mTabSwitching = false;
+        endTrace("ElyraDrawerTabSwitch", mTabTraceCookie);
+        mTabTraceCookie = 0;
     }
 
-    private void finishOpenImmediately() {
-        TextView title = findHeader(mContainer.getActiveRecyclerView());
-        if (mState.getState() == ElyraCategoryMotionStateMachine.State.CATEGORY_OPENING) {
-            finishOpen(title);
-        } else {
-            cleanupTransitionViews();
+    private void abortInvalidPreparation() {
+        if (mTabSwitching) {
+            cancelTabSwitch();
+            return;
         }
-    }
-
-    private void finishClose(@Nullable View source) {
-        if (!mState.markClosed()) {
-            mState.forceRoot();
-        }
-        restoreSource(source);
-        cleanupTransitionViews();
-        if (source != null && source.isAttachedToWindow()) source.requestFocus();
-        clearCategorySession();
-        endTrace("ElyraCategoryClose", mCloseTraceCookie);
-        mCloseTraceCookie = 0;
-        mContainer.updateElyraDrawerVisualState();
-    }
-
-    private void settleRoot() {
-        cancelAnimator();
-        if (mContainer.getPersonalAppList().canHandleElyraCategoryBack()) {
-            mContainer.showElyraCategoryCardsForMotion();
-        }
-        cleanupTransitionViews();
         mState.forceRoot();
+        cleanupTransitionViews();
         clearCategorySession();
-        endTrace("ElyraCategoryOpen", mOpenTraceCookie);
-        endTrace("ElyraCategoryClose", mCloseTraceCookie);
-        mOpenTraceCookie = mCloseTraceCookie = 0;
+        endCategoryTraces();
+        mContainer.updateElyraDrawerVisualState();
+    }
+
+    private void finishTabSwitch(AllAppsRecyclerView rv) {
+        restoreViewProperties(rv);
+        rv.setEnabled(true);
+        mTabSwitching = false;
+        endTrace("ElyraDrawerTabSwitch", mTabTraceCookie);
+        mTabTraceCookie = 0;
         mContainer.updateElyraDrawerVisualState();
     }
 
@@ -383,56 +583,6 @@ final class ElyraCategoryMotionController {
         return null;
     }
 
-    private RectF detailBounds(@Nullable AllAppsRecyclerView rv) {
-        if (rv == null || rv.getWidth() <= 0 || rv.getHeight() <= 0) {
-            return mSourceBounds == null ? new RectF() : new RectF(mSourceBounds);
-        }
-        RectF bounds = bounds(rv);
-        TextView header = findHeader(rv);
-        float top = header == null ? bounds.top + rv.getPaddingTop() : bounds(header).top;
-        return new RectF(bounds.left + rv.getPaddingLeft() + dp(8), top,
-                bounds.right - rv.getPaddingRight() - dp(8),
-                bounds.bottom - rv.getPaddingBottom());
-    }
-
-    private float[] detailTitlePosition(@Nullable AllAppsRecyclerView rv, RectF fallback) {
-        TextView title = findHeader(rv);
-        return title == null
-                ? new float[] {fallback.left + dp(16), fallback.top + dp(28)}
-                : baseline(title);
-    }
-
-    private float[] titlePosition(@Nullable View source, RectF fallback) {
-        if (source instanceof ViewGroup) {
-            View title = ((ViewGroup) source).getChildAt(0);
-            if (title instanceof TextView) return baseline((TextView) title);
-        }
-        return new float[] {fallback.left + dp(14), fallback.top + dp(24)};
-    }
-
-    private RectF bounds(View view) {
-        mContainer.getLocationOnScreen(mContainerLocation);
-        view.getLocationOnScreen(mViewLocation);
-        float left = mViewLocation[0] - mContainerLocation[0];
-        float top = mViewLocation[1] - mContainerLocation[1];
-        return new RectF(left, top, left + view.getWidth(), top + view.getHeight());
-    }
-
-    private float[] baseline(TextView title) {
-        RectF bounds = bounds(title);
-        Paint.FontMetrics metrics = title.getPaint().getFontMetrics();
-        return new float[] {bounds.left + title.getPaddingLeft(),
-                bounds.top + (title.getHeight() - metrics.bottom - metrics.top) / 2f};
-    }
-
-    private RectF fallbackSource(RectF expanded) {
-        float width = mSourceBounds == null ? dp(164) : mSourceBounds.width();
-        float height = mSourceBounds == null ? dp(152) : mSourceBounds.height();
-        float centerY = expanded.top + expanded.height() * 0.58f;
-        return new RectF(expanded.centerX() - width / 2f, centerY - height / 2f,
-                expanded.centerX() + width / 2f, centerY + height / 2f);
-    }
-
     @Nullable
     private Parcelable saveScrollState(RecyclerView rv) {
         return rv.getLayoutManager() == null ? null : rv.getLayoutManager().onSaveInstanceState();
@@ -444,70 +594,30 @@ final class ElyraCategoryMotionController {
         }
     }
 
-    private void prepareRecyclerForTransition(AllAppsRecyclerView rv, float scale) {
-        rv.animate().cancel();
-        rv.setAlpha(0f);
-        setScale(rv, scale);
-    }
-
-    private void cleanupTransitionViews() {
-        restoreSource(mClosingSource);
-        restoreSource(mSourceView);
-        mClosingSource = null;
-        mSourceView = null;
-        AllAppsRecyclerView rv = mContainer.getActiveRecyclerView();
-        if (rv != null) {
-            rv.animate().cancel();
-            rv.setAlpha(1f);
-            rv.setScaleX(1f);
-            rv.setScaleY(1f);
-            rv.setTranslationX(0f);
-            rv.setLayerType(View.LAYER_TYPE_NONE, null);
-        }
-        removeMorph();
-        mAnimator = null;
-    }
-
     private void restoreSource(@Nullable View source) {
         if (source == null) return;
         source.animate().cancel();
-        source.setAlpha(1f);
-        source.setScaleX(1f);
-        source.setScaleY(1f);
-        source.setLayerType(View.LAYER_TYPE_NONE, null);
+        restoreViewProperties(source);
+    }
+
+    private static void restoreViewProperties(View view) {
+        view.setAlpha(1f);
+        view.setScaleX(1f);
+        view.setScaleY(1f);
+        view.setTranslationX(0f);
+        view.setTranslationY(0f);
     }
 
     private void clearCategorySession() {
         mCard = null;
-        mSourceBounds = null;
+        mSourceView = null;
         mRootScrollState = null;
+        mDetailSnapshot = Collections.emptyList();
+        mPreparationModelGeneration = 0;
     }
 
-    private void addMorph() {
-        if (mMorph == null) return;
-        mContainer.getOverlay().add(mMorph);
-        mMorph.layout(0, 0, mContainer.getWidth(), mContainer.getHeight());
-    }
-
-    private void removeMorph() {
-        if (mMorph == null) return;
-        mMorph.setLayerType(View.LAYER_TYPE_NONE, null);
-        mContainer.getOverlay().remove(mMorph);
-        mMorph = null;
-    }
-
-    private void cancelAnimator() {
-        mTransitionGeneration++;
-        if (mAnimator != null) {
-            mAnimator.cancel();
-            mAnimator = null;
-        }
-    }
-
-    private void finishTabSwitch() {
-        mTabSwitching = false;
-        endTrace("ElyraDrawerTabSwitch", mTabTraceCookie);
-        mTabTraceCookie = 0;
+    private boolean isCurrent(int generation, ElyraCategoryMotionStateMachine.State state) {
+        return generation == mTransitionGeneration && mState.getState() == state;
     }
 
     private int beginTrace(String name) {
@@ -520,6 +630,18 @@ final class ElyraCategoryMotionController {
         if (cookie != 0 && BuildConfig.DEBUG && Utilities.ATLEAST_Q) {
             Trace.endAsyncSection(name, cookie);
         }
+    }
+
+    private void endCategoryTraces() {
+        endTrace("ElyraCategoryOpen", mOpenTraceCookie);
+        endTrace("ElyraCategoryClose", mCloseTraceCookie);
+        mOpenTraceCookie = mCloseTraceCookie = 0;
+    }
+
+    private void endAllTraces() {
+        endCategoryTraces();
+        endTrace("ElyraDrawerTabSwitch", mTabTraceCookie);
+        mTabTraceCookie = 0;
     }
 
     private void beginSyncTrace(String name) {
@@ -539,97 +661,9 @@ final class ElyraCategoryMotionController {
         view.setScaleY(scale);
     }
 
-    private static float clamp(float value) {
-        return Math.max(0f, Math.min(1f, value));
+    private static float lerp(float from, float to, float amount) {
+        return from + (to - from) * amount;
     }
 
     private interface ProgressConsumer { void accept(float progress); }
-
-    /** One preallocated shared surface; it never captures a card or drawer bitmap. */
-    private static final class MorphView extends View {
-        private final Paint surfacePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final TextPaint titlePaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-        private final RectF start = new RectF();
-        private final RectF end = new RectF();
-        private final RectF current = new RectF();
-        private final float[] startTitle = new float[2];
-        private final float[] endTitle = new float[2];
-        private final String title;
-        private float startRadius;
-        private float endRadius;
-        private float progress;
-
-        MorphView(View source, RectF bounds, String title, float[] titlePosition,
-                int surfaceColor, int strokeColor, float radius) {
-            super(source.getContext());
-            start.set(bounds);
-            end.set(bounds);
-            this.title = title;
-            startTitle[0] = endTitle[0] = titlePosition[0];
-            startTitle[1] = endTitle[1] = titlePosition[1];
-            startRadius = endRadius = radius;
-            surfacePaint.setColor(surfaceColor);
-            strokePaint.setColor(strokeColor);
-            strokePaint.setStyle(Paint.Style.STROKE);
-            strokePaint.setStrokeWidth(source.getResources().getDisplayMetrics().density);
-            titlePaint.setColor(source.getContext().getColor(R.color.elyra_drawer_text_primary));
-            titlePaint.setTextSize(14 * source.getResources().getDisplayMetrics().scaledDensity);
-            titlePaint.setFakeBoldText(true);
-            setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
-        }
-
-        void setTarget(RectF bounds, float[] titlePosition, float radius) {
-            end.set(bounds);
-            endTitle[0] = titlePosition[0];
-            endTitle[1] = titlePosition[1];
-            endRadius = radius;
-        }
-
-        void setProgress(float value) {
-            progress = value;
-            invalidate();
-        }
-
-        RectF currentBounds() {
-            RectF result = new RectF();
-            lerp(start, end, progress, result);
-            return result;
-        }
-
-        float[] currentTitle() {
-            return new float[] {
-                    lerp(startTitle[0], endTitle[0], progress),
-                    lerp(startTitle[1], endTitle[1], progress),
-            };
-        }
-
-        float currentRadius() {
-            return lerp(startRadius, endRadius, progress);
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            lerp(start, end, progress, current);
-            float radius = lerp(startRadius, endRadius, progress);
-            int alpha = Math.round(255f * (1f - clamp((progress - 0.78f) / 0.22f)));
-            surfacePaint.setAlpha(alpha);
-            strokePaint.setAlpha(alpha);
-            titlePaint.setAlpha(alpha);
-            canvas.drawRoundRect(current, radius, radius, surfacePaint);
-            canvas.drawRoundRect(current, radius, radius, strokePaint);
-            canvas.drawText(title,
-                    lerp(startTitle[0], endTitle[0], progress),
-                    lerp(startTitle[1], endTitle[1], progress), titlePaint);
-        }
-
-        private static void lerp(RectF from, RectF to, float amount, RectF out) {
-            out.set(lerp(from.left, to.left, amount), lerp(from.top, to.top, amount),
-                    lerp(from.right, to.right, amount), lerp(from.bottom, to.bottom, amount));
-        }
-
-        private static float lerp(float from, float to, float amount) {
-            return from + (to - from) * amount;
-        }
-    }
 }
